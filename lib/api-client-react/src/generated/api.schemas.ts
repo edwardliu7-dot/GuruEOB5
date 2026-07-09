@@ -36,6 +36,7 @@ export interface Teacher {
   photoUrl?: string | null;
   bio?: string | null;
   createdAt: string;
+  isAdmin: boolean;
 }
 
 export type RegisterInputJabatanItem = typeof RegisterInputJabatanItem[keyof typeof RegisterInputJabatanItem];
@@ -127,6 +128,27 @@ export interface StudentInput {
   kelas: string;
   jenisKelamin: StudentInputJenisKelamin;
   school: string;
+}
+
+export interface StudentImportAnalyzeInput {
+  /** @maxItems 1000 */
+  rows: string[][];
+}
+
+export interface StudentImportAnalyzeResult {
+  students: StudentInput[];
+}
+
+export interface BulkCreateStudentsInput {
+  /**
+     * @minItems 1
+     * @maxItems 1000
+     */
+  students: StudentInput[];
+}
+
+export interface BulkCreateStudentsResult {
+  count: number;
 }
 
 export interface Subject {

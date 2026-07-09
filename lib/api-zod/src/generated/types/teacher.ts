@@ -20,4 +20,5 @@ export interface Teacher {
   photoUrl?: string | null;
   bio?: string | null;
   createdAt: Date;
+  isAdmin: boolean;
 }

@@ -24,6 +24,8 @@ import type {
   AdminDocumentInput,
   AttendanceRecord,
   AttendanceRecordInput,
+  BulkCreateStudentsInput,
+  BulkCreateStudentsResult,
   DashboardSummary,
   Grade,
   GradeInput,
@@ -44,6 +46,8 @@ import type {
   PointRecordInput,
   RegisterInput,
   Student,
+  StudentImportAnalyzeInput,
+  StudentImportAnalyzeResult,
   StudentInput,
   Subject,
   SubjectInput,
@@ -1283,6 +1287,148 @@ export const useCreateStudent = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateStudentMutationOptions(options));
+    }
+
+export const getAnalyzeStudentImportUrl = () => {
+
+
+
+
+  return `/api/students/import/analyze`
+}
+
+/**
+ * @summary Analyze raw spreadsheet rows with AI and map them to student fields
+ */
+export const analyzeStudentImport = async (studentImportAnalyzeInput: StudentImportAnalyzeInput, options?: RequestInit): Promise<StudentImportAnalyzeResult> => {
+
+  return customFetch<StudentImportAnalyzeResult>(getAnalyzeStudentImportUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(studentImportAnalyzeInput)
+  }
+);}
+
+
+
+
+
+export const getAnalyzeStudentImportMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeStudentImport>>, TError,{data: BodyType<StudentImportAnalyzeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof analyzeStudentImport>>, TError,{data: BodyType<StudentImportAnalyzeInput>}, TContext> => {
+
+const mutationKey = ['analyzeStudentImport'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof analyzeStudentImport>>, {data: BodyType<StudentImportAnalyzeInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  analyzeStudentImport(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AnalyzeStudentImportMutationResult = NonNullable<Awaited<ReturnType<typeof analyzeStudentImport>>>
+    export type AnalyzeStudentImportMutationBody = BodyType<StudentImportAnalyzeInput>
+    export type AnalyzeStudentImportMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Analyze raw spreadsheet rows with AI and map them to student fields
+ */
+export const useAnalyzeStudentImport = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeStudentImport>>, TError,{data: BodyType<StudentImportAnalyzeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof analyzeStudentImport>>,
+        TError,
+        {data: BodyType<StudentImportAnalyzeInput>},
+        TContext
+      > => {
+      return useMutation(getAnalyzeStudentImportMutationOptions(options));
+    }
+
+export const getBulkCreateStudentsUrl = () => {
+
+
+
+
+  return `/api/students/bulk`
+}
+
+/**
+ * @summary Create many students at once
+ */
+export const bulkCreateStudents = async (bulkCreateStudentsInput: BulkCreateStudentsInput, options?: RequestInit): Promise<BulkCreateStudentsResult> => {
+
+  return customFetch<BulkCreateStudentsResult>(getBulkCreateStudentsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bulkCreateStudentsInput)
+  }
+);}
+
+
+
+
+
+export const getBulkCreateStudentsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateStudents>>, TError,{data: BodyType<BulkCreateStudentsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkCreateStudents>>, TError,{data: BodyType<BulkCreateStudentsInput>}, TContext> => {
+
+const mutationKey = ['bulkCreateStudents'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkCreateStudents>>, {data: BodyType<BulkCreateStudentsInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkCreateStudents(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkCreateStudentsMutationResult = NonNullable<Awaited<ReturnType<typeof bulkCreateStudents>>>
+    export type BulkCreateStudentsMutationBody = BodyType<BulkCreateStudentsInput>
+    export type BulkCreateStudentsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create many students at once
+ */
+export const useBulkCreateStudents = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateStudents>>, TError,{data: BodyType<BulkCreateStudentsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof bulkCreateStudents>>,
+        TError,
+        {data: BodyType<BulkCreateStudentsInput>},
+        TContext
+      > => {
+      return useMutation(getBulkCreateStudentsMutationOptions(options));
     }
 
 export const getGetStudentUrl = (id: string,) => {

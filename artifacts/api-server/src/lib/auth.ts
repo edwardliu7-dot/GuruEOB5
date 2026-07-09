@@ -8,9 +8,28 @@ declare module "express-session" {
   }
 }
 
+const ADMIN_USERNAMES = ["edwardliu7"];
+
+export function isAdminGuru(guru: Guru): boolean {
+  return ADMIN_USERNAMES.includes(guru.username);
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   if (!req.session.teacherId) {
     res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  next();
+}
+
+export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!isAdminGuru(guru)) {
+    res.status(403).json({ error: "Hanya admin yang boleh mengakses fitur ini" });
     return;
   }
   next();
@@ -43,5 +62,6 @@ export function guruToTeacher(guru: Guru): Record<string, unknown> {
     photoUrl: guru.photoUrl,
     bio: guru.bio,
     createdAt: guru.createdAt,
+    isAdmin: isAdminGuru(guru),
   };
 }

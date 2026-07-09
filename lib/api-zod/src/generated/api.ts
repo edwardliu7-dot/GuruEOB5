@@ -47,7 +47,8 @@ export const RegisterResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "isAdmin": zod.boolean()
 })
 
 
@@ -71,7 +72,8 @@ export const LoginResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "isAdmin": zod.boolean()
 })
 
 
@@ -98,7 +100,8 @@ export const GetMeResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "isAdmin": zod.boolean()
 })
 
 
@@ -219,7 +222,8 @@ export const ListTeachersResponseItem = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "isAdmin": zod.boolean()
 })
 export const ListTeachersResponse = zod.array(ListTeachersResponseItem)
 
@@ -243,7 +247,8 @@ export const GetTeacherResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "isAdmin": zod.boolean()
 })
 
 
@@ -277,7 +282,8 @@ export const UpdateTeacherResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "isAdmin": zod.boolean()
 })
 
 
@@ -331,6 +337,50 @@ export const CreateStudentResponse = zod.object({
   "jenisKelamin": zod.enum(['L', 'P']),
   "school": zod.string(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Analyze raw spreadsheet rows with AI and map them to student fields
+ */
+export const analyzeStudentImportBodyRowsMax = 1000;
+
+
+
+export const AnalyzeStudentImportBody = zod.object({
+  "rows": zod.array(zod.array(zod.string())).max(analyzeStudentImportBodyRowsMax)
+})
+
+export const AnalyzeStudentImportResponse = zod.object({
+  "students": zod.array(zod.object({
+  "nisn": zod.string().optional(),
+  "namaLengkap": zod.string(),
+  "kelas": zod.string(),
+  "jenisKelamin": zod.enum(['L', 'P']),
+  "school": zod.string()
+}))
+})
+
+
+/**
+ * @summary Create many students at once
+ */
+export const bulkCreateStudentsBodyStudentsMax = 1000;
+
+
+
+export const BulkCreateStudentsBody = zod.object({
+  "students": zod.array(zod.object({
+  "nisn": zod.string().optional(),
+  "namaLengkap": zod.string(),
+  "kelas": zod.string(),
+  "jenisKelamin": zod.enum(['L', 'P']),
+  "school": zod.string()
+})).min(1).max(bulkCreateStudentsBodyStudentsMax)
+})
+
+export const BulkCreateStudentsResponse = zod.object({
+  "count": zod.number()
 })
 
 
