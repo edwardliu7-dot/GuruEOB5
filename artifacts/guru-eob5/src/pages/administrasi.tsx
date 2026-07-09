@@ -1,0 +1,332 @@
+import { useState } from "react";
+import { Layout } from "@/components/layout";
+import { useListSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject, useListDocuments, useCreateDocument, useDeleteDocument, useListTeachers, getListDocumentsQueryKey } from "@workspace/api-client-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { Folder, FileText, Plus, ArrowLeft, Trash2, Edit2, MoreVertical, Upload } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+
+const subjectSchema = z.object({
+  name: z.string().min(1, "Nama mata pelajaran harus diisi"),
+  teacherId: z.string().min(1, "Guru pengampu harus dipilih"),
+});
+
+const documentSchema = z.object({
+  name: z.string().min(1, "Nama dokumen harus diisi"),
+  description: z.string().optional(),
+});
+
+type SubjectFormValues = z.infer<typeof subjectSchema>;
+type DocumentFormValues = z.infer<typeof documentSchema>;
+
+export default function Administrasi() {
+  const { data: subjects, isLoading: isLoadingSubjects } = useListSubjects();
+  const { data: teachers } = useListTeachers();
+  const createSubject = useCreateSubject();
+  const updateSubject = useUpdateSubject();
+  const deleteSubject = useDeleteSubject();
+  
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<any | null>(null);
+  
+  const { data: documents, isLoading: isLoadingDocuments } = useListDocuments(
+    { subjectId: selectedSubject || undefined },
+    { query: { enabled: !!selectedSubject, queryKey: getListDocumentsQueryKey({ subjectId: selectedSubject || undefined }) } }
+  );
+  const createDocument = useCreateDocument();
+  const deleteDocument = useDeleteDocument();
+  const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const subjectForm = useForm<SubjectFormValues>({
+    resolver: zodResolver(subjectSchema),
+    defaultValues: { name: "", teacherId: "" },
+  });
+
+  const documentForm = useForm<DocumentFormValues>({
+    resolver: zodResolver(documentSchema),
+    defaultValues: { name: "", description: "" },
+  });
+
+  const onSubjectSubmit = async (data: SubjectFormValues) => {
+    try {
+      if (editingSubject) {
+        await updateSubject.mutateAsync({ id: editingSubject.id, data });
+        toast({ title: "Berhasil", description: "Mata pelajaran berhasil diperbarui" });
+      } else {
+        await createSubject.mutateAsync({ data });
+        toast({ title: "Berhasil", description: "Mata pelajaran berhasil ditambahkan" });
+      }
+      setIsSubjectDialogOpen(false);
+      subjectForm.reset();
+      setEditingSubject(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/subjects"] });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+    }
+  };
+
+  const onDocumentSubmit = async (data: DocumentFormValues) => {
+    if (!selectedSubject) return;
+    try {
+      await createDocument.mutateAsync({ data: { ...data, subjectId: selectedSubject } });
+      toast({ title: "Berhasil", description: "Dokumen berhasil diunggah" });
+      setIsDocumentDialogOpen(false);
+      documentForm.reset();
+      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+    }
+  };
+
+  const handleDeleteSubject = async (id: string) => {
+    if (confirm("Yakin ingin menghapus mata pelajaran ini?")) {
+      try {
+        await deleteSubject.mutateAsync({ id });
+        queryClient.invalidateQueries({ queryKey: ["/api/subjects"] });
+        toast({ title: "Berhasil", description: "Dihapus" });
+      } catch (e) {
+        toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+      }
+    }
+  };
+
+  const handleDeleteDocument = async (id: string) => {
+    if (confirm("Yakin ingin menghapus dokumen ini?")) {
+      try {
+        await deleteDocument.mutateAsync({ id });
+        queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
+        toast({ title: "Berhasil", description: "Dihapus" });
+      } catch (e) {
+        toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+      }
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              {selectedSubject && (
+                <Button variant="ghost" size="icon" onClick={() => setSelectedSubject(null)} className="mr-2">
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+              )}
+              <h1 className="text-3xl font-bold tracking-tight font-serif text-foreground">
+                {selectedSubject ? "Dokumen Administrasi" : "Administrasi Guru"}
+              </h1>
+            </div>
+            <p className="text-muted-foreground mt-1">
+              {selectedSubject 
+                ? `Mata Pelajaran: ${subjects?.find((s: any) => s.id === selectedSubject)?.name}` 
+                : "Kelola folder mata pelajaran dan dokumen administrasinya."}
+            </p>
+          </div>
+
+          {!selectedSubject ? (
+            <Dialog open={isSubjectDialogOpen} onOpenChange={(open) => { setIsSubjectDialogOpen(open); if(!open){ setEditingSubject(null); subjectForm.reset(); } }}>
+              <DialogTrigger asChild>
+                <Button><Plus className="w-4 h-4 mr-2" /> Tambah Mata Pelajaran</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{editingSubject ? "Edit Mata Pelajaran" : "Tambah Mata Pelajaran"}</DialogTitle>
+                </DialogHeader>
+                <Form {...subjectForm}>
+                  <form onSubmit={subjectForm.handleSubmit(onSubjectSubmit)} className="space-y-4">
+                    <FormField
+                      control={subjectForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nama Mata Pelajaran</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Misal: Matematika Kelas X" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={subjectForm.control}
+                      name="teacherId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Guru Pengampu</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih guru" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {teachers?.map((t: any) => (
+                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button type="submit" disabled={createSubject.isPending || updateSubject.isPending}>Simpan</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <Dialog open={isDocumentDialogOpen} onOpenChange={setIsDocumentDialogOpen}>
+              <DialogTrigger asChild>
+                <Button><Upload className="w-4 h-4 mr-2" /> Unggah Dokumen</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Unggah Dokumen Baru</DialogTitle>
+                </DialogHeader>
+                <Form {...documentForm}>
+                  <form onSubmit={documentForm.handleSubmit(onDocumentSubmit)} className="space-y-4">
+                    <FormField
+                      control={documentForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nama Dokumen</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Misal: RPP Semester 1" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={documentForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Keterangan (Opsional)</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Catatan tambahan" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button type="submit" disabled={createDocument.isPending}>Simpan</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+
+        {/* View: Subject Folders */}
+        {!selectedSubject && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {isLoadingSubjects ? (
+              Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+            ) : subjects?.length === 0 ? (
+              <div className="col-span-full py-12 text-center text-muted-foreground bg-white rounded-xl border border-dashed border-border">
+                <Folder className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+                <p>Belum ada mata pelajaran.</p>
+              </div>
+            ) : (
+              subjects?.map((subject: any) => (
+                <div key={subject.id} className="group relative bg-white border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer" onClick={() => setSelectedSubject(subject.id)}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <Folder className="w-5 h-5 fill-current opacity-20" />
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingSubject(subject); subjectForm.reset({ name: subject.name, teacherId: subject.teacherId }); setIsSubjectDialogOpen(true); }}>
+                          <Edit2 className="w-4 h-4 mr-2" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteSubject(subject.id); }}>
+                          <Trash2 className="w-4 h-4 mr-2" /> Hapus
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <h3 className="font-semibold text-lg line-clamp-1">{subject.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-1">Guru: {teachers?.find((t:any) => t.id === subject.teacherId)?.name}</p>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* View: Documents */}
+        {selectedSubject && (
+          <div className="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
+            {isLoadingDocuments ? (
+              <div className="p-4 space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : documents?.length === 0 ? (
+              <div className="py-16 text-center text-muted-foreground">
+                <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+                <p>Belum ada dokumen untuk mata pelajaran ini.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {documents?.map((doc: any) => (
+                  <div key={doc.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-500">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{doc.name}</h4>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                          <span>{format(new Date(doc.uploadedAt), "dd MMM yyyy")}</span>
+                          {doc.description && (
+                            <>
+                              <span>•</span>
+                              <span className="line-clamp-1">{doc.description}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDocument(doc.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
+    </Layout>
+  );
+}

@@ -1,6 +1,6 @@
-# [Project name]
+# GuruEOB5
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An Indonesian school/teacher administration app: teachers log in, see a dashboard of key stats, manage subject-based administration documents, keep a teaching journal, track attendance/grades/points, and manage a student roster.
 
 ## Run & Operate
 
@@ -9,36 +9,46 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL`, `SESSION_SECRET`
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- API: Express 5, session-based auth (`express-session` + `bcryptjs`)
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: React + Vite (`artifacts/guru-eob5`), blue/gold/cream Indonesian-school theme
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — API contract (source of truth for all endpoints/schemas)
+- `lib/db/src/schema/` — Drizzle schema: teachers, students, subjects, documents, journal, attendance, grades, points
+- `artifacts/api-server/src/routes/` — one route file per resource
+- `artifacts/guru-eob5/src/pages/` — one page per feature (login, dashboard, administrasi, siswa, jurnal, absensi, nilai, poin, guru)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Custom username/password login (not Clerk/Replit Auth) — reference screenshots specified a custom branded login screen.
+- Session-based auth via `express-session`, teacher id stored in `req.session.teacherId`.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Login (username/password)
+- Teacher dashboard: student/teacher counts, admin doc completion donut, journal progress chart
+- Administrasi Guru: subject folders containing admin documents
+- Data Siswa: student table with search, add/edit/delete
+- Jurnal Mengajar: per-subject teaching journal entries
+- Absensi, Nilai, Poin: attendance, grades, and points tracking
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+_None recorded yet._
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Any `type: string` timestamp field in `openapi.yaml` must also have `format: date-time`, or Orval won't coerce Drizzle `Date` objects and response validation will throw. See `.agents/memory/openapi-date-fields.md`.
+- Express route paths must match the OpenAPI spec's path keys exactly — a mismatch typechecks fine but causes runtime 404s. See `.agents/memory/route-path-drift.md`.
 
 ## Pointers
 

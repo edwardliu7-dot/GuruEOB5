@@ -1,0 +1,2 @@
+- [OpenAPI date fields](openapi-date-fields.md) — timestamp fields need `format: date-time` in openapi.yaml or orval's date coercion never kicks in, causing Zod parse failures on Drizzle `Date` objects.
+- [Route path drift](route-path-drift.md) — backend route paths can silently drift from the OpenAPI spec (e.g. `/journal-entries` vs `/journal`); frontend hooks are generated from the spec so a mismatch causes 404s only at runtime, not typecheck.
