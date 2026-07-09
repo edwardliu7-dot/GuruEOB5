@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/lib/auth";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -102,6 +102,12 @@ export default function Login() {
                   </Button>
                 </form>
               </Form>
+              <p className="text-sm text-muted-foreground text-center mt-4">
+                Belum punya akun?{" "}
+                <Link href="/register" className="text-primary font-medium hover:underline">
+                  Daftar di sini
+                </Link>
+              </p>
             </CardContent>
           </Card>
         </div>

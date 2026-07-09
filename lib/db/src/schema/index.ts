@@ -1,4 +1,3 @@
-export * from "./teachers";
 export * from "./students";
 export * from "./subjects";
 export * from "./documents";

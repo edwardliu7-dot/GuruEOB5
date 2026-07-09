@@ -6,10 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TeacherRole = typeof TeacherRole[keyof typeof TeacherRole];
-
-
-export const TeacherRole = {
-  admin: 'admin',
-  guru: 'guru',
-} as const;
+export interface KesiswaanSiswaPoin {
+  studentId: string;
+  namaLengkap: string;
+  kelas: string;
+  totalPoin: number;
+}

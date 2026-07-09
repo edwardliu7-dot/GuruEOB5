@@ -1,39 +1,28 @@
 import { Router, type IRouter } from "express";
 import { count, eq, gte } from "drizzle-orm";
-import {
-  db,
-  studentsTable,
-  teachersTable,
-  documentsTable,
-  journalEntriesTable,
-} from "@workspace/db";
+import { db, studentsTable, documentsTable, journalEntriesTable, neonDb, gurusTable } from "@workspace/db";
 import { GetDashboardSummaryResponse } from "@workspace/api-zod";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, getCurrentGuru, sameSchoolFilter } from "../lib/auth";
 
 const router: IRouter = Router();
 
 router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> => {
-  const [teacher] = await db
-    .select()
-    .from(teachersTable)
-    .where(eq(teachersTable.id, req.session.teacherId as string));
+  const guru = await getCurrentGuru(req);
 
-  if (!teacher) {
+  if (!guru) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
 
-  const [[{ totalSiswa = 0 } = { totalSiswa: 0 }], [{ totalGuru = 0 } = { totalGuru: 0 }], [
-    { totalDokumen = 0 } = { totalDokumen: 0 },
-  ]] = await Promise.all([
-    db
-      .select({ totalSiswa: count() })
-      .from(studentsTable)
-      .where(eq(studentsTable.school, teacher.school)),
-    db
-      .select({ totalGuru: count() })
-      .from(teachersTable)
-      .where(eq(teachersTable.school, teacher.school)),
+  const [
+    [{ totalSiswa = 0 } = { totalSiswa: 0 }],
+    [{ totalGuru = 0 } = { totalGuru: 0 }],
+    [{ totalDokumen = 0 } = { totalDokumen: 0 }],
+  ] = await Promise.all([
+    guru.school
+      ? db.select({ totalSiswa: count() }).from(studentsTable).where(eq(studentsTable.school, guru.school))
+      : db.select({ totalSiswa: count() }).from(studentsTable),
+    neonDb.select({ totalGuru: count() }).from(gurusTable).where(sameSchoolFilter(guru)),
     db.select({ totalDokumen: count() }).from(documentsTable),
   ]);
 
@@ -83,7 +72,7 @@ router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> =>
       jurnalHariIniTerisi: jurnalHariIni > 0,
       progresJurnalBulanIni,
       kelengkapanAdministrasiPersen,
-      schoolName: teacher.school,
+      schoolName: guru.school ?? "Sekolah",
       tahunAjaran,
       semester,
     }),

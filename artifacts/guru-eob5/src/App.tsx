@@ -15,6 +15,11 @@ import Absensi from "@/pages/absensi";
 import Nilai from "@/pages/nilai";
 import Poin from "@/pages/poin";
 import Guru from "@/pages/guru";
+import Register from "@/pages/register";
+import Kepsek from "@/pages/kepsek";
+import Kurikulum from "@/pages/kurikulum";
+import Kesiswaan from "@/pages/kesiswaan";
+import WaliKelas from "@/pages/walikelas";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -39,6 +44,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/administrasi" component={() => <ProtectedRoute component={Administrasi} />} />
@@ -48,6 +54,10 @@ function Router() {
       <Route path="/nilai" component={() => <ProtectedRoute component={Nilai} />} />
       <Route path="/poin" component={() => <ProtectedRoute component={Poin} />} />
       <Route path="/guru" component={() => <ProtectedRoute component={Guru} />} />
+      <Route path="/kepsek" component={() => <ProtectedRoute component={Kepsek} />} />
+      <Route path="/kurikulum" component={() => <ProtectedRoute component={Kurikulum} />} />
+      <Route path="/kesiswaan" component={() => <ProtectedRoute component={Kesiswaan} />} />
+      <Route path="/walikelas" component={() => <ProtectedRoute component={WaliKelas} />} />
       <Route component={NotFound} />
     </Switch>
   );

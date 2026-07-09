@@ -13,28 +13,60 @@ export interface SuccessResponse {
   success: boolean;
 }
 
-export type TeacherRole = typeof TeacherRole[keyof typeof TeacherRole];
+export type TeacherJabatanItem = typeof TeacherJabatanItem[keyof typeof TeacherJabatanItem];
 
 
-export const TeacherRole = {
-  admin: 'admin',
+export const TeacherJabatanItem = {
+  kepala_sekolah: 'kepala_sekolah',
+  wakasek: 'wakasek',
   guru: 'guru',
+  wali_kelas: 'wali_kelas',
 } as const;
 
 export interface Teacher {
   id: string;
   username: string;
   name: string;
-  role: TeacherRole;
-  school: string;
+  jabatan: TeacherJabatanItem[];
+  mapel?: string[] | null;
+  wakasekBidang?: string | null;
+  waliKelasKelas?: string | null;
+  kelasDiampu: string[];
+  school?: string | null;
+  photoUrl?: string | null;
+  bio?: string | null;
   createdAt: string;
 }
 
+export type RegisterInputJabatanItem = typeof RegisterInputJabatanItem[keyof typeof RegisterInputJabatanItem];
+
+
+export const RegisterInputJabatanItem = {
+  kepala_sekolah: 'kepala_sekolah',
+  wakasek: 'wakasek',
+  guru: 'guru',
+  wali_kelas: 'wali_kelas',
+} as const;
+
+export type RegisterInputWakasekBidang = typeof RegisterInputWakasekBidang[keyof typeof RegisterInputWakasekBidang];
+
+
+export const RegisterInputWakasekBidang = {
+  Kurikulum: 'Kurikulum',
+  Kesiswaan: 'Kesiswaan',
+} as const;
+
 export interface RegisterInput {
+  name: string;
+  /** @minItems 1 */
+  jabatan: RegisterInputJabatanItem[];
+  mapel?: string[];
+  wakasekBidang?: RegisterInputWakasekBidang;
+  waliKelasKelas?: string;
+  kelasDiampu: string[];
+  school: string;
   username: string;
   password: string;
-  name: string;
-  school: string;
 }
 
 export interface LoginInput {
@@ -42,18 +74,25 @@ export interface LoginInput {
   password: string;
 }
 
-export type UpdateTeacherInputRole = typeof UpdateTeacherInputRole[keyof typeof UpdateTeacherInputRole];
+export type UpdateTeacherInputJabatanItem = typeof UpdateTeacherInputJabatanItem[keyof typeof UpdateTeacherInputJabatanItem];
 
 
-export const UpdateTeacherInputRole = {
-  admin: 'admin',
+export const UpdateTeacherInputJabatanItem = {
+  kepala_sekolah: 'kepala_sekolah',
+  wakasek: 'wakasek',
   guru: 'guru',
+  wali_kelas: 'wali_kelas',
 } as const;
 
 export interface UpdateTeacherInput {
   name?: string;
-  role?: UpdateTeacherInputRole;
+  jabatan?: UpdateTeacherInputJabatanItem[];
+  mapel?: string[];
+  wakasekBidang?: string;
+  waliKelasKelas?: string;
+  kelasDiampu?: string[];
   school?: string;
+  bio?: string;
 }
 
 export type StudentJenisKelamin = typeof StudentJenisKelamin[keyof typeof StudentJenisKelamin];
@@ -256,6 +295,79 @@ export interface DashboardSummary {
   schoolName: string;
   tahunAjaran: string;
   semester: string;
+}
+
+export interface KepsekTeacherProgress {
+  username: string;
+  name: string;
+  jabatan: string[];
+  mapel?: string[] | null;
+  jurnalBulanIni: number;
+  dokumenTotal: number;
+  dokumenSelesai: number;
+  kelengkapanPersen: number;
+}
+
+export interface KepsekOverview {
+  teachers: KepsekTeacherProgress[];
+}
+
+export type KurikulumTeacherDocsSubjectsItem = {
+  subjectId: string;
+  subjectName: string;
+  documents: AdminDocument[];
+};
+
+export interface KurikulumTeacherDocs {
+  username: string;
+  name: string;
+  mapel?: string[] | null;
+  subjects: KurikulumTeacherDocsSubjectsItem[];
+}
+
+export interface KurikulumOverview {
+  teachers: KurikulumTeacherDocs[];
+}
+
+export interface KesiswaanKelasRekap {
+  kelas: string;
+  totalSiswa: number;
+  hadir: number;
+  izin: number;
+  sakit: number;
+  alpa: number;
+  totalPoinPositif: number;
+  totalPoinNegatif: number;
+}
+
+export interface KesiswaanSiswaPoin {
+  studentId: string;
+  namaLengkap: string;
+  kelas: string;
+  totalPoin: number;
+}
+
+export interface KesiswaanOverview {
+  perKelas: KesiswaanKelasRekap[];
+  siswaPoinTerbanyak: KesiswaanSiswaPoin[];
+}
+
+export interface WaliKelasSiswaRekap {
+  studentId: string;
+  nisn: string;
+  namaLengkap: string;
+  jenisKelamin: string;
+  hadir: number;
+  izin: number;
+  sakit: number;
+  alpa: number;
+  rataNilai?: number | null;
+  totalPoin: number;
+}
+
+export interface WaliKelasRekap {
+  kelas: string;
+  siswa: WaliKelasSiswaRekap[];
 }
 
 export type ListStudentsParams = {

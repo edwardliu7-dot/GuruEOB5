@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, teachersTable } from "@workspace/db";
+import { and, eq } from "drizzle-orm";
+import { neonDb, gurusTable } from "@workspace/db";
 import {
   ListTeachersResponse,
   GetTeacherParams,
@@ -11,13 +11,18 @@ import {
   DeleteTeacherParams,
   DeleteTeacherResponse,
 } from "@workspace/api-zod";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, getCurrentGuru, guruToTeacher, sameSchoolFilter } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/teachers", requireAuth, async (_req, res): Promise<void> => {
-  const teachers = await db.select().from(teachersTable);
-  res.json(ListTeachersResponse.parse(teachers));
+router.get("/teachers", requireAuth, async (req, res): Promise<void> => {
+  const current = await getCurrentGuru(req);
+  if (!current) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const gurus = await neonDb.select().from(gurusTable).where(sameSchoolFilter(current));
+  res.json(ListTeachersResponse.parse(gurus.map(guruToTeacher)));
 });
 
 router.get("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
@@ -27,17 +32,23 @@ router.get("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const [teacher] = await db
-    .select()
-    .from(teachersTable)
-    .where(eq(teachersTable.id, params.data.id));
+  const current = await getCurrentGuru(req);
+  if (!current) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
 
-  if (!teacher) {
+  const [guru] = await neonDb
+    .select()
+    .from(gurusTable)
+    .where(and(eq(gurusTable.id, params.data.id), sameSchoolFilter(current)));
+
+  if (!guru) {
     res.status(404).json({ error: "Teacher not found" });
     return;
   }
 
-  res.json(GetTeacherResponse.parse(teacher));
+  res.json(GetTeacherResponse.parse(guruToTeacher(guru)));
 });
 
 router.patch("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
@@ -53,18 +64,23 @@ router.patch("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const [teacher] = await db
-    .update(teachersTable)
+  if (req.session.teacherId !== params.data.id) {
+    res.status(403).json({ error: "Hanya boleh mengubah profil sendiri" });
+    return;
+  }
+
+  const [guru] = await neonDb
+    .update(gurusTable)
     .set(parsed.data)
-    .where(eq(teachersTable.id, params.data.id))
+    .where(eq(gurusTable.id, params.data.id))
     .returning();
 
-  if (!teacher) {
+  if (!guru) {
     res.status(404).json({ error: "Teacher not found" });
     return;
   }
 
-  res.json(UpdateTeacherResponse.parse(teacher));
+  res.json(UpdateTeacherResponse.parse(guruToTeacher(guru)));
 });
 
 router.delete("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
@@ -74,12 +90,17 @@ router.delete("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const [teacher] = await db
-    .delete(teachersTable)
-    .where(eq(teachersTable.id, params.data.id))
+  if (req.session.teacherId !== params.data.id) {
+    res.status(403).json({ error: "Hanya boleh menghapus akun sendiri" });
+    return;
+  }
+
+  const [guru] = await neonDb
+    .delete(gurusTable)
+    .where(eq(gurusTable.id, params.data.id))
     .returning();
 
-  if (!teacher) {
+  if (!guru) {
     res.status(404).json({ error: "Teacher not found" });
     return;
   }

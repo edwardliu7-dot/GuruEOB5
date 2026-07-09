@@ -5,10 +5,18 @@
  * API specification for GuruEOB5 - school management app for teachers
  * OpenAPI spec version: 0.1.0
  */
+import type { RegisterInputJabatanItem } from './registerInputJabatanItem';
+import type { RegisterInputWakasekBidang } from './registerInputWakasekBidang';
 
 export interface RegisterInput {
+  name: string;
+  /** @minItems 1 */
+  jabatan: RegisterInputJabatanItem[];
+  mapel?: string[];
+  wakasekBidang?: RegisterInputWakasekBidang;
+  waliKelasKelas?: string;
+  kelasDiampu: string[];
+  school: string;
   username: string;
   password: string;
-  name: string;
-  school: string;
 }

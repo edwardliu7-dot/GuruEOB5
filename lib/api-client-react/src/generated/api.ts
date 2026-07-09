@@ -30,6 +30,9 @@ import type {
   HealthStatus,
   JournalEntry,
   JournalEntryInput,
+  KepsekOverview,
+  KesiswaanOverview,
+  KurikulumOverview,
   ListAttendanceParams,
   ListDocumentsParams,
   ListGradesParams,
@@ -46,7 +49,8 @@ import type {
   SubjectInput,
   SuccessResponse,
   Teacher,
-  UpdateTeacherInput
+  UpdateTeacherInput,
+  WaliKelasRekap
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -509,6 +513,314 @@ export function useGetDashboardSummary<TData = Awaited<ReturnType<typeof getDash
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetDashboardSummaryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetKepsekOverviewUrl = () => {
+
+
+
+
+  return `/api/kepsek/overview`
+}
+
+/**
+ * @summary Kepala sekolah progress overview across all teachers
+ */
+export const getKepsekOverview = async ( options?: RequestInit): Promise<KepsekOverview> => {
+
+  return customFetch<KepsekOverview>(getGetKepsekOverviewUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetKepsekOverviewQueryKey = () => {
+    return [
+    `/api/kepsek/overview`
+    ] as const;
+    }
+
+
+export const getGetKepsekOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getKepsekOverview>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKepsekOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetKepsekOverviewQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getKepsekOverview>>> = ({ signal }) => getKepsekOverview({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getKepsekOverview>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetKepsekOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getKepsekOverview>>>
+export type GetKepsekOverviewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Kepala sekolah progress overview across all teachers
+ */
+
+export function useGetKepsekOverview<TData = Awaited<ReturnType<typeof getKepsekOverview>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKepsekOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetKepsekOverviewQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetKurikulumOverviewUrl = () => {
+
+
+
+
+  return `/api/kurikulum/overview`
+}
+
+/**
+ * @summary Wakasek kurikulum view of all teachers' administrative documents
+ */
+export const getKurikulumOverview = async ( options?: RequestInit): Promise<KurikulumOverview> => {
+
+  return customFetch<KurikulumOverview>(getGetKurikulumOverviewUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetKurikulumOverviewQueryKey = () => {
+    return [
+    `/api/kurikulum/overview`
+    ] as const;
+    }
+
+
+export const getGetKurikulumOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getKurikulumOverview>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKurikulumOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetKurikulumOverviewQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getKurikulumOverview>>> = ({ signal }) => getKurikulumOverview({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getKurikulumOverview>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetKurikulumOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getKurikulumOverview>>>
+export type GetKurikulumOverviewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Wakasek kurikulum view of all teachers' administrative documents
+ */
+
+export function useGetKurikulumOverview<TData = Awaited<ReturnType<typeof getKurikulumOverview>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKurikulumOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetKurikulumOverviewQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetKesiswaanOverviewUrl = () => {
+
+
+
+
+  return `/api/kesiswaan/overview`
+}
+
+/**
+ * @summary Wakasek kesiswaan recap of attendance and points per class
+ */
+export const getKesiswaanOverview = async ( options?: RequestInit): Promise<KesiswaanOverview> => {
+
+  return customFetch<KesiswaanOverview>(getGetKesiswaanOverviewUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetKesiswaanOverviewQueryKey = () => {
+    return [
+    `/api/kesiswaan/overview`
+    ] as const;
+    }
+
+
+export const getGetKesiswaanOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getKesiswaanOverview>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetKesiswaanOverviewQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getKesiswaanOverview>>> = ({ signal }) => getKesiswaanOverview({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanOverview>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetKesiswaanOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getKesiswaanOverview>>>
+export type GetKesiswaanOverviewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Wakasek kesiswaan recap of attendance and points per class
+ */
+
+export function useGetKesiswaanOverview<TData = Awaited<ReturnType<typeof getKesiswaanOverview>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetKesiswaanOverviewQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetWaliKelasRekapUrl = () => {
+
+
+
+
+  return `/api/walikelas/rekap`
+}
+
+/**
+ * @summary Wali kelas recap for the current teacher's homeroom class
+ */
+export const getWaliKelasRekap = async ( options?: RequestInit): Promise<WaliKelasRekap> => {
+
+  return customFetch<WaliKelasRekap>(getGetWaliKelasRekapUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWaliKelasRekapQueryKey = () => {
+    return [
+    `/api/walikelas/rekap`
+    ] as const;
+    }
+
+
+export const getGetWaliKelasRekapQueryOptions = <TData = Awaited<ReturnType<typeof getWaliKelasRekap>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWaliKelasRekap>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWaliKelasRekapQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWaliKelasRekap>>> = ({ signal }) => getWaliKelasRekap({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWaliKelasRekap>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWaliKelasRekapQueryResult = NonNullable<Awaited<ReturnType<typeof getWaliKelasRekap>>>
+export type GetWaliKelasRekapQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Wali kelas recap for the current teacher's homeroom class
+ */
+
+export function useGetWaliKelasRekap<TData = Awaited<ReturnType<typeof getWaliKelasRekap>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWaliKelasRekap>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWaliKelasRekapQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

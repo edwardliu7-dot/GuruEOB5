@@ -20,19 +20,33 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Register a new teacher account
  */
+
+
+
 export const RegisterBody = zod.object({
-  "username": zod.string(),
-  "password": zod.string(),
   "name": zod.string(),
-  "school": zod.string()
+  "jabatan": zod.array(zod.enum(['kepala_sekolah', 'wakasek', 'guru', 'wali_kelas'])).min(1),
+  "mapel": zod.array(zod.string()).optional(),
+  "wakasekBidang": zod.enum(['Kurikulum', 'Kesiswaan']).optional(),
+  "waliKelasKelas": zod.string().optional(),
+  "kelasDiampu": zod.array(zod.string()),
+  "school": zod.string(),
+  "username": zod.string(),
+  "password": zod.string()
 })
 
 export const RegisterResponse = zod.object({
   "id": zod.string(),
   "username": zod.string(),
   "name": zod.string(),
-  "role": zod.enum(['admin', 'guru']),
-  "school": zod.string(),
+  "jabatan": zod.array(zod.enum(['kepala_sekolah', 'wakasek', 'guru', 'wali_kelas'])),
+  "mapel": zod.array(zod.string()).nullish(),
+  "wakasekBidang": zod.string().nullish(),
+  "waliKelasKelas": zod.string().nullish(),
+  "kelasDiampu": zod.array(zod.string()),
+  "school": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "bio": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -49,8 +63,14 @@ export const LoginResponse = zod.object({
   "id": zod.string(),
   "username": zod.string(),
   "name": zod.string(),
-  "role": zod.enum(['admin', 'guru']),
-  "school": zod.string(),
+  "jabatan": zod.array(zod.enum(['kepala_sekolah', 'wakasek', 'guru', 'wali_kelas'])),
+  "mapel": zod.array(zod.string()).nullish(),
+  "wakasekBidang": zod.string().nullish(),
+  "waliKelasKelas": zod.string().nullish(),
+  "kelasDiampu": zod.array(zod.string()),
+  "school": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "bio": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -70,8 +90,14 @@ export const GetMeResponse = zod.object({
   "id": zod.string(),
   "username": zod.string(),
   "name": zod.string(),
-  "role": zod.enum(['admin', 'guru']),
-  "school": zod.string(),
+  "jabatan": zod.array(zod.enum(['kepala_sekolah', 'wakasek', 'guru', 'wali_kelas'])),
+  "mapel": zod.array(zod.string()).nullish(),
+  "wakasekBidang": zod.string().nullish(),
+  "waliKelasKelas": zod.string().nullish(),
+  "kelasDiampu": zod.array(zod.string()),
+  "school": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "bio": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -96,14 +122,103 @@ export const GetDashboardSummaryResponse = zod.object({
 
 
 /**
+ * @summary Kepala sekolah progress overview across all teachers
+ */
+export const GetKepsekOverviewResponse = zod.object({
+  "teachers": zod.array(zod.object({
+  "username": zod.string(),
+  "name": zod.string(),
+  "jabatan": zod.array(zod.string()),
+  "mapel": zod.array(zod.string()).nullish(),
+  "jurnalBulanIni": zod.number(),
+  "dokumenTotal": zod.number(),
+  "dokumenSelesai": zod.number(),
+  "kelengkapanPersen": zod.number()
+}))
+})
+
+
+/**
+ * @summary Wakasek kurikulum view of all teachers' administrative documents
+ */
+export const GetKurikulumOverviewResponse = zod.object({
+  "teachers": zod.array(zod.object({
+  "username": zod.string(),
+  "name": zod.string(),
+  "mapel": zod.array(zod.string()).nullish(),
+  "subjects": zod.array(zod.object({
+  "subjectId": zod.string(),
+  "subjectName": zod.string(),
+  "documents": zod.array(zod.object({
+  "id": zod.string(),
+  "subjectId": zod.string(),
+  "name": zod.string(),
+  "description": zod.string().optional(),
+  "uploadedAt": zod.coerce.date()
+}))
+}))
+}))
+})
+
+
+/**
+ * @summary Wakasek kesiswaan recap of attendance and points per class
+ */
+export const GetKesiswaanOverviewResponse = zod.object({
+  "perKelas": zod.array(zod.object({
+  "kelas": zod.string(),
+  "totalSiswa": zod.number(),
+  "hadir": zod.number(),
+  "izin": zod.number(),
+  "sakit": zod.number(),
+  "alpa": zod.number(),
+  "totalPoinPositif": zod.number(),
+  "totalPoinNegatif": zod.number()
+})),
+  "siswaPoinTerbanyak": zod.array(zod.object({
+  "studentId": zod.string(),
+  "namaLengkap": zod.string(),
+  "kelas": zod.string(),
+  "totalPoin": zod.number()
+}))
+})
+
+
+/**
+ * @summary Wali kelas recap for the current teacher's homeroom class
+ */
+export const GetWaliKelasRekapResponse = zod.object({
+  "kelas": zod.string(),
+  "siswa": zod.array(zod.object({
+  "studentId": zod.string(),
+  "nisn": zod.string(),
+  "namaLengkap": zod.string(),
+  "jenisKelamin": zod.string(),
+  "hadir": zod.number(),
+  "izin": zod.number(),
+  "sakit": zod.number(),
+  "alpa": zod.number(),
+  "rataNilai": zod.number().nullish(),
+  "totalPoin": zod.number()
+}))
+})
+
+
+/**
  * @summary List all teachers
  */
 export const ListTeachersResponseItem = zod.object({
   "id": zod.string(),
   "username": zod.string(),
   "name": zod.string(),
-  "role": zod.enum(['admin', 'guru']),
-  "school": zod.string(),
+  "jabatan": zod.array(zod.enum(['kepala_sekolah', 'wakasek', 'guru', 'wali_kelas'])),
+  "mapel": zod.array(zod.string()).nullish(),
+  "wakasekBidang": zod.string().nullish(),
+  "waliKelasKelas": zod.string().nullish(),
+  "kelasDiampu": zod.array(zod.string()),
+  "school": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "bio": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 export const ListTeachersResponse = zod.array(ListTeachersResponseItem)
@@ -120,8 +235,14 @@ export const GetTeacherResponse = zod.object({
   "id": zod.string(),
   "username": zod.string(),
   "name": zod.string(),
-  "role": zod.enum(['admin', 'guru']),
-  "school": zod.string(),
+  "jabatan": zod.array(zod.enum(['kepala_sekolah', 'wakasek', 'guru', 'wali_kelas'])),
+  "mapel": zod.array(zod.string()).nullish(),
+  "wakasekBidang": zod.string().nullish(),
+  "waliKelasKelas": zod.string().nullish(),
+  "kelasDiampu": zod.array(zod.string()),
+  "school": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "bio": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -135,16 +256,27 @@ export const UpdateTeacherParams = zod.object({
 
 export const UpdateTeacherBody = zod.object({
   "name": zod.string().optional(),
-  "role": zod.enum(['admin', 'guru']).optional(),
-  "school": zod.string().optional()
+  "jabatan": zod.array(zod.enum(['kepala_sekolah', 'wakasek', 'guru', 'wali_kelas'])).optional(),
+  "mapel": zod.array(zod.string()).optional(),
+  "wakasekBidang": zod.string().optional(),
+  "waliKelasKelas": zod.string().optional(),
+  "kelasDiampu": zod.array(zod.string()).optional(),
+  "school": zod.string().optional(),
+  "bio": zod.string().optional()
 })
 
 export const UpdateTeacherResponse = zod.object({
   "id": zod.string(),
   "username": zod.string(),
   "name": zod.string(),
-  "role": zod.enum(['admin', 'guru']),
-  "school": zod.string(),
+  "jabatan": zod.array(zod.enum(['kepala_sekolah', 'wakasek', 'guru', 'wali_kelas'])),
+  "mapel": zod.array(zod.string()).nullish(),
+  "wakasekBidang": zod.string().nullish(),
+  "waliKelasKelas": zod.string().nullish(),
+  "kelasDiampu": zod.array(zod.string()),
+  "school": zod.string().nullish(),
+  "photoUrl": zod.string().nullish(),
+  "bio": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 

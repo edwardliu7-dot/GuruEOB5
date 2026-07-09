@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
-import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
-import { db, teachersTable } from "@workspace/db";
+import { eq, or } from "drizzle-orm";
+import { neonDb, gurusTable } from "@workspace/db";
 import {
   RegisterBody,
   RegisterResponse,
@@ -10,9 +9,13 @@ import {
   LogoutResponse,
   GetMeResponse,
 } from "@workspace/api-zod";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, getCurrentGuru, guruToTeacher } from "../lib/auth";
 
 const router: IRouter = Router();
+
+function slugify(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, "-");
+}
 
 router.post("/auth/register", async (req, res): Promise<void> => {
   const parsed = RegisterBody.safeParse(req.body);
@@ -21,32 +24,66 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
-  const { username, password, name, school } = parsed.data;
+  const {
+    name,
+    jabatan,
+    mapel,
+    wakasekBidang,
+    waliKelasKelas,
+    kelasDiampu,
+    school,
+    username,
+    password,
+  } = parsed.data;
 
-  const [existing] = await db
+  if (jabatan.includes("guru") && (!mapel || mapel.length === 0)) {
+    res.status(400).json({ error: "Pilih minimal satu mata pelajaran untuk jabatan Guru" });
+    return;
+  }
+  if (jabatan.includes("wakasek") && !wakasekBidang) {
+    res.status(400).json({ error: "Pilih bidang untuk jabatan Wakasek" });
+    return;
+  }
+  if (jabatan.includes("wali_kelas") && !waliKelasKelas) {
+    res.status(400).json({ error: "Pilih kelas untuk jabatan Wali Kelas" });
+    return;
+  }
+
+  const id = slugify(username);
+
+  const [existing] = await neonDb
     .select()
-    .from(teachersTable)
-    .where(eq(teachersTable.username, username));
+    .from(gurusTable)
+    .where(or(eq(gurusTable.id, id), eq(gurusTable.username, username)));
 
   if (existing) {
     res.status(400).json({ error: "Username sudah digunakan" });
     return;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
-
-  const [teacher] = await db
-    .insert(teachersTable)
-    .values({ username, passwordHash, name, school, role: "guru" })
+  const [guru] = await neonDb
+    .insert(gurusTable)
+    .values({
+      id,
+      username,
+      password,
+      name,
+      jabatan,
+      mapel: jabatan.includes("guru") ? (mapel ?? []) : null,
+      wakasekBidang: jabatan.includes("wakasek") ? (wakasekBidang ?? null) : null,
+      waliKelasKelas: jabatan.includes("wali_kelas") ? (waliKelasKelas ?? null) : null,
+      kelasDiampu,
+      school,
+    })
     .returning();
 
-  if (!teacher) {
-    res.status(500).json({ error: "Failed to create teacher" });
+  if (!guru) {
+    res.status(500).json({ error: "Gagal membuat akun" });
     return;
   }
 
-  req.session.teacherId = teacher.id;
-  res.status(201).json(RegisterResponse.parse(teacher));
+  req.session.teacherId = guru.id;
+  res.json(RegisterResponse.parse(guruToTeacher(guru)));
 });
 
 router.post("/auth/login", async (req, res): Promise<void> => {
@@ -58,24 +95,18 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
   const { username, password } = parsed.data;
 
-  const [teacher] = await db
+  const [guru] = await neonDb
     .select()
-    .from(teachersTable)
-    .where(eq(teachersTable.username, username));
+    .from(gurusTable)
+    .where(or(eq(gurusTable.username, username), eq(gurusTable.id, slugify(username))));
 
-  if (!teacher) {
+  if (!guru || guru.password !== password) {
     res.status(401).json({ error: "Username atau password salah" });
     return;
   }
 
-  const valid = await bcrypt.compare(password, teacher.passwordHash);
-  if (!valid) {
-    res.status(401).json({ error: "Username atau password salah" });
-    return;
-  }
-
-  req.session.teacherId = teacher.id;
-  res.json(LoginResponse.parse(teacher));
+  req.session.teacherId = guru.id;
+  res.json(LoginResponse.parse(guruToTeacher(guru)));
 });
 
 router.post("/auth/logout", (req, res): void => {
@@ -91,17 +122,14 @@ router.post("/auth/logout", (req, res): void => {
 });
 
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
-  const [teacher] = await db
-    .select()
-    .from(teachersTable)
-    .where(eq(teachersTable.id, req.session.teacherId as string));
+  const guru = await getCurrentGuru(req);
 
-  if (!teacher) {
+  if (!guru) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
 
-  res.json(GetMeResponse.parse(teacher));
+  res.json(GetMeResponse.parse(guruToTeacher(guru)));
 });
 
 export default router;

@@ -122,6 +122,58 @@ paths:
               schema:
                 $ref: "#/components/schemas/DashboardSummary"
 
+  /kepsek/overview:
+    get:
+      operationId: getKepsekOverview
+      tags: [dashboard]
+      summary: Kepala sekolah progress overview across all teachers
+      responses:
+        "200":
+          description: Overview of teacher work progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KepsekOverview"
+
+  /kurikulum/overview:
+    get:
+      operationId: getKurikulumOverview
+      tags: [dashboard]
+      summary: Wakasek kurikulum view of all teachers' administrative documents
+      responses:
+        "200":
+          description: Documents per teacher and subject
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KurikulumOverview"
+
+  /kesiswaan/overview:
+    get:
+      operationId: getKesiswaanOverview
+      tags: [dashboard]
+      summary: Wakasek kesiswaan recap of attendance and points per class
+      responses:
+        "200":
+          description: Attendance and points recap
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KesiswaanOverview"
+
+  /walikelas/rekap:
+    get:
+      operationId: getWaliKelasRekap
+      tags: [dashboard]
+      summary: Wali kelas recap for the current teacher's homeroom class
+      responses:
+        "200":
+          description: Homeroom class recap
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaliKelasRekap"
+
   /teachers:
     get:
       operationId: listTeachers
@@ -586,28 +638,71 @@ components:
           type: string
         name:
           type: string
-        role:
+        jabatan:
+          type: array
+          items:
+            type: string
+            enum: [kepala_sekolah, wakasek, guru, wali_kelas]
+        mapel:
+          type: array
+          items:
+            type: string
+          nullable: true
+        wakasekBidang:
           type: string
-          enum: [admin, guru]
+          nullable: true
+        waliKelasKelas:
+          type: string
+          nullable: true
+        kelasDiampu:
+          type: array
+          items:
+            type: string
         school:
           type: string
+          nullable: true
+        photoUrl:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
-      required: [id, username, name, role, school, createdAt]
+      required: [id, username, name, jabatan, kelasDiampu, createdAt]
 
     RegisterInput:
       type: object
       properties:
+        name:
+          type: string
+        jabatan:
+          type: array
+          items:
+            type: string
+            enum: [kepala_sekolah, wakasek, guru, wali_kelas]
+          minItems: 1
+        mapel:
+          type: array
+          items:
+            type: string
+        wakasekBidang:
+          type: string
+          enum: [Kurikulum, Kesiswaan]
+        waliKelasKelas:
+          type: string
+        kelasDiampu:
+          type: array
+          items:
+            type: string
+        school:
+          type: string
         username:
           type: string
         password:
           type: string
-        name:
-          type: string
-        school:
-          type: string
-      required: [username, password, name, school]
+      required: [name, jabatan, kelasDiampu, school, username, password]
 
     LoginInput:
       type: object
@@ -623,10 +718,26 @@ components:
       properties:
         name:
           type: string
-        role:
+        jabatan:
+          type: array
+          items:
+            type: string
+            enum: [kepala_sekolah, wakasek, guru, wali_kelas]
+        mapel:
+          type: array
+          items:
+            type: string
+        wakasekBidang:
           type: string
-          enum: [admin, guru]
+        waliKelasKelas:
+          type: string
+        kelasDiampu:
+          type: array
+          items:
+            type: string
         school:
+          type: string
+        bio:
           type: string
 
     Student:
@@ -899,4 +1010,160 @@ components:
         - schoolName
         - tahunAjaran
         - semester
+
+    KepsekTeacherProgress:
+      type: object
+      properties:
+        username:
+          type: string
+        name:
+          type: string
+        jabatan:
+          type: array
+          items:
+            type: string
+        mapel:
+          type: array
+          items:
+            type: string
+          nullable: true
+        jurnalBulanIni:
+          type: integer
+        dokumenTotal:
+          type: integer
+        dokumenSelesai:
+          type: integer
+        kelengkapanPersen:
+          type: number
+      required: [username, name, jabatan, jurnalBulanIni, dokumenTotal, dokumenSelesai, kelengkapanPersen]
+
+    KepsekOverview:
+      type: object
+      properties:
+        teachers:
+          type: array
+          items:
+            $ref: "#/components/schemas/KepsekTeacherProgress"
+      required: [teachers]
+
+    KurikulumTeacherDocs:
+      type: object
+      properties:
+        username:
+          type: string
+        name:
+          type: string
+        mapel:
+          type: array
+          items:
+            type: string
+          nullable: true
+        subjects:
+          type: array
+          items:
+            type: object
+            properties:
+              subjectId:
+                type: string
+              subjectName:
+                type: string
+              documents:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminDocument"
+            required: [subjectId, subjectName, documents]
+      required: [username, name, subjects]
+
+    KurikulumOverview:
+      type: object
+      properties:
+        teachers:
+          type: array
+          items:
+            $ref: "#/components/schemas/KurikulumTeacherDocs"
+      required: [teachers]
+
+    KesiswaanKelasRekap:
+      type: object
+      properties:
+        kelas:
+          type: string
+        totalSiswa:
+          type: integer
+        hadir:
+          type: integer
+        izin:
+          type: integer
+        sakit:
+          type: integer
+        alpa:
+          type: integer
+        totalPoinPositif:
+          type: integer
+        totalPoinNegatif:
+          type: integer
+      required: [kelas, totalSiswa, hadir, izin, sakit, alpa, totalPoinPositif, totalPoinNegatif]
+
+    KesiswaanSiswaPoin:
+      type: object
+      properties:
+        studentId:
+          type: string
+        namaLengkap:
+          type: string
+        kelas:
+          type: string
+        totalPoin:
+          type: integer
+      required: [studentId, namaLengkap, kelas, totalPoin]
+
+    KesiswaanOverview:
+      type: object
+      properties:
+        perKelas:
+          type: array
+          items:
+            $ref: "#/components/schemas/KesiswaanKelasRekap"
+        siswaPoinTerbanyak:
+          type: array
+          items:
+            $ref: "#/components/schemas/KesiswaanSiswaPoin"
+      required: [perKelas, siswaPoinTerbanyak]
+
+    WaliKelasSiswaRekap:
+      type: object
+      properties:
+        studentId:
+          type: string
+        nisn:
+          type: string
+        namaLengkap:
+          type: string
+        jenisKelamin:
+          type: string
+        hadir:
+          type: integer
+        izin:
+          type: integer
+        sakit:
+          type: integer
+        alpa:
+          type: integer
+        rataNilai:
+          type: number
+          nullable: true
+        totalPoin:
+          type: integer
+      required: [studentId, nisn, namaLengkap, jenisKelamin, hadir, izin, sakit, alpa, totalPoin]
+
+    WaliKelasRekap:
+      type: object
+      properties:
+        kelas:
+          type: string
+        siswa:
+          type: array
+          items:
+            $ref: "#/components/schemas/WaliKelasSiswaRekap"
+      required: [kelas, siswa]
 

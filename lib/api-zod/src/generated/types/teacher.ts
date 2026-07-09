@@ -5,13 +5,19 @@
  * API specification for GuruEOB5 - school management app for teachers
  * OpenAPI spec version: 0.1.0
  */
-import type { TeacherRole } from './teacherRole';
+import type { TeacherJabatanItem } from './teacherJabatanItem';
 
 export interface Teacher {
   id: string;
   username: string;
   name: string;
-  role: TeacherRole;
-  school: string;
+  jabatan: TeacherJabatanItem[];
+  mapel?: string[] | null;
+  wakasekBidang?: string | null;
+  waliKelasKelas?: string | null;
+  kelasDiampu: string[];
+  school?: string | null;
+  photoUrl?: string | null;
+  bio?: string | null;
   createdAt: Date;
 }

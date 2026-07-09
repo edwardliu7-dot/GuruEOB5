@@ -1,14 +1,11 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
-import { teachersTable } from "./teachers";
 
 export const subjectsTable = pgTable("subjects", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  teacherId: uuid("teacher_id")
-    .notNull()
-    .references(() => teachersTable.id, { onDelete: "cascade" }),
+  teacherId: text("teacher_id").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

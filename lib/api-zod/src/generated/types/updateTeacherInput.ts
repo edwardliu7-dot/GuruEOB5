@@ -5,10 +5,15 @@
  * API specification for GuruEOB5 - school management app for teachers
  * OpenAPI spec version: 0.1.0
  */
-import type { UpdateTeacherInputRole } from './updateTeacherInputRole';
+import type { UpdateTeacherInputJabatanItem } from './updateTeacherInputJabatanItem';
 
 export interface UpdateTeacherInput {
   name?: string;
-  role?: UpdateTeacherInputRole;
+  jabatan?: UpdateTeacherInputJabatanItem[];
+  mapel?: string[];
+  wakasekBidang?: string;
+  waliKelasKelas?: string;
+  kelasDiampu?: string[];
   school?: string;
+  bio?: string;
 }
