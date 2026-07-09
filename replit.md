@@ -34,7 +34,9 @@ An Indonesian school/teacher administration app: teachers log in, see a dashboar
 - Session-based auth via `express-session`, teacher id stored in `req.session.teacherId` (= Neon `gurus.id` slug).
 - Accounts live in a SHARED external Neon DB (`gurus` table, via `NEON_DATABASE_URL`) shared with the TOMAT and BLP apps; all other app data stays in local Replit Postgres (`teacherId` stored as plain text, no FK to Neon).
 - Passwords stored in PLAINTEXT in `gurus` — the user's explicit choice for cross-app login compatibility. Never "fix" this to bcrypt without asking; password is stripped from all API responses (`guruToTeacher`).
-- Tenant scoping: all reads against shared/global data must be filtered by the current guru's `school` (`sameSchoolFilter` in `api-server/src/lib/auth.ts`); gurus with no school only see themselves.
+- Tenant scoping: all reads against shared/global data must be filtered by the current guru's `school` (`sameSchoolFilter` in `api-server/src/lib/auth.ts`); gurus with no school only see themselves. Admin mutations on teachers are also school-scoped (except self).
+- Admin role: `ADMIN_USERNAMES = ["edwardliu7"]` in `api-server/src/lib/auth.ts`; `Teacher.isAdmin` in API responses. Data Siswa and Data Guru are admin-only (nav hidden + `ProtectedRoute adminOnly` + backend `requireAdmin` on GET /teachers and all student writes). GET /students stays auth-only for absensi/nilai/poin.
+- AI student import: any spreadsheet (xlsx/xls/csv/ods…) parsed client-side with SheetJS, raw rows sent to `POST /students/import/analyze` where Gemini (`gemini-2.5-flash`, `GEMINI_API_KEY`, structured JSON output in `api-server/src/lib/gemini.ts`) maps columns to student fields; user verifies/edits in a dialog, then `POST /students/bulk` saves (max 1000 rows).
 
 ## Product
 
@@ -42,7 +44,8 @@ An Indonesian school/teacher administration app: teachers log in, see a dashboar
 - Role-based menus by jabatan: kepala_sekolah (/kepsek Progres Guru; can also open kurikulum & kesiswaan), wakasek kurikulum (/kurikulum), wakasek kesiswaan (/kesiswaan), wali_kelas (/walikelas)
 - Teacher dashboard: student/teacher counts, admin doc completion donut, journal progress chart
 - Administrasi Guru: subject folders containing admin documents
-- Data Siswa: student table with search, add/edit/delete
+- Data Siswa (admin-only): student table with search, add/edit/delete, AI-assisted spreadsheet import with verification dialog
+- Data Guru (admin-only): teacher directory
 - Jurnal Mengajar: per-subject teaching journal entries
 - Absensi, Nilai, Poin: attendance, grades, and points tracking
 

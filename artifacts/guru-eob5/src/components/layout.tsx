@@ -13,15 +13,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
     window.location.href = "/login";
   };
 
+  const isAdmin = user?.isAdmin ?? false;
+
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/administrasi", label: "Administrasi", icon: FolderOpen },
-    { href: "/siswa", label: "Data Siswa", icon: Users },
+    ...(isAdmin ? [{ href: "/siswa", label: "Data Siswa", icon: Users }] : []),
     { href: "/jurnal", label: "Jurnal Mengajar", icon: BookOpen },
     { href: "/absensi", label: "Absensi", icon: ClipboardCheck },
     { href: "/nilai", label: "Nilai", icon: GraduationCap },
     { href: "/poin", label: "Poin Siswa", icon: Star },
-    { href: "/guru", label: "Data Guru", icon: Users },
+    ...(isAdmin ? [{ href: "/guru", label: "Data Guru", icon: Users }] : []),
   ];
 
   const jabatan = user?.jabatan ?? [];

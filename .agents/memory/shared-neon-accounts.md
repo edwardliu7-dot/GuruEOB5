@@ -10,6 +10,7 @@ Accounts (`gurus` table) live in an external Neon DB shared with two other apps 
 **Rules:**
 - Passwords are PLAINTEXT by the user's explicit choice, for cross-app login compatibility. Do not hash them without asking — the other apps compare plaintext. Mitigate by always stripping `password` from API responses.
 - Any read of the shared table (lists, counts, aggregates) MUST be tenant-scoped by the current guru's `school`, or accounts from unrelated apps/schools leak into responses. A guru with `school = null` should only see themselves.
+- Mutations too: admin-privileged update/delete on `gurus` must also be school-scoped (except self-mutation), otherwise the global admin can alter accounts belonging to the other apps' schools (IDOR found in review).
 - Local app data reads that feed multi-teacher views (dashboards, role overviews) must also filter by `school`, since the local DB can hold data for multiple schools.
 - Test accounts created during e2e runs are written to the real shared DB — always delete them at the end of the test.
 

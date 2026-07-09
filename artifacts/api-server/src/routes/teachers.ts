@@ -11,11 +11,11 @@ import {
   DeleteTeacherParams,
   DeleteTeacherResponse,
 } from "@workspace/api-zod";
-import { requireAuth, getCurrentGuru, guruToTeacher, sameSchoolFilter } from "../lib/auth";
+import { requireAuth, requireAdmin, getCurrentGuru, guruToTeacher, sameSchoolFilter, isAdminGuru } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/teachers", requireAuth, async (req, res): Promise<void> => {
+router.get("/teachers", requireAuth, requireAdmin, async (req, res): Promise<void> => {
   const current = await getCurrentGuru(req);
   if (!current) {
     res.status(401).json({ error: "Unauthorized" });
@@ -64,7 +64,13 @@ router.patch("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  if (req.session.teacherId !== params.data.id) {
+  const current = await getCurrentGuru(req);
+  if (!current) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const isSelf = req.session.teacherId === params.data.id;
+  if (!isSelf && !isAdminGuru(current)) {
     res.status(403).json({ error: "Hanya boleh mengubah profil sendiri" });
     return;
   }
@@ -72,7 +78,11 @@ router.patch("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
   const [guru] = await neonDb
     .update(gurusTable)
     .set(parsed.data)
-    .where(eq(gurusTable.id, params.data.id))
+    .where(
+      isSelf
+        ? eq(gurusTable.id, params.data.id)
+        : and(eq(gurusTable.id, params.data.id), sameSchoolFilter(current)),
+    )
     .returning();
 
   if (!guru) {
@@ -90,14 +100,24 @@ router.delete("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  if (req.session.teacherId !== params.data.id) {
+  const current = await getCurrentGuru(req);
+  if (!current) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const isSelf = req.session.teacherId === params.data.id;
+  if (!isSelf && !isAdminGuru(current)) {
     res.status(403).json({ error: "Hanya boleh menghapus akun sendiri" });
     return;
   }
 
   const [guru] = await neonDb
     .delete(gurusTable)
-    .where(eq(gurusTable.id, params.data.id))
+    .where(
+      isSelf
+        ? eq(gurusTable.id, params.data.id)
+        : and(eq(gurusTable.id, params.data.id), sameSchoolFilter(current)),
+    )
     .returning();
 
   if (!guru) {

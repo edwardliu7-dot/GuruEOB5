@@ -126,9 +126,8 @@ export default function Register() {
       setLocation("/dashboard");
     } catch (err: unknown) {
       const message =
-        err && typeof err === "object" && "response" in err
-          ? ((err as { response?: { data?: { error?: string } } }).response?.data?.error ??
-            "Terjadi kesalahan server")
+        err && typeof err === "object" && "data" in err
+          ? ((err as { data?: { error?: string } }).data?.error ?? "Terjadi kesalahan server")
           : "Terjadi kesalahan server";
       toast({ variant: "destructive", title: "Pendaftaran gagal", description: message });
     }

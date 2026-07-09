@@ -24,18 +24,27 @@ import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+function ProtectedRoute({
+  component: Component,
+  adminOnly = false,
+}: {
+  component: React.ComponentType;
+  adminOnly?: boolean;
+}) {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (!isLoading && !user) {
       setLocation("/login");
+    } else if (!isLoading && user && adminOnly && !user.isAdmin) {
+      setLocation("/dashboard");
     }
-  }, [user, isLoading, setLocation]);
+  }, [user, isLoading, adminOnly, setLocation]);
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Memuat...</div>;
   if (!user) return null;
+  if (adminOnly && !user.isAdmin) return null;
 
   return <Component />;
 }
@@ -48,12 +57,12 @@ function Router() {
       <Route path="/" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/administrasi" component={() => <ProtectedRoute component={Administrasi} />} />
-      <Route path="/siswa" component={() => <ProtectedRoute component={Siswa} />} />
+      <Route path="/siswa" component={() => <ProtectedRoute component={Siswa} adminOnly />} />
       <Route path="/jurnal" component={() => <ProtectedRoute component={Jurnal} />} />
       <Route path="/absensi" component={() => <ProtectedRoute component={Absensi} />} />
       <Route path="/nilai" component={() => <ProtectedRoute component={Nilai} />} />
       <Route path="/poin" component={() => <ProtectedRoute component={Poin} />} />
-      <Route path="/guru" component={() => <ProtectedRoute component={Guru} />} />
+      <Route path="/guru" component={() => <ProtectedRoute component={Guru} adminOnly />} />
       <Route path="/kepsek" component={() => <ProtectedRoute component={Kepsek} />} />
       <Route path="/kurikulum" component={() => <ProtectedRoute component={Kurikulum} />} />
       <Route path="/kesiswaan" component={() => <ProtectedRoute component={Kesiswaan} />} />

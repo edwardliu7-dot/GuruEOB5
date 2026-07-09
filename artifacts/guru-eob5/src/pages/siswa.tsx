@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
+import * as XLSX from "xlsx";
 import { Layout } from "@/components/layout";
-import { useListStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@workspace/api-client-react";
+import { useListStudents, useCreateStudent, useUpdateStudent, useDeleteStudent, useAnalyzeStudentImport, useBulkCreateStudents } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -9,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Trash2, Edit2, Download, Upload } from "lucide-react";
+import { Search, Plus, Trash2, Edit2, Download, Upload, Loader2, Sparkles } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,6 +26,14 @@ const studentSchema = z.object({
 
 type StudentFormValues = z.infer<typeof studentSchema>;
 
+type ImportRow = {
+  nisn?: string;
+  namaLengkap: string;
+  kelas: string;
+  jenisKelamin: "L" | "P";
+  school: string;
+};
+
 export default function Siswa() {
   const [search, setSearch] = useState("");
   const { data: students, isLoading } = useListStudents({ search: search || undefined }, { query: { queryKey: ["/api/students", search] } });
@@ -34,6 +43,11 @@ export default function Siswa() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
+
+  const analyzeImport = useAnalyzeStudentImport();
+  const bulkCreate = useBulkCreateStudents();
+  const [importRows, setImportRows] = useState<ImportRow[]>([]);
+  const [isVerifyOpen, setIsVerifyOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -93,36 +107,74 @@ export default function Siswa() {
     document.body.removeChild(link);
   };
 
-  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const text = event.target?.result as string;
-        const rows = text.split('\n').map(row => row.split(',').map(cell => cell.replace(/^"|"$/g, '').trim()));
-        
-        let successCount = 0;
-        // Skip header row
-        for (let i = 1; i < rows.length; i++) {
-          if (rows[i].length < 5) continue; // Skip malformed rows
-          const [nisn, namaLengkap, kelas, jenisKelamin, school] = rows[i];
-          if (namaLengkap && kelas && school) {
-            await createStudent.mutateAsync({
-              data: { nisn, namaLengkap, kelas, jenisKelamin: jenisKelamin === "P" ? "P" : "L", school }
-            });
-            successCount++;
-          }
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+
+      const rows: string[][] = [];
+      for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) continue;
+        const sheetRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: false, defval: "" });
+        for (const row of sheetRows) {
+          rows.push(row.map((cell) => String(cell ?? "").trim()));
         }
-        toast({ title: "Import Berhasil", description: `${successCount} data siswa ditambahkan` });
-        queryClient.invalidateQueries({ queryKey: ["/api/students"] });
-      } catch (err) {
-        toast({ variant: "destructive", title: "Gagal Import", description: "Format CSV tidak valid" });
       }
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    };
-    reader.readAsText(file);
+
+      const nonEmpty = rows.filter((row) => row.some((cell) => cell !== ""));
+      if (nonEmpty.length === 0) {
+        toast({ variant: "destructive", title: "Gagal Import", description: "File tidak berisi data" });
+        return;
+      }
+      if (nonEmpty.length > 1000) {
+        toast({ variant: "destructive", title: "Gagal Import", description: "Maksimal 1000 baris per import" });
+        return;
+      }
+
+      const result = await analyzeImport.mutateAsync({ data: { rows: nonEmpty } });
+      if (result.students.length === 0) {
+        toast({ variant: "destructive", title: "Gagal Import", description: "AI tidak menemukan data siswa pada file ini" });
+        return;
+      }
+      setImportRows(result.students as ImportRow[]);
+      setIsVerifyOpen(true);
+    } catch (err: any) {
+      const message = err?.data?.error ?? "File tidak dapat dibaca. Pastikan formatnya benar.";
+      toast({ variant: "destructive", title: "Gagal Import", description: message });
+    }
+  };
+
+  const updateImportRow = (index: number, patch: Partial<ImportRow>) => {
+    setImportRows((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  };
+
+  const removeImportRow = (index: number) => {
+    setImportRows((rows) => rows.filter((_, i) => i !== index));
+  };
+
+  const handleConfirmImport = async () => {
+    const invalid = importRows.some((r) => !r.namaLengkap.trim() || !r.kelas.trim() || !r.school.trim());
+    if (invalid) {
+      toast({ variant: "destructive", title: "Data belum lengkap", description: "Nama, kelas, dan sekolah wajib diisi pada setiap baris" });
+      return;
+    }
+    try {
+      const result = await bulkCreate.mutateAsync({
+        data: { students: importRows.map((r) => ({ ...r, nisn: r.nisn?.trim() || undefined })) },
+      });
+      toast({ title: "Import Berhasil", description: `${result.count} data siswa ditambahkan` });
+      setIsVerifyOpen(false);
+      setImportRows([]);
+      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
+    } catch (err: any) {
+      const message = err?.data?.error ?? "Terjadi kesalahan saat menyimpan data";
+      toast({ variant: "destructive", title: "Gagal Import", description: message });
+    }
   };
 
   return (
@@ -136,13 +188,17 @@ export default function Siswa() {
           <div className="flex items-center gap-2">
             <input 
               type="file" 
-              accept=".csv" 
+              accept=".csv,.tsv,.txt,.xlsx,.xls,.xlsm,.xlsb,.ods,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.oasis.opendocument.spreadsheet,text/csv" 
               className="hidden" 
               ref={fileInputRef} 
-              onChange={handleImportCSV} 
+              onChange={handleImportFile} 
             />
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="w-4 h-4 mr-2" /> Import
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={analyzeImport.isPending}>
+              {analyzeImport.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menganalisis...</>
+              ) : (
+                <><Upload className="w-4 h-4 mr-2" /> Import</>
+              )}
             </Button>
             <Button variant="outline" onClick={handleExportCSV} disabled={!students?.length}>
               <Download className="w-4 h-4 mr-2" /> Ekspor
@@ -241,6 +297,79 @@ export default function Siswa() {
             </Dialog>
           </div>
         </div>
+
+        <Dialog open={isVerifyOpen} onOpenChange={(open) => { setIsVerifyOpen(open); if (!open) setImportRows([]); }}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" /> Verifikasi Data Import
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              AI telah mengidentifikasi {importRows.length} data siswa. Periksa dan perbaiki bila perlu sebelum disimpan.
+            </p>
+            <div className="max-h-[50vh] overflow-y-auto border border-border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/50">
+                    <TableHead className="w-[110px]">NISN</TableHead>
+                    <TableHead>Nama Lengkap</TableHead>
+                    <TableHead className="w-[100px]">Kelas</TableHead>
+                    <TableHead className="w-[90px]">L/P</TableHead>
+                    <TableHead className="w-[170px]">Sekolah</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {importRows.map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Input value={row.nisn ?? ""} onChange={(e) => updateImportRow(i, { nisn: e.target.value })} className="h-8" />
+                      </TableCell>
+                      <TableCell>
+                        <Input value={row.namaLengkap} onChange={(e) => updateImportRow(i, { namaLengkap: e.target.value })} className="h-8" />
+                      </TableCell>
+                      <TableCell>
+                        <Input value={row.kelas} onChange={(e) => updateImportRow(i, { kelas: e.target.value })} className="h-8" />
+                      </TableCell>
+                      <TableCell>
+                        <Select value={row.jenisKelamin} onValueChange={(v) => updateImportRow(i, { jenisKelamin: v as "L" | "P" })}>
+                          <SelectTrigger className="h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="L">L</SelectItem>
+                            <SelectItem value="P">P</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Input value={row.school} onChange={(e) => updateImportRow(i, { school: e.target.value })} className="h-8" />
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => removeImportRow(i)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setIsVerifyOpen(false); setImportRows([]); }} disabled={bulkCreate.isPending}>
+                Batal
+              </Button>
+              <Button onClick={handleConfirmImport} disabled={bulkCreate.isPending || importRows.length === 0}>
+                {bulkCreate.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</>
+                ) : (
+                  <>Simpan {importRows.length} Siswa</>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="p-4 border-b border-border bg-gray-50/50">
