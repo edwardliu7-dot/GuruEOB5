@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, subjectsTable } from "@workspace/db";
+import { db, subjectsTable, type Guru } from "@workspace/db";
 import {
   ListSubjectsResponse,
   CreateSubjectBody,
@@ -11,12 +11,49 @@ import {
   DeleteSubjectParams,
   DeleteSubjectResponse,
 } from "@workspace/api-zod";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, getCurrentGuru } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/subjects", requireAuth, async (_req, res): Promise<void> => {
-  const subjects = await db.select().from(subjectsTable);
+async function syncSubjectFolders(guru: Guru): Promise<void> {
+  const mapel = guru.mapel ?? [];
+  const kelasDiampu = guru.kelasDiampu ?? [];
+  if (mapel.length === 0 || kelasDiampu.length === 0) return;
+
+  const existing = await db
+    .select({ name: subjectsTable.name })
+    .from(subjectsTable)
+    .where(eq(subjectsTable.teacherId, guru.id));
+  const existingNames = new Set(existing.map((s) => s.name));
+
+  const missing: { name: string; teacherId: string }[] = [];
+  for (const m of mapel) {
+    for (const k of kelasDiampu) {
+      const name = `${m} - ${k}`;
+      if (!existingNames.has(name)) {
+        missing.push({ name, teacherId: guru.id });
+      }
+    }
+  }
+
+  if (missing.length > 0) {
+    await db.insert(subjectsTable).values(missing);
+  }
+}
+
+router.get("/subjects", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  await syncSubjectFolders(guru);
+
+  const subjects = await db
+    .select()
+    .from(subjectsTable)
+    .where(eq(subjectsTable.teacherId, guru.id));
   res.json(ListSubjectsResponse.parse(subjects));
 });
 

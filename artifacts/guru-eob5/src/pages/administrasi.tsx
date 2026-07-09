@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout";
-import { useListSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject, useListDocuments, useCreateDocument, useDeleteDocument, useListTeachers, getListDocumentsQueryKey } from "@workspace/api-client-react";
+import { useListSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject, useListDocuments, useCreateDocument, useDeleteDocument, useGetMe, getListDocumentsQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 const subjectSchema = z.object({
   name: z.string().min(1, "Nama mata pelajaran harus diisi"),
-  teacherId: z.string().min(1, "Guru pengampu harus dipilih"),
 });
 
 const documentSchema = z.object({
@@ -33,7 +32,7 @@ type DocumentFormValues = z.infer<typeof documentSchema>;
 
 export default function Administrasi() {
   const { data: subjects, isLoading: isLoadingSubjects } = useListSubjects();
-  const { data: teachers } = useListTeachers();
+  const { data: me } = useGetMe();
   const createSubject = useCreateSubject();
   const updateSubject = useUpdateSubject();
   const deleteSubject = useDeleteSubject();
@@ -55,7 +54,7 @@ export default function Administrasi() {
 
   const subjectForm = useForm<SubjectFormValues>({
     resolver: zodResolver(subjectSchema),
-    defaultValues: { name: "", teacherId: "" },
+    defaultValues: { name: "" },
   });
 
   const documentForm = useForm<DocumentFormValues>({
@@ -64,12 +63,13 @@ export default function Administrasi() {
   });
 
   const onSubjectSubmit = async (data: SubjectFormValues) => {
+    if (!me) return;
     try {
       if (editingSubject) {
-        await updateSubject.mutateAsync({ id: editingSubject.id, data });
+        await updateSubject.mutateAsync({ id: editingSubject.id, data: { ...data, teacherId: editingSubject.teacherId } });
         toast({ title: "Berhasil", description: "Mata pelajaran berhasil diperbarui" });
       } else {
-        await createSubject.mutateAsync({ data });
+        await createSubject.mutateAsync({ data: { ...data, teacherId: me.id } });
         toast({ title: "Berhasil", description: "Mata pelajaran berhasil ditambahkan" });
       }
       setIsSubjectDialogOpen(false);
@@ -165,28 +165,6 @@ export default function Administrasi() {
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={subjectForm.control}
-                      name="teacherId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Guru Pengampu</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Pilih guru" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {teachers?.map((t: any) => (
-                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                     <DialogFooter>
                       <Button type="submit" disabled={createSubject.isPending || updateSubject.isPending}>Simpan</Button>
                     </DialogFooter>
@@ -265,7 +243,7 @@ export default function Administrasi() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingSubject(subject); subjectForm.reset({ name: subject.name, teacherId: subject.teacherId }); setIsSubjectDialogOpen(true); }}>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingSubject(subject); subjectForm.reset({ name: subject.name }); setIsSubjectDialogOpen(true); }}>
                           <Edit2 className="w-4 h-4 mr-2" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteSubject(subject.id); }}>
@@ -275,7 +253,7 @@ export default function Administrasi() {
                     </DropdownMenu>
                   </div>
                   <h3 className="font-semibold text-lg line-clamp-1">{subject.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-1">Guru: {teachers?.find((t:any) => t.id === subject.teacherId)?.name}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-1">Guru: {me?.name}</p>
                 </div>
               ))
             )}
