@@ -640,6 +640,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/PointRecord"
 
+  /points/bulk:
+    post:
+      operationId: bulkCreatePoints
+      tags: [points]
+      summary: Record the same point entry for a group of students
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkCreatePointsInput"
+      responses:
+        "200":
+          description: Bulk create result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkCreatePointsResult"
+
 components:
   parameters:
     IdParam:
@@ -785,6 +804,7 @@ components:
           type: string
         nisn:
           type: string
+          nullable: true
         namaLengkap:
           type: string
         kelas:
@@ -804,6 +824,7 @@ components:
       properties:
         nisn:
           type: string
+          nullable: true
         namaLengkap:
           type: string
         kelas:
@@ -852,7 +873,9 @@ components:
       properties:
         count:
           type: integer
-      required: [count]
+        skipped:
+          type: integer
+      required: [count, skipped]
 
     Subject:
       type: object
@@ -1214,6 +1237,7 @@ components:
           type: string
         nisn:
           type: string
+          nullable: true
         namaLengkap:
           type: string
         jenisKelamin:
