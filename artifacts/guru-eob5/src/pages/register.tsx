@@ -21,6 +21,7 @@ import {
   WAKASEK_BIDANG_OPTIONS,
   KELAS_OPTIONS,
   MAPEL_OPTIONS,
+  SCHOOL_OPTIONS,
 } from "@/lib/options";
 
 const STEPS = ["Data Diri", "Jabatan", "Kelas & Sekolah", "Akun"] as const;
@@ -79,7 +80,7 @@ export default function Register() {
     }
     if (step === 2) {
       if (kelasDiampu.length === 0) return "Pilih minimal satu kelas yang diampu";
-      if (!school.trim()) return "Nama sekolah harus diisi";
+      if (!school) return "Pilih nama sekolah";
     }
     if (step === 3) {
       if (!username.trim()) return "Username harus diisi";
@@ -290,13 +291,17 @@ export default function Register() {
                   ))}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="school">Nama sekolah</Label>
-                  <Input
-                    id="school"
-                    placeholder="cth: SMP IT Al-Hikmah"
-                    value={school}
-                    onChange={(e) => setSchool(e.target.value)}
-                  />
+                  <Label>Nama sekolah</Label>
+                  <RadioGroup value={school} onValueChange={setSchool} className="space-y-1">
+                    {SCHOOL_OPTIONS.map((s) => (
+                      <div key={s} className="flex items-center gap-2">
+                        <RadioGroupItem value={s} id={`school-${s}`} />
+                        <Label htmlFor={`school-${s}`} className="font-normal cursor-pointer">
+                          {s}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
                 </div>
               </div>
             )}

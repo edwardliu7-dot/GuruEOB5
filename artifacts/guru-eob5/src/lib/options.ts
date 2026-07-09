@@ -20,6 +20,12 @@ export const KELAS_OPTIONS = [
   "IX Al Khawarizmi",
 ] as const;
 
+export const SCHOOL_OPTIONS = [
+  "SMP TISA Islamic School",
+  "SDS TISA Islamic School",
+  "TK TISA Islamic School",
+] as const;
+
 export const MAPEL_OPTIONS = [
   "B. Indonesia",
   "IPA",
