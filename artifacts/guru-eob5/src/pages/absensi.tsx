@@ -1,5 +1,5 @@
 import { Layout } from "@/components/layout";
-import { useListAttendance, useCreateAttendanceRecord, useListSubjects, useListStudents } from "@workspace/api-client-react";
+import { useListAttendance, useBulkCreateAttendance, useListSubjects, useListStudents } from "@workspace/api-client-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,9 +16,10 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const attendanceSchema = z.object({
-  studentId: z.string().min(1, "Siswa harus dipilih"),
+  studentIds: z.array(z.string()).min(1, "Pilih minimal satu siswa"),
   subjectId: z.string().min(1, "Mata pelajaran harus dipilih"),
   tanggal: z.string().min(1, "Tanggal harus diisi"),
   status: z.enum(["hadir", "izin", "sakit", "alpa"]),
@@ -28,29 +29,36 @@ export default function Absensi() {
   const { data: subjects } = useListSubjects();
   const { data: students } = useListStudents();
   const [selectedSubject, setSelectedSubject] = useState<string>("");
-  
+
   const subjectFilter = selectedSubject && selectedSubject !== "all" ? selectedSubject : undefined;
   const { data: attendanceList, isLoading } = useListAttendance(
     { subjectId: subjectFilter },
     { query: { queryKey: ["/api/attendance", subjectFilter ?? ""] } }
   );
 
-  const createRecord = useCreateAttendanceRecord();
+  const bulkCreateAttendance = useBulkCreateAttendance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [kelasFilter, setKelasFilter] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof attendanceSchema>>({
     resolver: zodResolver(attendanceSchema),
-    defaultValues: { studentId: "", subjectId: "", tanggal: new Date().toISOString().split("T")[0], status: "hadir" },
+    defaultValues: { studentIds: [], subjectId: "", tanggal: new Date().toISOString().split("T")[0], status: "hadir" },
   });
+
+  const kelasList = [...new Set((students ?? []).map((s: any) => s.kelas))].sort();
+  const visibleStudents = (students ?? []).filter(
+    (s: any) => kelasFilter === "all" || s.kelas === kelasFilter,
+  );
 
   const onSubmit = async (data: z.infer<typeof attendanceSchema>) => {
     try {
-      await createRecord.mutateAsync({ data });
-      toast({ title: "Berhasil", description: "Kehadiran dicatat" });
+      const result = await bulkCreateAttendance.mutateAsync({ data });
+      toast({ title: "Berhasil", description: `Kehadiran dicatat untuk ${result.count} siswa` });
       setIsDialogOpen(false);
       form.reset();
+      setKelasFilter("all");
       queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
     } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
@@ -80,17 +88,63 @@ export default function Absensi() {
               <DialogHeader><DialogTitle>Catat Kehadiran</DialogTitle></DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField control={form.control} name="studentId" render={({ field }) => (
-                    <FormItem><FormLabel>Siswa</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih Siswa" /></SelectTrigger></FormControl>
-                        <SelectContent>{students?.map((s:any) => <SelectItem key={s.id} value={s.id}>{s.namaLengkap}</SelectItem>)}</SelectContent>
-                      </Select><FormMessage />
-                    </FormItem>
-                  )} />
+                  <FormField control={form.control} name="studentIds" render={({ field }) => {
+                    const visibleIds = visibleStudents.map((s: any) => s.id);
+                    const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id: string) => field.value.includes(id));
+                    return (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Siswa ({field.value.length} dipilih)</FormLabel>
+                          <Select value={kelasFilter} onValueChange={setKelasFilter}>
+                            <SelectTrigger className="w-[150px] h-8"><SelectValue placeholder="Semua Kelas" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Semua Kelas</SelectItem>
+                              {kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="border rounded-md max-h-48 overflow-y-auto">
+                          <label className="flex items-center gap-2 px-3 py-2 border-b bg-gray-50/50 cursor-pointer text-sm font-medium">
+                            <Checkbox
+                              checked={allVisibleSelected}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...new Set([...field.value, ...visibleIds])]);
+                                } else {
+                                  field.onChange(field.value.filter((id: string) => !visibleIds.includes(id)));
+                                }
+                              }}
+                            />
+                            Pilih Semua {kelasFilter !== "all" ? `(${kelasFilter})` : ""}
+                          </label>
+                          {visibleStudents.length === 0 ? (
+                            <p className="px-3 py-4 text-sm text-muted-foreground text-center">Tidak ada siswa.</p>
+                          ) : (
+                            visibleStudents.map((s: any) => (
+                              <label key={s.id} className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-50 text-sm">
+                                <Checkbox
+                                  checked={field.value.includes(s.id)}
+                                  onCheckedChange={(checked) => {
+                                    field.onChange(
+                                      checked
+                                        ? [...field.value, s.id]
+                                        : field.value.filter((id: string) => id !== s.id),
+                                    );
+                                  }}
+                                />
+                                <span className="flex-1">{s.namaLengkap}</span>
+                                <span className="text-xs text-muted-foreground">{s.kelas}</span>
+                              </label>
+                            ))
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }} />
                   <FormField control={form.control} name="subjectId" render={({ field }) => (
                     <FormItem><FormLabel>Mata Pelajaran</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Pilih Mapel" /></SelectTrigger></FormControl>
                         <SelectContent>{subjects?.map((s:any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                       </Select><FormMessage />
@@ -102,7 +156,7 @@ export default function Absensi() {
                     )} />
                     <FormField control={form.control} name="status" render={({ field }) => (
                       <FormItem><FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Pilih Status" /></SelectTrigger></FormControl>
                           <SelectContent>
                             <SelectItem value="hadir">Hadir</SelectItem>
@@ -114,7 +168,7 @@ export default function Absensi() {
                       </FormItem>
                     )} />
                   </div>
-                  <DialogFooter><Button type="submit" disabled={createRecord.isPending}>Simpan</Button></DialogFooter>
+                  <DialogFooter><Button type="submit" disabled={bulkCreateAttendance.isPending}>Simpan</Button></DialogFooter>
                 </form>
               </Form>
             </DialogContent>

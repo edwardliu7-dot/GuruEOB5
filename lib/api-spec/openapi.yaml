@@ -562,6 +562,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttendanceRecord"
 
+  /attendance/bulk:
+    post:
+      operationId: bulkCreateAttendance
+      tags: [attendance]
+      summary: Record the same attendance status for a group of students
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkCreateAttendanceInput"
+      responses:
+        "200":
+          description: Bulk create result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkCreateResult"
+
   /grades:
     get:
       operationId: listGrades
@@ -602,6 +621,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Grade"
+
+  /grades/bulk:
+    post:
+      operationId: bulkCreateGrades
+      tags: [grades]
+      summary: Record the same grade for a group of students
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkCreateGradesInput"
+      responses:
+        "200":
+          description: Bulk create result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkCreateResult"
 
   /points:
     get:
@@ -894,6 +932,51 @@ components:
         count:
           type: integer
       required: [count]
+
+    BulkCreateResult:
+      type: object
+      properties:
+        count:
+          type: integer
+      required: [count]
+
+    BulkCreateAttendanceInput:
+      type: object
+      properties:
+        studentIds:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: string
+        subjectId:
+          type: string
+        tanggal:
+          type: string
+        status:
+          type: string
+          enum: [hadir, izin, sakit, alpa]
+      required: [studentIds, subjectId, tanggal, status]
+
+    BulkCreateGradesInput:
+      type: object
+      properties:
+        studentIds:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: string
+        subjectId:
+          type: string
+        jenis:
+          type: string
+          enum: [tugas, uts, uas]
+        nilai:
+          type: number
+        tanggal:
+          type: string
+      required: [studentIds, subjectId, jenis, nilai, tanggal]
 
     BulkCreateStudentsResult:
       type: object

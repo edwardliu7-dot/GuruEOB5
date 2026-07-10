@@ -643,6 +643,25 @@ export const CreateAttendanceRecordResponse = zod.object({
 
 
 /**
+ * @summary Record the same attendance status for a group of students
+ */
+export const bulkCreateAttendanceBodyStudentIdsMax = 500;
+
+
+
+export const BulkCreateAttendanceBody = zod.object({
+  "studentIds": zod.array(zod.string()).min(1).max(bulkCreateAttendanceBodyStudentIdsMax),
+  "subjectId": zod.string(),
+  "tanggal": zod.string(),
+  "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa'])
+})
+
+export const BulkCreateAttendanceResponse = zod.object({
+  "count": zod.number()
+})
+
+
+/**
  * @summary List grades
  */
 export const ListGradesQueryParams = zod.object({
@@ -681,6 +700,26 @@ export const CreateGradeResponse = zod.object({
   "nilai": zod.number(),
   "tanggal": zod.string(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Record the same grade for a group of students
+ */
+export const bulkCreateGradesBodyStudentIdsMax = 500;
+
+
+
+export const BulkCreateGradesBody = zod.object({
+  "studentIds": zod.array(zod.string()).min(1).max(bulkCreateGradesBodyStudentIdsMax),
+  "subjectId": zod.string(),
+  "jenis": zod.enum(['tugas', 'uts', 'uas']),
+  "nilai": zod.number(),
+  "tanggal": zod.string()
+})
+
+export const BulkCreateGradesResponse = zod.object({
+  "count": zod.number()
 })
 
 

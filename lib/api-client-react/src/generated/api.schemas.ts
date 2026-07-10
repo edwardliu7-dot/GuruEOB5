@@ -171,6 +171,52 @@ export interface BulkCreatePointsResult {
   count: number;
 }
 
+export interface BulkCreateResult {
+  count: number;
+}
+
+export type BulkCreateAttendanceInputStatus = typeof BulkCreateAttendanceInputStatus[keyof typeof BulkCreateAttendanceInputStatus];
+
+
+export const BulkCreateAttendanceInputStatus = {
+  hadir: 'hadir',
+  izin: 'izin',
+  sakit: 'sakit',
+  alpa: 'alpa',
+} as const;
+
+export interface BulkCreateAttendanceInput {
+  /**
+     * @minItems 1
+     * @maxItems 500
+     */
+  studentIds: string[];
+  subjectId: string;
+  tanggal: string;
+  status: BulkCreateAttendanceInputStatus;
+}
+
+export type BulkCreateGradesInputJenis = typeof BulkCreateGradesInputJenis[keyof typeof BulkCreateGradesInputJenis];
+
+
+export const BulkCreateGradesInputJenis = {
+  tugas: 'tugas',
+  uts: 'uts',
+  uas: 'uas',
+} as const;
+
+export interface BulkCreateGradesInput {
+  /**
+     * @minItems 1
+     * @maxItems 500
+     */
+  studentIds: string[];
+  subjectId: string;
+  jenis: BulkCreateGradesInputJenis;
+  nilai: number;
+  tanggal: string;
+}
+
 export interface BulkCreateStudentsResult {
   count: number;
   skipped: number;
