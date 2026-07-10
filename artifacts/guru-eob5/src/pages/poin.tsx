@@ -1,5 +1,5 @@
 import { Layout } from "@/components/layout";
-import { useListPoints, useCreatePoint, useListStudents } from "@workspace/api-client-react";
+import { useListPoints, useBulkCreatePoints, useListStudents } from "@workspace/api-client-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,9 +16,10 @@ import { Plus, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const pointSchema = z.object({
-  studentId: z.string().min(1, "Siswa harus dipilih"),
+  studentIds: z.array(z.string()).min(1, "Pilih minimal satu siswa"),
   jenis: z.enum(["positif", "negatif"]),
   poin: z.coerce.number().min(1, "Poin harus lebih dari 0"),
   keterangan: z.string().min(1, "Keterangan harus diisi"),
@@ -28,22 +29,29 @@ const pointSchema = z.object({
 export default function Poin() {
   const { data: students } = useListStudents();
   const { data: pointsList, isLoading } = useListPoints();
-  const createPoint = useCreatePoint();
+  const bulkCreatePoints = useBulkCreatePoints();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [kelasFilter, setKelasFilter] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof pointSchema>>({
     resolver: zodResolver(pointSchema),
-    defaultValues: { studentId: "", jenis: "positif", poin: 5, keterangan: "", tanggal: new Date().toISOString().split("T")[0] },
+    defaultValues: { studentIds: [], jenis: "positif", poin: 5, keterangan: "", tanggal: new Date().toISOString().split("T")[0] },
   });
+
+  const kelasList = [...new Set((students ?? []).map((s: any) => s.kelas))].sort();
+  const visibleStudents = (students ?? []).filter(
+    (s: any) => kelasFilter === "all" || s.kelas === kelasFilter,
+  );
 
   const onSubmit = async (data: z.infer<typeof pointSchema>) => {
     try {
-      await createPoint.mutateAsync({ data });
-      toast({ title: "Berhasil", description: "Poin dicatat" });
+      const result = await bulkCreatePoints.mutateAsync({ data });
+      toast({ title: "Berhasil", description: `Poin dicatat untuk ${result.count} siswa` });
       setIsDialogOpen(false);
       form.reset();
+      setKelasFilter("all");
       queryClient.invalidateQueries({ queryKey: ["/api/points"] });
     } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
@@ -66,14 +74,60 @@ export default function Poin() {
               <DialogHeader><DialogTitle>Input Poin</DialogTitle></DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField control={form.control} name="studentId" render={({ field }) => (
-                    <FormItem><FormLabel>Siswa</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih Siswa" /></SelectTrigger></FormControl>
-                        <SelectContent>{students?.map((s:any) => <SelectItem key={s.id} value={s.id}>{s.namaLengkap}</SelectItem>)}</SelectContent>
-                      </Select><FormMessage />
-                    </FormItem>
-                  )} />
+                  <FormField control={form.control} name="studentIds" render={({ field }) => {
+                    const visibleIds = visibleStudents.map((s: any) => s.id);
+                    const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id: string) => field.value.includes(id));
+                    return (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel>Siswa ({field.value.length} dipilih)</FormLabel>
+                          <Select value={kelasFilter} onValueChange={setKelasFilter}>
+                            <SelectTrigger className="w-[150px] h-8"><SelectValue placeholder="Semua Kelas" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Semua Kelas</SelectItem>
+                              {kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="border rounded-md max-h-48 overflow-y-auto">
+                          <label className="flex items-center gap-2 px-3 py-2 border-b bg-gray-50/50 cursor-pointer text-sm font-medium">
+                            <Checkbox
+                              checked={allVisibleSelected}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...new Set([...field.value, ...visibleIds])]);
+                                } else {
+                                  field.onChange(field.value.filter((id: string) => !visibleIds.includes(id)));
+                                }
+                              }}
+                            />
+                            Pilih Semua {kelasFilter !== "all" ? `(${kelasFilter})` : ""}
+                          </label>
+                          {visibleStudents.length === 0 ? (
+                            <p className="px-3 py-4 text-sm text-muted-foreground text-center">Tidak ada siswa.</p>
+                          ) : (
+                            visibleStudents.map((s: any) => (
+                              <label key={s.id} className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-50 text-sm">
+                                <Checkbox
+                                  checked={field.value.includes(s.id)}
+                                  onCheckedChange={(checked) => {
+                                    field.onChange(
+                                      checked
+                                        ? [...field.value, s.id]
+                                        : field.value.filter((id: string) => id !== s.id),
+                                    );
+                                  }}
+                                />
+                                <span className="flex-1">{s.namaLengkap}</span>
+                                <span className="text-xs text-muted-foreground">{s.kelas}</span>
+                              </label>
+                            ))
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }} />
                   <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="jenis" render={({ field }) => (
                       <FormItem><FormLabel>Jenis Poin</FormLabel>
@@ -96,7 +150,7 @@ export default function Poin() {
                   <FormField control={form.control} name="tanggal" render={({ field }) => (
                     <FormItem><FormLabel>Tanggal</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <DialogFooter><Button type="submit" disabled={createPoint.isPending}>Simpan</Button></DialogFooter>
+                  <DialogFooter><Button type="submit" disabled={bulkCreatePoints.isPending}>Simpan</Button></DialogFooter>
                 </form>
               </Form>
             </DialogContent>

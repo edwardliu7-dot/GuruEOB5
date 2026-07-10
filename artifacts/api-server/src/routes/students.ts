@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, studentsTable } from "@workspace/db";
+import { db, studentsTable, type InsertStudent, type Student } from "@workspace/db";
 import {
   ListStudentsResponse,
   CreateStudentBody,
@@ -22,9 +22,37 @@ import { mapRowsToStudents } from "../lib/gemini";
 
 const router: IRouter = Router();
 
+function normalizeStudent<T extends { nisn?: string | null; namaLengkap: string; kelas: string }>(
+  s: T,
+): T {
+  return {
+    ...s,
+    nisn: s.nisn?.trim() ? s.nisn.trim() : null,
+    namaLengkap: s.namaLengkap.trim(),
+    kelas: s.kelas.trim(),
+  };
+}
+
+function dedupKey(s: { nisn?: string | null; namaLengkap: string; kelas: string; school: string }): string {
+  return s.nisn
+    ? `nisn:${s.school}:${s.nisn}`
+    : `nama:${s.school}:${s.namaLengkap.toLowerCase()}:${s.kelas.toLowerCase()}`;
+}
+
+async function listSchoolStudents(req: Parameters<typeof getCurrentGuru>[0]): Promise<Student[] | null> {
+  const guru = await getCurrentGuru(req);
+  if (!guru) return null;
+  if (!guru.school) return [];
+  return db.select().from(studentsTable).where(eq(studentsTable.school, guru.school));
+}
+
 router.get("/students", requireAuth, async (req, res): Promise<void> => {
+  const students = await listSchoolStudents(req);
+  if (students === null) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   const kelas = typeof req.query["kelas"] === "string" ? req.query["kelas"] : undefined;
-  const students = await db.select().from(studentsTable);
   const filtered = kelas ? students.filter((s) => s.kelas === kelas) : students;
   res.json(ListStudentsResponse.parse(filtered));
 });
@@ -36,7 +64,25 @@ router.post("/students", requireAuth, requireAdmin, async (req, res): Promise<vo
     return;
   }
 
-  const [student] = await db.insert(studentsTable).values(parsed.data).returning();
+  const guru = await getCurrentGuru(req);
+  if (!guru?.school) {
+    res.status(400).json({ error: "Akun Anda belum memiliki sekolah" });
+    return;
+  }
+
+  const data = normalizeStudent({ ...parsed.data, school: guru.school });
+  const existing = await db.select().from(studentsTable).where(eq(studentsTable.school, data.school));
+  const keys = new Set(existing.map((s) => dedupKey(s)));
+  if (keys.has(dedupKey(data))) {
+    res.status(409).json({
+      error: data.nisn
+        ? `Siswa dengan NISN ${data.nisn} sudah terdaftar`
+        : `Siswa "${data.namaLengkap}" di kelas ${data.kelas} sudah terdaftar`,
+    });
+    return;
+  }
+
+  const [student] = await db.insert(studentsTable).values(data).returning();
   res.status(201).json(CreateStudentResponse.parse(student));
 });
 
@@ -70,8 +116,39 @@ router.post("/students/bulk", requireAuth, requireAdmin, async (req, res): Promi
     return;
   }
 
-  const inserted = await db.insert(studentsTable).values(parsed.data.students).returning();
-  res.json(BulkCreateStudentsResponse.parse({ count: inserted.length }));
+  const guru = await getCurrentGuru(req);
+  if (!guru?.school) {
+    res.status(400).json({ error: "Akun Anda belum memiliki sekolah" });
+    return;
+  }
+
+  const normalized = parsed.data.students.map((s) =>
+    normalizeStudent({ ...s, school: guru.school as string }),
+  );
+  const existing = await db
+    .select()
+    .from(studentsTable)
+    .where(eq(studentsTable.school, guru.school));
+  const seen = new Set(existing.map((s) => dedupKey(s)));
+
+  const toInsert: InsertStudent[] = [];
+  let skipped = 0;
+  for (const s of normalized) {
+    const key = dedupKey(s);
+    if (seen.has(key)) {
+      skipped++;
+      continue;
+    }
+    seen.add(key);
+    toInsert.push(s);
+  }
+
+  const inserted =
+    toInsert.length > 0
+      ? await db.insert(studentsTable).values(toInsert).onConflictDoNothing().returning()
+      : [];
+  skipped += toInsert.length - inserted.length;
+  res.json(BulkCreateStudentsResponse.parse({ count: inserted.length, skipped }));
 });
 
 router.get("/students/:id", requireAuth, async (req, res): Promise<void> => {
@@ -81,12 +158,13 @@ router.get("/students/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  const guru = await getCurrentGuru(req);
   const [student] = await db
     .select()
     .from(studentsTable)
     .where(eq(studentsTable.id, params.data.id));
 
-  if (!student) {
+  if (!student || !guru?.school || student.school !== guru.school) {
     res.status(404).json({ error: "Student not found" });
     return;
   }
@@ -107,9 +185,20 @@ router.patch("/students/:id", requireAuth, requireAdmin, async (req, res): Promi
     return;
   }
 
+  const guru = await getCurrentGuru(req);
+  const [existing] = await db
+    .select()
+    .from(studentsTable)
+    .where(eq(studentsTable.id, params.data.id));
+  if (!existing || !guru?.school || existing.school !== guru.school) {
+    res.status(404).json({ error: "Student not found" });
+    return;
+  }
+
+  const { school: _ignored, ...updates } = parsed.data;
   const [student] = await db
     .update(studentsTable)
-    .set(parsed.data)
+    .set(updates)
     .where(eq(studentsTable.id, params.data.id))
     .returning();
 
@@ -128,16 +217,17 @@ router.delete("/students/:id", requireAuth, requireAdmin, async (req, res): Prom
     return;
   }
 
-  const [student] = await db
-    .delete(studentsTable)
-    .where(eq(studentsTable.id, params.data.id))
-    .returning();
-
-  if (!student) {
+  const guru = await getCurrentGuru(req);
+  const [existing] = await db
+    .select()
+    .from(studentsTable)
+    .where(eq(studentsTable.id, params.data.id));
+  if (!existing || !guru?.school || existing.school !== guru.school) {
     res.status(404).json({ error: "Student not found" });
     return;
   }
 
+  await db.delete(studentsTable).where(eq(studentsTable.id, params.data.id));
   res.json(DeleteStudentResponse.parse({ success: true }));
 });
 

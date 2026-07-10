@@ -8,7 +8,7 @@
 import type { StudentInputJenisKelamin } from './studentInputJenisKelamin';
 
 export interface StudentInput {
-  nisn?: string;
+  nisn?: string | null;
   namaLengkap: string;
   kelas: string;
   jenisKelamin: StudentInputJenisKelamin;

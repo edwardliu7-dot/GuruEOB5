@@ -14,7 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import logoUrl from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 import {
   JABATAN_OPTIONS,
@@ -136,11 +137,8 @@ export default function Register() {
   return (
     <div className="min-h-screen flex items-center justify-center w-full bg-[#F8FAFC] py-10 px-4">
       <div className="w-full max-w-xl">
-        <div className="flex items-center gap-2 mb-6 justify-center">
-          <div className="w-10 h-10 rounded bg-primary flex items-center justify-center text-primary-foreground">
-            <BookOpen className="w-6 h-6" />
-          </div>
-          <span className="font-serif font-bold text-2xl tracking-tight text-foreground">GuruEOB5</span>
+        <div className="flex items-center mb-6 justify-center">
+          <img src={logoUrl} alt="GuruEOB5" className="h-20 w-auto" />
         </div>
 
         <Card className="border-0 shadow-xl shadow-black/5 ring-1 ring-black/5">

@@ -37,7 +37,7 @@ async function syncSubjectFolders(guru: Guru): Promise<void> {
   }
 
   if (missing.length > 0) {
-    await db.insert(subjectsTable).values(missing);
+    await db.insert(subjectsTable).values(missing).onConflictDoNothing();
   }
 }
 

@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { LogOut, LayoutDashboard, FolderOpen, Users, UserCircle, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatJabatan } from "@/lib/options";
+import logoUrl from "@/assets/logo.png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -50,10 +51,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border shrink-0">
         <div className="h-16 flex items-center px-6 border-b border-sidebar-border shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-bold">
-              G
-            </div>
-            <span className="font-serif font-bold text-lg tracking-tight">GuruEOB5</span>
+            <img src={logoUrl} alt="GuruEOB5" className="h-12 w-auto" />
           </div>
         </div>
         

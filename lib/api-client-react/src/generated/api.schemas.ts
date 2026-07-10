@@ -106,7 +106,7 @@ export const StudentJenisKelamin = {
 
 export interface Student {
   id: string;
-  nisn: string;
+  nisn: string | null;
   namaLengkap: string;
   kelas: string;
   jenisKelamin: StudentJenisKelamin;
@@ -123,7 +123,7 @@ export const StudentInputJenisKelamin = {
 } as const;
 
 export interface StudentInput {
-  nisn?: string;
+  nisn?: string | null;
   namaLengkap: string;
   kelas: string;
   jenisKelamin: StudentInputJenisKelamin;
@@ -147,8 +147,33 @@ export interface BulkCreateStudentsInput {
   students: StudentInput[];
 }
 
+export type BulkCreatePointsInputJenis = typeof BulkCreatePointsInputJenis[keyof typeof BulkCreatePointsInputJenis];
+
+
+export const BulkCreatePointsInputJenis = {
+  positif: 'positif',
+  negatif: 'negatif',
+} as const;
+
+export interface BulkCreatePointsInput {
+  /**
+     * @minItems 1
+     * @maxItems 500
+     */
+  studentIds: string[];
+  jenis: BulkCreatePointsInputJenis;
+  poin: number;
+  keterangan: string;
+  tanggal: string;
+}
+
+export interface BulkCreatePointsResult {
+  count: number;
+}
+
 export interface BulkCreateStudentsResult {
   count: number;
+  skipped: number;
 }
 
 export interface Subject {
@@ -376,7 +401,7 @@ export interface KesiswaanOverview {
 
 export interface WaliKelasSiswaRekap {
   studentId: string;
-  nisn: string;
+  nisn: string | null;
   namaLengkap: string;
   jenisKelamin: string;
   hadir: number;

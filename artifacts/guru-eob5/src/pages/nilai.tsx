@@ -29,9 +29,10 @@ export default function Nilai() {
   const { data: students } = useListStudents();
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   
+  const subjectFilter = selectedSubject && selectedSubject !== "all" ? selectedSubject : undefined;
   const { data: gradesList, isLoading } = useListGrades(
-    { subjectId: selectedSubject || undefined },
-    { query: { queryKey: ["/api/grades", selectedSubject] } }
+    { subjectId: subjectFilter },
+    { query: { queryKey: ["/api/grades", subjectFilter ?? ""] } }
   );
 
   const createGrade = useCreateGrade();

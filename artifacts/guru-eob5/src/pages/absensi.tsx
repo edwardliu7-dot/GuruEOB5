@@ -29,9 +29,10 @@ export default function Absensi() {
   const { data: students } = useListStudents();
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   
+  const subjectFilter = selectedSubject && selectedSubject !== "all" ? selectedSubject : undefined;
   const { data: attendanceList, isLoading } = useListAttendance(
-    { subjectId: selectedSubject || undefined },
-    { query: { queryKey: ["/api/attendance", selectedSubject] } }
+    { subjectId: subjectFilter },
+    { query: { queryKey: ["/api/attendance", subjectFilter ?? ""] } }
   );
 
   const createRecord = useCreateAttendanceRecord();

@@ -194,7 +194,7 @@ export const GetWaliKelasRekapResponse = zod.object({
   "kelas": zod.string(),
   "siswa": zod.array(zod.object({
   "studentId": zod.string(),
-  "nisn": zod.string(),
+  "nisn": zod.string().nullable(),
   "namaLengkap": zod.string(),
   "jenisKelamin": zod.string(),
   "hadir": zod.number(),
@@ -308,7 +308,7 @@ export const ListStudentsQueryParams = zod.object({
 
 export const ListStudentsResponseItem = zod.object({
   "id": zod.string(),
-  "nisn": zod.string(),
+  "nisn": zod.string().nullable(),
   "namaLengkap": zod.string(),
   "kelas": zod.string(),
   "jenisKelamin": zod.enum(['L', 'P']),
@@ -322,7 +322,7 @@ export const ListStudentsResponse = zod.array(ListStudentsResponseItem)
  * @summary Create a student
  */
 export const CreateStudentBody = zod.object({
-  "nisn": zod.string().optional(),
+  "nisn": zod.string().nullish(),
   "namaLengkap": zod.string(),
   "kelas": zod.string(),
   "jenisKelamin": zod.enum(['L', 'P']),
@@ -331,7 +331,7 @@ export const CreateStudentBody = zod.object({
 
 export const CreateStudentResponse = zod.object({
   "id": zod.string(),
-  "nisn": zod.string(),
+  "nisn": zod.string().nullable(),
   "namaLengkap": zod.string(),
   "kelas": zod.string(),
   "jenisKelamin": zod.enum(['L', 'P']),
@@ -353,7 +353,7 @@ export const AnalyzeStudentImportBody = zod.object({
 
 export const AnalyzeStudentImportResponse = zod.object({
   "students": zod.array(zod.object({
-  "nisn": zod.string().optional(),
+  "nisn": zod.string().nullish(),
   "namaLengkap": zod.string(),
   "kelas": zod.string(),
   "jenisKelamin": zod.enum(['L', 'P']),
@@ -371,7 +371,7 @@ export const bulkCreateStudentsBodyStudentsMax = 1000;
 
 export const BulkCreateStudentsBody = zod.object({
   "students": zod.array(zod.object({
-  "nisn": zod.string().optional(),
+  "nisn": zod.string().nullish(),
   "namaLengkap": zod.string(),
   "kelas": zod.string(),
   "jenisKelamin": zod.enum(['L', 'P']),
@@ -380,7 +380,8 @@ export const BulkCreateStudentsBody = zod.object({
 })
 
 export const BulkCreateStudentsResponse = zod.object({
-  "count": zod.number()
+  "count": zod.number(),
+  "skipped": zod.number()
 })
 
 
@@ -393,7 +394,7 @@ export const GetStudentParams = zod.object({
 
 export const GetStudentResponse = zod.object({
   "id": zod.string(),
-  "nisn": zod.string(),
+  "nisn": zod.string().nullable(),
   "namaLengkap": zod.string(),
   "kelas": zod.string(),
   "jenisKelamin": zod.enum(['L', 'P']),
@@ -410,7 +411,7 @@ export const UpdateStudentParams = zod.object({
 })
 
 export const UpdateStudentBody = zod.object({
-  "nisn": zod.string().optional(),
+  "nisn": zod.string().nullish(),
   "namaLengkap": zod.string(),
   "kelas": zod.string(),
   "jenisKelamin": zod.enum(['L', 'P']),
@@ -419,7 +420,7 @@ export const UpdateStudentBody = zod.object({
 
 export const UpdateStudentResponse = zod.object({
   "id": zod.string(),
-  "nisn": zod.string(),
+  "nisn": zod.string().nullable(),
   "namaLengkap": zod.string(),
   "kelas": zod.string(),
   "jenisKelamin": zod.enum(['L', 'P']),
@@ -721,6 +722,26 @@ export const CreatePointResponse = zod.object({
   "keterangan": zod.string(),
   "tanggal": zod.string(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Record the same point entry for a group of students
+ */
+export const bulkCreatePointsBodyStudentIdsMax = 500;
+
+
+
+export const BulkCreatePointsBody = zod.object({
+  "studentIds": zod.array(zod.string()).min(1).max(bulkCreatePointsBodyStudentIdsMax),
+  "jenis": zod.enum(['positif', 'negatif']),
+  "poin": zod.number(),
+  "keterangan": zod.string(),
+  "tanggal": zod.string()
+})
+
+export const BulkCreatePointsResponse = zod.object({
+  "count": zod.number()
 })
 
 

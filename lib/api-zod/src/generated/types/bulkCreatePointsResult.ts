@@ -6,7 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface BulkCreateStudentsResult {
+export interface BulkCreatePointsResult {
   count: number;
-  skipped: number;
 }

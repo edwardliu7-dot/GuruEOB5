@@ -9,7 +9,7 @@ import type { StudentJenisKelamin } from './studentJenisKelamin';
 
 export interface Student {
   id: string;
-  nisn: string;
+  nisn: string | null;
   namaLengkap: string;
   kelas: string;
   jenisKelamin: StudentJenisKelamin;

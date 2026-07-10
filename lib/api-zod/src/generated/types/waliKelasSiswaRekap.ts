@@ -8,7 +8,7 @@
 
 export interface WaliKelasSiswaRekap {
   studentId: string;
-  nisn: string;
+  nisn: string | null;
   namaLengkap: string;
   jenisKelamin: string;
   hadir: number;

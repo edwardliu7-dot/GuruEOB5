@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and, type SQL } from "drizzle-orm";
 import { db, attendanceTable } from "@workspace/db";
 import {
   ListAttendanceResponse,
@@ -11,11 +11,18 @@ import { requireAuth } from "../lib/auth";
 const router: IRouter = Router();
 
 router.get("/attendance", requireAuth, async (req, res): Promise<void> => {
-  const studentId =
-    typeof req.query["studentId"] === "string" ? req.query["studentId"] : undefined;
-  const records = studentId
-    ? await db.select().from(attendanceTable).where(eq(attendanceTable.studentId, studentId))
-    : await db.select().from(attendanceTable);
+  const subjectId =
+    typeof req.query["subjectId"] === "string" ? req.query["subjectId"] : undefined;
+  const date = typeof req.query["date"] === "string" ? req.query["date"] : undefined;
+
+  const conditions: SQL[] = [];
+  if (subjectId) conditions.push(eq(attendanceTable.subjectId, subjectId));
+  if (date) conditions.push(eq(attendanceTable.tanggal, date));
+
+  const records =
+    conditions.length > 0
+      ? await db.select().from(attendanceTable).where(and(...conditions))
+      : await db.select().from(attendanceTable);
   res.json(ListAttendanceResponse.parse(records));
 });
 
@@ -26,7 +33,14 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const [record] = await db.insert(attendanceTable).values(parsed.data).returning();
+  const [record] = await db
+    .insert(attendanceTable)
+    .values(parsed.data)
+    .onConflictDoUpdate({
+      target: [attendanceTable.studentId, attendanceTable.subjectId, attendanceTable.tanggal],
+      set: { status: parsed.data.status },
+    })
+    .returning();
   res.status(201).json(CreateAttendanceRecordResponse.parse(record));
 });
 

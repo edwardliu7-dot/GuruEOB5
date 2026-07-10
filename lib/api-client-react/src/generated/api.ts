@@ -24,6 +24,8 @@ import type {
   AdminDocumentInput,
   AttendanceRecord,
   AttendanceRecordInput,
+  BulkCreatePointsInput,
+  BulkCreatePointsResult,
   BulkCreateStudentsInput,
   BulkCreateStudentsResult,
   DashboardSummary,
@@ -2857,5 +2859,76 @@ export const useCreatePoint = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreatePointMutationOptions(options));
+    }
+
+export const getBulkCreatePointsUrl = () => {
+
+
+
+
+  return `/api/points/bulk`
+}
+
+/**
+ * @summary Record the same point entry for a group of students
+ */
+export const bulkCreatePoints = async (bulkCreatePointsInput: BulkCreatePointsInput, options?: RequestInit): Promise<BulkCreatePointsResult> => {
+
+  return customFetch<BulkCreatePointsResult>(getBulkCreatePointsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bulkCreatePointsInput)
+  }
+);}
+
+
+
+
+
+export const getBulkCreatePointsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreatePoints>>, TError,{data: BodyType<BulkCreatePointsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkCreatePoints>>, TError,{data: BodyType<BulkCreatePointsInput>}, TContext> => {
+
+const mutationKey = ['bulkCreatePoints'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkCreatePoints>>, {data: BodyType<BulkCreatePointsInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkCreatePoints(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkCreatePointsMutationResult = NonNullable<Awaited<ReturnType<typeof bulkCreatePoints>>>
+    export type BulkCreatePointsMutationBody = BodyType<BulkCreatePointsInput>
+    export type BulkCreatePointsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Record the same point entry for a group of students
+ */
+export const useBulkCreatePoints = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreatePoints>>, TError,{data: BodyType<BulkCreatePointsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof bulkCreatePoints>>,
+        TError,
+        {data: BodyType<BulkCreatePointsInput>},
+        TContext
+      > => {
+      return useMutation(getBulkCreatePointsMutationOptions(options));
     }
 

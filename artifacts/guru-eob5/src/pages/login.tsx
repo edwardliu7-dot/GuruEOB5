@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import logoUrl from "@/assets/logo.png";
 import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
@@ -54,11 +54,8 @@ export default function Login() {
     <div className="min-h-screen flex w-full bg-[#F8FAFC]">
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
         <div className="mx-auto w-full max-w-sm lg:w-[360px]">
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 rounded bg-primary flex items-center justify-center text-primary-foreground">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <span className="font-serif font-bold text-2xl tracking-tight text-foreground">GuruEOB5</span>
+          <div className="flex items-center justify-center mb-8">
+            <img src={logoUrl} alt="GuruEOB5" className="h-24 w-auto" />
           </div>
 
           <Card className="border-0 shadow-xl shadow-black/5 ring-1 ring-black/5">

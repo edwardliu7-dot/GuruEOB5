@@ -167,7 +167,13 @@ export default function Siswa() {
       const result = await bulkCreate.mutateAsync({
         data: { students: importRows.map((r) => ({ ...r, nisn: r.nisn?.trim() || undefined })) },
       });
-      toast({ title: "Import Berhasil", description: `${result.count} data siswa ditambahkan` });
+      toast({
+        title: "Import Berhasil",
+        description:
+          result.skipped > 0
+            ? `${result.count} data siswa ditambahkan, ${result.skipped} dilewati karena duplikat`
+            : `${result.count} data siswa ditambahkan`,
+      });
       setIsVerifyOpen(false);
       setImportRows([]);
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
