@@ -15,5 +15,11 @@ export interface UpdateTeacherInput {
   waliKelasKelas?: string;
   kelasDiampu?: string[];
   school?: string;
+  /** @maxLength 500 */
   bio?: string;
+  /**
+     * @maxLength 400000
+     * @pattern ^$|^data:image/(jpeg|png|webp);base64,|^https?://
+     */
+  photoUrl?: string;
 }

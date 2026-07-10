@@ -75,9 +75,12 @@ router.patch("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  const updates: Partial<typeof gurusTable.$inferInsert> = { ...parsed.data };
+  if (parsed.data.photoUrl === "") updates.photoUrl = null;
+
   const [guru] = await neonDb
     .update(gurusTable)
-    .set(parsed.data)
+    .set(updates)
     .where(
       isSelf
         ? eq(gurusTable.id, params.data.id)

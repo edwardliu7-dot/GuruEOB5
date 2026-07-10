@@ -13,6 +13,7 @@ Accounts (`gurus` table) live in an external Neon DB shared with two other apps 
 - Mutations too: admin-privileged update/delete on `gurus` must also be school-scoped (except self-mutation), otherwise the global admin can alter accounts belonging to the other apps' schools (IDOR found in review).
 - Local app data reads that feed multi-teacher views (dashboards, role overviews) must also filter by `school`, since the local DB can hold data for multiple schools.
 - Test accounts created during e2e runs are written to the real shared DB — always delete them at the end of the test.
+- Profile fields on `gurus` (`bio`, `photo_url`) are shared across all three apps. Photos are stored as client-resized (≤256px) JPEG **data URLs** directly in `photo_url` — chosen over object storage so BLP/TOMAT render them with zero cross-app infra. Server validates `photoUrl` length + scheme; clearing normalizes `""` → `null`. Keep any new shared profile field cross-app safe (no app-local hosting).
 
 **Why:** Post-build architect review found authenticated users could enumerate real teachers from the other apps via `/teachers` and role overviews; runtime responses contained real foreign usernames.
 

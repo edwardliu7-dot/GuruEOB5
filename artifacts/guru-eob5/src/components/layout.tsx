@@ -1,13 +1,25 @@
 import { Link, useLocation } from "wouter";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { LogOut, LayoutDashboard, FolderOpen, Users, UserCircle, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ProfileDialog } from "@/components/profile-dialog";
 import { formatJabatan } from "@/lib/options";
 import logoUrl from "@/assets/logo.png";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const initials = (user?.name ?? "?")
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   const handleLogout = async () => {
     await logout();
@@ -94,15 +106,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
         
         <div className="p-4 border-t border-sidebar-border shrink-0">
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-9 h-9 rounded-full bg-sidebar-accent flex items-center justify-center">
-              <UserCircle className="w-5 h-5 text-sidebar-foreground/70" />
-            </div>
+          <button
+            type="button"
+            onClick={() => setProfileOpen(true)}
+            className="w-full flex items-center gap-3 mb-4 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/50 transition-colors text-left"
+          >
+            <Avatar className="w-9 h-9">
+              {user?.photoUrl ? <AvatarImage src={user.photoUrl} alt={user.name} /> : null}
+              <AvatarFallback className="bg-sidebar-accent text-sidebar-foreground/70 text-xs">{initials}</AvatarFallback>
+            </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user?.name}</p>
               <p className="text-xs text-sidebar-foreground/50 truncate">{formatJabatan(user?.jabatan)}</p>
             </div>
-          </div>
+          </button>
           <Button 
             variant="ghost" 
             className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50" 
@@ -113,6 +130,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
       </aside>
+
+      <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#F8FAFC]">
