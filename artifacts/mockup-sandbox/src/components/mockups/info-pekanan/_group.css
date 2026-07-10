@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+.ip-root {
+  --ip-cream: 40 33% 98%;
+  --ip-navy: 220 50% 15%;
+  --ip-blue: 215 80% 40%;
+  --ip-gold: 38 92% 50%;
+  --ip-muted-fg: 220 15% 45%;
+  --ip-border: 220 20% 90%;
+  --ip-green: 160 55% 40%;
+  --ip-red: 0 74% 52%;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.ip-root h1, .ip-root h2, .ip-root h3 {
+  font-family: 'Playfair Display', serif;
+  letter-spacing: -0.02em;
+}
