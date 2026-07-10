@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileDialog } from "@/components/profile-dialog";
@@ -32,7 +32,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/administrasi", label: "Administrasi", icon: FolderOpen },
     ...(isAdmin ? [{ href: "/siswa", label: "Data Siswa", icon: Users }] : []),
+    ...(isAdmin ? [{ href: "/kalender", label: "Kalender Akademik", icon: CalendarDays }] : []),
+    { href: "/prosem", label: "Program Semester", icon: CalendarRange },
     { href: "/jurnal", label: "Jurnal Mengajar", icon: BookOpen },
+    { href: "/info-pekanan", label: "Info Pekanan", icon: Megaphone },
     { href: "/absensi", label: "Absensi", icon: ClipboardCheck },
     { href: "/nilai", label: "Nilai", icon: GraduationCap },
     { href: "/poin", label: "Poin Siswa", icon: Star },

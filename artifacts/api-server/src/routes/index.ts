@@ -11,6 +11,9 @@ import journalRouter from "./journal";
 import attendanceRouter from "./attendance";
 import gradesRouter from "./grades";
 import pointsRouter from "./points";
+import academicCalendarsRouter from "./academic-calendars";
+import prosemRouter from "./prosem";
+import infoPekananRouter from "./info-pekanan";
 
 const router: IRouter = Router();
 
@@ -26,5 +29,8 @@ router.use(journalRouter);
 router.use(attendanceRouter);
 router.use(gradesRouter);
 router.use(pointsRouter);
+router.use(academicCalendarsRouter);
+router.use(prosemRouter);
+router.use(infoPekananRouter);
 
 export default router;

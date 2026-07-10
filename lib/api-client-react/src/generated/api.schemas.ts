@@ -469,6 +469,112 @@ export interface WaliKelasRekap {
   siswa: WaliKelasSiswaRekap[];
 }
 
+export interface AcademicCalendar {
+  id: string;
+  school: string;
+  createdBy: string;
+  tahunAjaran: string;
+  semester: string;
+  createdAt: string;
+}
+
+export interface AcademicCalendarInput {
+  /** @minLength 1 */
+  tahunAjaran: string;
+  /** @minLength 1 */
+  semester: string;
+}
+
+export interface AcademicWeek {
+  id: string;
+  calendarId: string;
+  pekanKe: number;
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  jenis: string;
+  keterangan?: string | null;
+  createdAt: string;
+}
+
+export interface AcademicWeekInput {
+  /** @minLength 1 */
+  calendarId: string;
+  pekanKe: number;
+  /** @minLength 1 */
+  tanggalMulai: string;
+  /** @minLength 1 */
+  tanggalSelesai: string;
+  /** @minLength 1 */
+  jenis: string;
+  keterangan?: string | null;
+}
+
+export interface Prosem {
+  id: string;
+  teacherId: string;
+  subjectId: string;
+  calendarId: string;
+  kelas: string;
+  createdAt: string;
+}
+
+export interface ProsemInput {
+  /** @minLength 1 */
+  subjectId: string;
+  /** @minLength 1 */
+  calendarId: string;
+  /** @minLength 1 */
+  kelas: string;
+}
+
+export interface ProsemItem {
+  id: string;
+  prosemId: string;
+  weekId: string;
+  kd?: string | null;
+  materi: string;
+  jp?: number | null;
+  catatan?: string | null;
+  createdAt: string;
+}
+
+export interface ProsemItemInput {
+  /** @minLength 1 */
+  prosemId: string;
+  /** @minLength 1 */
+  weekId: string;
+  kd?: string | null;
+  /** @minLength 1 */
+  materi: string;
+  jp?: number | null;
+  catatan?: string | null;
+}
+
+export interface InfoPekananItem {
+  prosemItemId?: string | null;
+  subjectId: string;
+  subjectName: string;
+  kelas: string;
+  kd?: string | null;
+  materi: string;
+  jp?: number | null;
+  status: string;
+  journalEntryId?: string | null;
+}
+
+export interface InfoPekanan {
+  weekId?: string | null;
+  pekanKe?: number | null;
+  tanggalMulai?: string | null;
+  tanggalSelesai?: string | null;
+  jenis?: string | null;
+  totalRencana: number;
+  totalSesuai: number;
+  totalTertinggal: number;
+  totalDiDepan: number;
+  items: InfoPekananItem[];
+}
+
 export type ListStudentsParams = {
 search?: string;
 };
@@ -493,5 +599,23 @@ studentId?: string;
 
 export type ListPointsParams = {
 studentId?: string;
+};
+
+export type ListAcademicWeeksParams = {
+calendarId?: string;
+};
+
+export type ListProsemParams = {
+calendarId?: string;
+subjectId?: string;
+};
+
+export type ListProsemItemsParams = {
+prosemId?: string;
+};
+
+export type GetInfoPekananParams = {
+calendarId?: string;
+weekId?: string;
 };
 

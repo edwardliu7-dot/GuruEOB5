@@ -5,3 +5,5 @@ export * from "./journal";
 export * from "./attendance";
 export * from "./grades";
 export * from "./points";
+export * from "./academic-calendar";
+export * from "./prosem";

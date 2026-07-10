@@ -1,4 +1,5 @@
 - [Shared Neon accounts DB](shared-neon-accounts.md) — gurus table is shared across apps; plaintext passwords intentional; every read must be school-scoped or foreign accounts leak.
 - [OpenAPI date fields](openapi-date-fields.md) — timestamp fields need `format: date-time` in openapi.yaml or orval's date coercion never kicks in, causing Zod parse failures on Drizzle `Date` objects.
 - [Route path drift](route-path-drift.md) — backend route paths can silently drift from the OpenAPI spec (e.g. `/journal-entries` vs `/journal`); frontend hooks are generated from the spec so a mismatch causes 404s only at runtime, not typecheck.
+- [Tenant/ownership authz predicates](tenant-authz-predicates.md) — UPDATE/DELETE must bind to the target row's existing owner/school (never trust body FKs); empty `guru.school` must return empty/404, not a cross-school fallback.
 - [Prod session cookies](prod-session-cookies.md) — behind Replit's proxy, secure cookies need trust proxy + a PG session store; connect-pg-simple's createTableIfMissing breaks under esbuild bundling.

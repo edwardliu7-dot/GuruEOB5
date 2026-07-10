@@ -11,6 +11,9 @@ import Dashboard from "@/pages/dashboard";
 import Administrasi from "@/pages/administrasi";
 import Siswa from "@/pages/siswa";
 import Jurnal from "@/pages/jurnal";
+import Kalender from "@/pages/kalender";
+import Prosem from "@/pages/prosem";
+import InfoPekanan from "@/pages/info-pekanan";
 import Absensi from "@/pages/absensi";
 import Nilai from "@/pages/nilai";
 import Poin from "@/pages/poin";
@@ -59,6 +62,9 @@ function Router() {
       <Route path="/administrasi" component={() => <ProtectedRoute component={Administrasi} />} />
       <Route path="/siswa" component={() => <ProtectedRoute component={Siswa} adminOnly />} />
       <Route path="/jurnal" component={() => <ProtectedRoute component={Jurnal} />} />
+      <Route path="/kalender" component={() => <ProtectedRoute component={Kalender} adminOnly />} />
+      <Route path="/prosem" component={() => <ProtectedRoute component={Prosem} />} />
+      <Route path="/info-pekanan" component={() => <ProtectedRoute component={InfoPekanan} />} />
       <Route path="/absensi" component={() => <ProtectedRoute component={Absensi} />} />
       <Route path="/nilai" component={() => <ProtectedRoute component={Nilai} />} />
       <Route path="/poin" component={() => <ProtectedRoute component={Poin} />} />

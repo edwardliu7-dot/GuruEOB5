@@ -20,6 +20,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AcademicCalendar,
+  AcademicCalendarInput,
+  AcademicWeek,
+  AcademicWeekInput,
   AdminDocument,
   AdminDocumentInput,
   AttendanceRecord,
@@ -32,23 +36,32 @@ import type {
   BulkCreateStudentsInput,
   BulkCreateStudentsResult,
   DashboardSummary,
+  GetInfoPekananParams,
   Grade,
   GradeInput,
   HealthStatus,
+  InfoPekanan,
   JournalEntry,
   JournalEntryInput,
   KepsekOverview,
   KesiswaanOverview,
   KurikulumOverview,
+  ListAcademicWeeksParams,
   ListAttendanceParams,
   ListDocumentsParams,
   ListGradesParams,
   ListJournalEntriesParams,
   ListPointsParams,
+  ListProsemItemsParams,
+  ListProsemParams,
   ListStudentsParams,
   LoginInput,
   PointRecord,
   PointRecordInput,
+  Prosem,
+  ProsemInput,
+  ProsemItem,
+  ProsemItemInput,
   RegisterInput,
   Student,
   StudentImportAnalyzeInput,
@@ -3076,4 +3089,1129 @@ export const useBulkCreatePoints = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getBulkCreatePointsMutationOptions(options));
     }
+
+export const getListAcademicCalendarsUrl = () => {
+
+
+
+
+  return `/api/academic-calendars`
+}
+
+/**
+ * @summary List academic calendars for the current school
+ */
+export const listAcademicCalendars = async ( options?: RequestInit): Promise<AcademicCalendar[]> => {
+
+  return customFetch<AcademicCalendar[]>(getListAcademicCalendarsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAcademicCalendarsQueryKey = () => {
+    return [
+    `/api/academic-calendars`
+    ] as const;
+    }
+
+
+export const getListAcademicCalendarsQueryOptions = <TData = Awaited<ReturnType<typeof listAcademicCalendars>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAcademicCalendars>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAcademicCalendarsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAcademicCalendars>>> = ({ signal }) => listAcademicCalendars({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAcademicCalendars>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAcademicCalendarsQueryResult = NonNullable<Awaited<ReturnType<typeof listAcademicCalendars>>>
+export type ListAcademicCalendarsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List academic calendars for the current school
+ */
+
+export function useListAcademicCalendars<TData = Awaited<ReturnType<typeof listAcademicCalendars>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAcademicCalendars>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAcademicCalendarsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAcademicCalendarUrl = () => {
+
+
+
+
+  return `/api/academic-calendars`
+}
+
+/**
+ * @summary Create an academic calendar (admin only)
+ */
+export const createAcademicCalendar = async (academicCalendarInput: AcademicCalendarInput, options?: RequestInit): Promise<AcademicCalendar> => {
+
+  return customFetch<AcademicCalendar>(getCreateAcademicCalendarUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(academicCalendarInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAcademicCalendarMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAcademicCalendar>>, TError,{data: BodyType<AcademicCalendarInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAcademicCalendar>>, TError,{data: BodyType<AcademicCalendarInput>}, TContext> => {
+
+const mutationKey = ['createAcademicCalendar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAcademicCalendar>>, {data: BodyType<AcademicCalendarInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAcademicCalendar(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAcademicCalendarMutationResult = NonNullable<Awaited<ReturnType<typeof createAcademicCalendar>>>
+    export type CreateAcademicCalendarMutationBody = BodyType<AcademicCalendarInput>
+    export type CreateAcademicCalendarMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create an academic calendar (admin only)
+ */
+export const useCreateAcademicCalendar = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAcademicCalendar>>, TError,{data: BodyType<AcademicCalendarInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAcademicCalendar>>,
+        TError,
+        {data: BodyType<AcademicCalendarInput>},
+        TContext
+      > => {
+      return useMutation(getCreateAcademicCalendarMutationOptions(options));
+    }
+
+export const getDeleteAcademicCalendarUrl = (id: string,) => {
+
+
+
+
+  return `/api/academic-calendars/${id}`
+}
+
+/**
+ * @summary Delete an academic calendar (admin only)
+ */
+export const deleteAcademicCalendar = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteAcademicCalendarUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAcademicCalendarMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAcademicCalendar>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAcademicCalendar>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteAcademicCalendar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAcademicCalendar>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAcademicCalendar(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAcademicCalendarMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAcademicCalendar>>>
+
+    export type DeleteAcademicCalendarMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete an academic calendar (admin only)
+ */
+export const useDeleteAcademicCalendar = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAcademicCalendar>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAcademicCalendar>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAcademicCalendarMutationOptions(options));
+    }
+
+export const getListAcademicWeeksUrl = (params?: ListAcademicWeeksParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/academic-weeks?${stringifiedParams}` : `/api/academic-weeks`
+}
+
+/**
+ * @summary List weeks of a calendar
+ */
+export const listAcademicWeeks = async (params?: ListAcademicWeeksParams, options?: RequestInit): Promise<AcademicWeek[]> => {
+
+  return customFetch<AcademicWeek[]>(getListAcademicWeeksUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAcademicWeeksQueryKey = (params?: ListAcademicWeeksParams,) => {
+    return [
+    `/api/academic-weeks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAcademicWeeksQueryOptions = <TData = Awaited<ReturnType<typeof listAcademicWeeks>>, TError = ErrorType<unknown>>(params?: ListAcademicWeeksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAcademicWeeks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAcademicWeeksQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAcademicWeeks>>> = ({ signal }) => listAcademicWeeks(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAcademicWeeks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAcademicWeeksQueryResult = NonNullable<Awaited<ReturnType<typeof listAcademicWeeks>>>
+export type ListAcademicWeeksQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List weeks of a calendar
+ */
+
+export function useListAcademicWeeks<TData = Awaited<ReturnType<typeof listAcademicWeeks>>, TError = ErrorType<unknown>>(
+ params?: ListAcademicWeeksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAcademicWeeks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAcademicWeeksQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAcademicWeekUrl = () => {
+
+
+
+
+  return `/api/academic-weeks`
+}
+
+/**
+ * @summary Create an academic week (admin only)
+ */
+export const createAcademicWeek = async (academicWeekInput: AcademicWeekInput, options?: RequestInit): Promise<AcademicWeek> => {
+
+  return customFetch<AcademicWeek>(getCreateAcademicWeekUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(academicWeekInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAcademicWeekMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAcademicWeek>>, TError,{data: BodyType<AcademicWeekInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAcademicWeek>>, TError,{data: BodyType<AcademicWeekInput>}, TContext> => {
+
+const mutationKey = ['createAcademicWeek'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAcademicWeek>>, {data: BodyType<AcademicWeekInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAcademicWeek(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAcademicWeekMutationResult = NonNullable<Awaited<ReturnType<typeof createAcademicWeek>>>
+    export type CreateAcademicWeekMutationBody = BodyType<AcademicWeekInput>
+    export type CreateAcademicWeekMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create an academic week (admin only)
+ */
+export const useCreateAcademicWeek = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAcademicWeek>>, TError,{data: BodyType<AcademicWeekInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAcademicWeek>>,
+        TError,
+        {data: BodyType<AcademicWeekInput>},
+        TContext
+      > => {
+      return useMutation(getCreateAcademicWeekMutationOptions(options));
+    }
+
+export const getUpdateAcademicWeekUrl = (id: string,) => {
+
+
+
+
+  return `/api/academic-weeks/${id}`
+}
+
+/**
+ * @summary Update an academic week (admin only)
+ */
+export const updateAcademicWeek = async (id: string,
+    academicWeekInput: AcademicWeekInput, options?: RequestInit): Promise<AcademicWeek> => {
+
+  return customFetch<AcademicWeek>(getUpdateAcademicWeekUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(academicWeekInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateAcademicWeekMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAcademicWeek>>, TError,{id: string;data: BodyType<AcademicWeekInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAcademicWeek>>, TError,{id: string;data: BodyType<AcademicWeekInput>}, TContext> => {
+
+const mutationKey = ['updateAcademicWeek'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAcademicWeek>>, {id: string;data: BodyType<AcademicWeekInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateAcademicWeek(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAcademicWeekMutationResult = NonNullable<Awaited<ReturnType<typeof updateAcademicWeek>>>
+    export type UpdateAcademicWeekMutationBody = BodyType<AcademicWeekInput>
+    export type UpdateAcademicWeekMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update an academic week (admin only)
+ */
+export const useUpdateAcademicWeek = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAcademicWeek>>, TError,{id: string;data: BodyType<AcademicWeekInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAcademicWeek>>,
+        TError,
+        {id: string;data: BodyType<AcademicWeekInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateAcademicWeekMutationOptions(options));
+    }
+
+export const getDeleteAcademicWeekUrl = (id: string,) => {
+
+
+
+
+  return `/api/academic-weeks/${id}`
+}
+
+/**
+ * @summary Delete an academic week (admin only)
+ */
+export const deleteAcademicWeek = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteAcademicWeekUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAcademicWeekMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAcademicWeek>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAcademicWeek>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteAcademicWeek'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAcademicWeek>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAcademicWeek(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAcademicWeekMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAcademicWeek>>>
+
+    export type DeleteAcademicWeekMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete an academic week (admin only)
+ */
+export const useDeleteAcademicWeek = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAcademicWeek>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAcademicWeek>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAcademicWeekMutationOptions(options));
+    }
+
+export const getListProsemUrl = (params?: ListProsemParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/prosem?${stringifiedParams}` : `/api/prosem`
+}
+
+/**
+ * @summary List the current teacher's prosem entries
+ */
+export const listProsem = async (params?: ListProsemParams, options?: RequestInit): Promise<Prosem[]> => {
+
+  return customFetch<Prosem[]>(getListProsemUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListProsemQueryKey = (params?: ListProsemParams,) => {
+    return [
+    `/api/prosem`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListProsemQueryOptions = <TData = Awaited<ReturnType<typeof listProsem>>, TError = ErrorType<unknown>>(params?: ListProsemParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProsem>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProsemQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProsem>>> = ({ signal }) => listProsem(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProsem>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListProsemQueryResult = NonNullable<Awaited<ReturnType<typeof listProsem>>>
+export type ListProsemQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List the current teacher's prosem entries
+ */
+
+export function useListProsem<TData = Awaited<ReturnType<typeof listProsem>>, TError = ErrorType<unknown>>(
+ params?: ListProsemParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProsem>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListProsemQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateProsemUrl = () => {
+
+
+
+
+  return `/api/prosem`
+}
+
+/**
+ * @summary Create a prosem entry
+ */
+export const createProsem = async (prosemInput: ProsemInput, options?: RequestInit): Promise<Prosem> => {
+
+  return customFetch<Prosem>(getCreateProsemUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(prosemInput)
+  }
+);}
+
+
+
+
+
+export const getCreateProsemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProsem>>, TError,{data: BodyType<ProsemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProsem>>, TError,{data: BodyType<ProsemInput>}, TContext> => {
+
+const mutationKey = ['createProsem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProsem>>, {data: BodyType<ProsemInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createProsem(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateProsemMutationResult = NonNullable<Awaited<ReturnType<typeof createProsem>>>
+    export type CreateProsemMutationBody = BodyType<ProsemInput>
+    export type CreateProsemMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a prosem entry
+ */
+export const useCreateProsem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProsem>>, TError,{data: BodyType<ProsemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createProsem>>,
+        TError,
+        {data: BodyType<ProsemInput>},
+        TContext
+      > => {
+      return useMutation(getCreateProsemMutationOptions(options));
+    }
+
+export const getDeleteProsemUrl = (id: string,) => {
+
+
+
+
+  return `/api/prosem/${id}`
+}
+
+/**
+ * @summary Delete a prosem entry
+ */
+export const deleteProsem = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteProsemUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteProsemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProsem>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProsem>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteProsem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProsem>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteProsem(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProsemMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProsem>>>
+
+    export type DeleteProsemMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a prosem entry
+ */
+export const useDeleteProsem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProsem>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProsem>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteProsemMutationOptions(options));
+    }
+
+export const getListProsemItemsUrl = (params?: ListProsemItemsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/prosem-items?${stringifiedParams}` : `/api/prosem-items`
+}
+
+/**
+ * @summary List items of a prosem
+ */
+export const listProsemItems = async (params?: ListProsemItemsParams, options?: RequestInit): Promise<ProsemItem[]> => {
+
+  return customFetch<ProsemItem[]>(getListProsemItemsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListProsemItemsQueryKey = (params?: ListProsemItemsParams,) => {
+    return [
+    `/api/prosem-items`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListProsemItemsQueryOptions = <TData = Awaited<ReturnType<typeof listProsemItems>>, TError = ErrorType<unknown>>(params?: ListProsemItemsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProsemItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProsemItemsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProsemItems>>> = ({ signal }) => listProsemItems(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProsemItems>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListProsemItemsQueryResult = NonNullable<Awaited<ReturnType<typeof listProsemItems>>>
+export type ListProsemItemsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List items of a prosem
+ */
+
+export function useListProsemItems<TData = Awaited<ReturnType<typeof listProsemItems>>, TError = ErrorType<unknown>>(
+ params?: ListProsemItemsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProsemItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListProsemItemsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateProsemItemUrl = () => {
+
+
+
+
+  return `/api/prosem-items`
+}
+
+/**
+ * @summary Create a prosem item
+ */
+export const createProsemItem = async (prosemItemInput: ProsemItemInput, options?: RequestInit): Promise<ProsemItem> => {
+
+  return customFetch<ProsemItem>(getCreateProsemItemUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(prosemItemInput)
+  }
+);}
+
+
+
+
+
+export const getCreateProsemItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProsemItem>>, TError,{data: BodyType<ProsemItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProsemItem>>, TError,{data: BodyType<ProsemItemInput>}, TContext> => {
+
+const mutationKey = ['createProsemItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProsemItem>>, {data: BodyType<ProsemItemInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createProsemItem(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateProsemItemMutationResult = NonNullable<Awaited<ReturnType<typeof createProsemItem>>>
+    export type CreateProsemItemMutationBody = BodyType<ProsemItemInput>
+    export type CreateProsemItemMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a prosem item
+ */
+export const useCreateProsemItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProsemItem>>, TError,{data: BodyType<ProsemItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createProsemItem>>,
+        TError,
+        {data: BodyType<ProsemItemInput>},
+        TContext
+      > => {
+      return useMutation(getCreateProsemItemMutationOptions(options));
+    }
+
+export const getUpdateProsemItemUrl = (id: string,) => {
+
+
+
+
+  return `/api/prosem-items/${id}`
+}
+
+/**
+ * @summary Update a prosem item
+ */
+export const updateProsemItem = async (id: string,
+    prosemItemInput: ProsemItemInput, options?: RequestInit): Promise<ProsemItem> => {
+
+  return customFetch<ProsemItem>(getUpdateProsemItemUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(prosemItemInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateProsemItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProsemItem>>, TError,{id: string;data: BodyType<ProsemItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProsemItem>>, TError,{id: string;data: BodyType<ProsemItemInput>}, TContext> => {
+
+const mutationKey = ['updateProsemItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProsemItem>>, {id: string;data: BodyType<ProsemItemInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateProsemItem(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProsemItemMutationResult = NonNullable<Awaited<ReturnType<typeof updateProsemItem>>>
+    export type UpdateProsemItemMutationBody = BodyType<ProsemItemInput>
+    export type UpdateProsemItemMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a prosem item
+ */
+export const useUpdateProsemItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProsemItem>>, TError,{id: string;data: BodyType<ProsemItemInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateProsemItem>>,
+        TError,
+        {id: string;data: BodyType<ProsemItemInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateProsemItemMutationOptions(options));
+    }
+
+export const getDeleteProsemItemUrl = (id: string,) => {
+
+
+
+
+  return `/api/prosem-items/${id}`
+}
+
+/**
+ * @summary Delete a prosem item
+ */
+export const deleteProsemItem = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteProsemItemUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteProsemItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProsemItem>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProsemItem>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteProsemItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProsemItem>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteProsemItem(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProsemItemMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProsemItem>>>
+
+    export type DeleteProsemItemMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a prosem item
+ */
+export const useDeleteProsemItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProsemItem>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProsemItem>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteProsemItemMutationOptions(options));
+    }
+
+export const getGetInfoPekananUrl = (params?: GetInfoPekananParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/info-pekanan?${stringifiedParams}` : `/api/info-pekanan`
+}
+
+/**
+ * @summary Weekly info comparison (rencana from prosem vs realisasi from journal)
+ */
+export const getInfoPekanan = async (params?: GetInfoPekananParams, options?: RequestInit): Promise<InfoPekanan> => {
+
+  return customFetch<InfoPekanan>(getGetInfoPekananUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetInfoPekananQueryKey = (params?: GetInfoPekananParams,) => {
+    return [
+    `/api/info-pekanan`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetInfoPekananQueryOptions = <TData = Awaited<ReturnType<typeof getInfoPekanan>>, TError = ErrorType<unknown>>(params?: GetInfoPekananParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInfoPekanan>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInfoPekananQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInfoPekanan>>> = ({ signal }) => getInfoPekanan(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInfoPekanan>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetInfoPekananQueryResult = NonNullable<Awaited<ReturnType<typeof getInfoPekanan>>>
+export type GetInfoPekananQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Weekly info comparison (rencana from prosem vs realisasi from journal)
+ */
+
+export function useGetInfoPekanan<TData = Awaited<ReturnType<typeof getInfoPekanan>>, TError = ErrorType<unknown>>(
+ params?: GetInfoPekananParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getInfoPekanan>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetInfoPekananQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 

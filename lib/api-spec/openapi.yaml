@@ -30,6 +30,12 @@ tags:
     description: Administrative documents
   - name: dashboard
     description: Dashboard aggregates
+  - name: academic-calendar
+    description: Academic calendar and weeks (admin-managed)
+  - name: prosem
+    description: Program semester (per-teacher lesson plan)
+  - name: info-pekanan
+    description: Weekly info (rencana vs realisasi)
 paths:
   /healthz:
     get:
@@ -696,6 +702,269 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BulkCreatePointsResult"
+
+  /academic-calendars:
+    get:
+      operationId: listAcademicCalendars
+      tags: [academic-calendar]
+      summary: List academic calendars for the current school
+      responses:
+        "200":
+          description: List of academic calendars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AcademicCalendar"
+    post:
+      operationId: createAcademicCalendar
+      tags: [academic-calendar]
+      summary: Create an academic calendar (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcademicCalendarInput"
+      responses:
+        "200":
+          description: Created academic calendar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcademicCalendar"
+  /academic-calendars/{id}:
+    delete:
+      operationId: deleteAcademicCalendar
+      tags: [academic-calendar]
+      summary: Delete an academic calendar (admin only)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /academic-weeks:
+    get:
+      operationId: listAcademicWeeks
+      tags: [academic-calendar]
+      summary: List weeks of a calendar
+      parameters:
+        - name: calendarId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of academic weeks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AcademicWeek"
+    post:
+      operationId: createAcademicWeek
+      tags: [academic-calendar]
+      summary: Create an academic week (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcademicWeekInput"
+      responses:
+        "200":
+          description: Created academic week
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcademicWeek"
+  /academic-weeks/{id}:
+    put:
+      operationId: updateAcademicWeek
+      tags: [academic-calendar]
+      summary: Update an academic week (admin only)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcademicWeekInput"
+      responses:
+        "200":
+          description: Updated academic week
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcademicWeek"
+    delete:
+      operationId: deleteAcademicWeek
+      tags: [academic-calendar]
+      summary: Delete an academic week (admin only)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /prosem:
+    get:
+      operationId: listProsem
+      tags: [prosem]
+      summary: List the current teacher's prosem entries
+      parameters:
+        - name: calendarId
+          in: query
+          schema:
+            type: string
+        - name: subjectId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of prosem
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Prosem"
+    post:
+      operationId: createProsem
+      tags: [prosem]
+      summary: Create a prosem entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProsemInput"
+      responses:
+        "200":
+          description: Created prosem
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Prosem"
+  /prosem/{id}:
+    delete:
+      operationId: deleteProsem
+      tags: [prosem]
+      summary: Delete a prosem entry
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /prosem-items:
+    get:
+      operationId: listProsemItems
+      tags: [prosem]
+      summary: List items of a prosem
+      parameters:
+        - name: prosemId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of prosem items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProsemItem"
+    post:
+      operationId: createProsemItem
+      tags: [prosem]
+      summary: Create a prosem item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProsemItemInput"
+      responses:
+        "200":
+          description: Created prosem item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProsemItem"
+  /prosem-items/{id}:
+    put:
+      operationId: updateProsemItem
+      tags: [prosem]
+      summary: Update a prosem item
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProsemItemInput"
+      responses:
+        "200":
+          description: Updated prosem item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProsemItem"
+    delete:
+      operationId: deleteProsemItem
+      tags: [prosem]
+      summary: Delete a prosem item
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /info-pekanan:
+    get:
+      operationId: getInfoPekanan
+      tags: [info-pekanan]
+      summary: Weekly info comparison (rencana from prosem vs realisasi from journal)
+      parameters:
+        - name: calendarId
+          in: query
+          schema:
+            type: string
+        - name: weekId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Weekly info payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoPekanan"
 
 components:
   parameters:
@@ -1382,4 +1651,217 @@ components:
           items:
             $ref: "#/components/schemas/WaliKelasSiswaRekap"
       required: [kelas, siswa]
+
+    AcademicCalendar:
+      type: object
+      properties:
+        id:
+          type: string
+        school:
+          type: string
+        createdBy:
+          type: string
+        tahunAjaran:
+          type: string
+        semester:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, school, createdBy, tahunAjaran, semester, createdAt]
+
+    AcademicCalendarInput:
+      type: object
+      properties:
+        tahunAjaran:
+          type: string
+          minLength: 1
+        semester:
+          type: string
+          minLength: 1
+      required: [tahunAjaran, semester]
+
+    AcademicWeek:
+      type: object
+      properties:
+        id:
+          type: string
+        calendarId:
+          type: string
+        pekanKe:
+          type: integer
+        tanggalMulai:
+          type: string
+        tanggalSelesai:
+          type: string
+        jenis:
+          type: string
+        keterangan:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, calendarId, pekanKe, tanggalMulai, tanggalSelesai, jenis, createdAt]
+
+    AcademicWeekInput:
+      type: object
+      properties:
+        calendarId:
+          type: string
+          minLength: 1
+        pekanKe:
+          type: integer
+        tanggalMulai:
+          type: string
+          minLength: 1
+        tanggalSelesai:
+          type: string
+          minLength: 1
+        jenis:
+          type: string
+          minLength: 1
+        keterangan:
+          type: string
+          nullable: true
+      required: [calendarId, pekanKe, tanggalMulai, tanggalSelesai, jenis]
+
+    Prosem:
+      type: object
+      properties:
+        id:
+          type: string
+        teacherId:
+          type: string
+        subjectId:
+          type: string
+        calendarId:
+          type: string
+        kelas:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, teacherId, subjectId, calendarId, kelas, createdAt]
+
+    ProsemInput:
+      type: object
+      properties:
+        subjectId:
+          type: string
+          minLength: 1
+        calendarId:
+          type: string
+          minLength: 1
+        kelas:
+          type: string
+          minLength: 1
+      required: [subjectId, calendarId, kelas]
+
+    ProsemItem:
+      type: object
+      properties:
+        id:
+          type: string
+        prosemId:
+          type: string
+        weekId:
+          type: string
+        kd:
+          type: string
+          nullable: true
+        materi:
+          type: string
+        jp:
+          type: integer
+          nullable: true
+        catatan:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, prosemId, weekId, materi, createdAt]
+
+    ProsemItemInput:
+      type: object
+      properties:
+        prosemId:
+          type: string
+          minLength: 1
+        weekId:
+          type: string
+          minLength: 1
+        kd:
+          type: string
+          nullable: true
+        materi:
+          type: string
+          minLength: 1
+        jp:
+          type: integer
+          nullable: true
+        catatan:
+          type: string
+          nullable: true
+      required: [prosemId, weekId, materi]
+
+    InfoPekananItem:
+      type: object
+      properties:
+        prosemItemId:
+          type: string
+          nullable: true
+        subjectId:
+          type: string
+        subjectName:
+          type: string
+        kelas:
+          type: string
+        kd:
+          type: string
+          nullable: true
+        materi:
+          type: string
+        jp:
+          type: integer
+          nullable: true
+        status:
+          type: string
+        journalEntryId:
+          type: string
+          nullable: true
+      required: [subjectId, subjectName, kelas, materi, status]
+
+    InfoPekanan:
+      type: object
+      properties:
+        weekId:
+          type: string
+          nullable: true
+        pekanKe:
+          type: integer
+          nullable: true
+        tanggalMulai:
+          type: string
+          nullable: true
+        tanggalSelesai:
+          type: string
+          nullable: true
+        jenis:
+          type: string
+          nullable: true
+        totalRencana:
+          type: integer
+        totalSesuai:
+          type: integer
+        totalTertinggal:
+          type: integer
+        totalDiDepan:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InfoPekananItem"
+      required: [totalRencana, totalSesuai, totalTertinggal, totalDiDepan, items]
 

@@ -793,3 +793,328 @@ export const BulkCreatePointsResponse = zod.object({
 })
 
 
+/**
+ * @summary List academic calendars for the current school
+ */
+export const ListAcademicCalendarsResponseItem = zod.object({
+  "id": zod.string(),
+  "school": zod.string(),
+  "createdBy": zod.string(),
+  "tahunAjaran": zod.string(),
+  "semester": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListAcademicCalendarsResponse = zod.array(ListAcademicCalendarsResponseItem)
+
+
+/**
+ * @summary Create an academic calendar (admin only)
+ */
+
+
+
+
+export const CreateAcademicCalendarBody = zod.object({
+  "tahunAjaran": zod.string().min(1),
+  "semester": zod.string().min(1)
+})
+
+export const CreateAcademicCalendarResponse = zod.object({
+  "id": zod.string(),
+  "school": zod.string(),
+  "createdBy": zod.string(),
+  "tahunAjaran": zod.string(),
+  "semester": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete an academic calendar (admin only)
+ */
+export const DeleteAcademicCalendarParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteAcademicCalendarResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary List weeks of a calendar
+ */
+export const ListAcademicWeeksQueryParams = zod.object({
+  "calendarId": zod.coerce.string().optional()
+})
+
+export const ListAcademicWeeksResponseItem = zod.object({
+  "id": zod.string(),
+  "calendarId": zod.string(),
+  "pekanKe": zod.number(),
+  "tanggalMulai": zod.string(),
+  "tanggalSelesai": zod.string(),
+  "jenis": zod.string(),
+  "keterangan": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListAcademicWeeksResponse = zod.array(ListAcademicWeeksResponseItem)
+
+
+/**
+ * @summary Create an academic week (admin only)
+ */
+
+
+
+
+
+
+export const CreateAcademicWeekBody = zod.object({
+  "calendarId": zod.string().min(1),
+  "pekanKe": zod.number(),
+  "tanggalMulai": zod.string().min(1),
+  "tanggalSelesai": zod.string().min(1),
+  "jenis": zod.string().min(1),
+  "keterangan": zod.string().nullish()
+})
+
+export const CreateAcademicWeekResponse = zod.object({
+  "id": zod.string(),
+  "calendarId": zod.string(),
+  "pekanKe": zod.number(),
+  "tanggalMulai": zod.string(),
+  "tanggalSelesai": zod.string(),
+  "jenis": zod.string(),
+  "keterangan": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update an academic week (admin only)
+ */
+export const UpdateAcademicWeekParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+
+
+
+
+
+
+export const UpdateAcademicWeekBody = zod.object({
+  "calendarId": zod.string().min(1),
+  "pekanKe": zod.number(),
+  "tanggalMulai": zod.string().min(1),
+  "tanggalSelesai": zod.string().min(1),
+  "jenis": zod.string().min(1),
+  "keterangan": zod.string().nullish()
+})
+
+export const UpdateAcademicWeekResponse = zod.object({
+  "id": zod.string(),
+  "calendarId": zod.string(),
+  "pekanKe": zod.number(),
+  "tanggalMulai": zod.string(),
+  "tanggalSelesai": zod.string(),
+  "jenis": zod.string(),
+  "keterangan": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete an academic week (admin only)
+ */
+export const DeleteAcademicWeekParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteAcademicWeekResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary List the current teacher's prosem entries
+ */
+export const ListProsemQueryParams = zod.object({
+  "calendarId": zod.coerce.string().optional(),
+  "subjectId": zod.coerce.string().optional()
+})
+
+export const ListProsemResponseItem = zod.object({
+  "id": zod.string(),
+  "teacherId": zod.string(),
+  "subjectId": zod.string(),
+  "calendarId": zod.string(),
+  "kelas": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListProsemResponse = zod.array(ListProsemResponseItem)
+
+
+/**
+ * @summary Create a prosem entry
+ */
+
+
+
+
+
+export const CreateProsemBody = zod.object({
+  "subjectId": zod.string().min(1),
+  "calendarId": zod.string().min(1),
+  "kelas": zod.string().min(1)
+})
+
+export const CreateProsemResponse = zod.object({
+  "id": zod.string(),
+  "teacherId": zod.string(),
+  "subjectId": zod.string(),
+  "calendarId": zod.string(),
+  "kelas": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a prosem entry
+ */
+export const DeleteProsemParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteProsemResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary List items of a prosem
+ */
+export const ListProsemItemsQueryParams = zod.object({
+  "prosemId": zod.coerce.string().optional()
+})
+
+export const ListProsemItemsResponseItem = zod.object({
+  "id": zod.string(),
+  "prosemId": zod.string(),
+  "weekId": zod.string(),
+  "kd": zod.string().nullish(),
+  "materi": zod.string(),
+  "jp": zod.number().nullish(),
+  "catatan": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListProsemItemsResponse = zod.array(ListProsemItemsResponseItem)
+
+
+/**
+ * @summary Create a prosem item
+ */
+
+
+
+
+
+export const CreateProsemItemBody = zod.object({
+  "prosemId": zod.string().min(1),
+  "weekId": zod.string().min(1),
+  "kd": zod.string().nullish(),
+  "materi": zod.string().min(1),
+  "jp": zod.number().nullish(),
+  "catatan": zod.string().nullish()
+})
+
+export const CreateProsemItemResponse = zod.object({
+  "id": zod.string(),
+  "prosemId": zod.string(),
+  "weekId": zod.string(),
+  "kd": zod.string().nullish(),
+  "materi": zod.string(),
+  "jp": zod.number().nullish(),
+  "catatan": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a prosem item
+ */
+export const UpdateProsemItemParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+
+
+
+
+
+export const UpdateProsemItemBody = zod.object({
+  "prosemId": zod.string().min(1),
+  "weekId": zod.string().min(1),
+  "kd": zod.string().nullish(),
+  "materi": zod.string().min(1),
+  "jp": zod.number().nullish(),
+  "catatan": zod.string().nullish()
+})
+
+export const UpdateProsemItemResponse = zod.object({
+  "id": zod.string(),
+  "prosemId": zod.string(),
+  "weekId": zod.string(),
+  "kd": zod.string().nullish(),
+  "materi": zod.string(),
+  "jp": zod.number().nullish(),
+  "catatan": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a prosem item
+ */
+export const DeleteProsemItemParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteProsemItemResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Weekly info comparison (rencana from prosem vs realisasi from journal)
+ */
+export const GetInfoPekananQueryParams = zod.object({
+  "calendarId": zod.coerce.string().optional(),
+  "weekId": zod.coerce.string().optional()
+})
+
+export const GetInfoPekananResponse = zod.object({
+  "weekId": zod.string().nullish(),
+  "pekanKe": zod.number().nullish(),
+  "tanggalMulai": zod.string().nullish(),
+  "tanggalSelesai": zod.string().nullish(),
+  "jenis": zod.string().nullish(),
+  "totalRencana": zod.number(),
+  "totalSesuai": zod.number(),
+  "totalTertinggal": zod.number(),
+  "totalDiDepan": zod.number(),
+  "items": zod.array(zod.object({
+  "prosemItemId": zod.string().nullish(),
+  "subjectId": zod.string(),
+  "subjectName": zod.string(),
+  "kelas": zod.string(),
+  "kd": zod.string().nullish(),
+  "materi": zod.string(),
+  "jp": zod.number().nullish(),
+  "status": zod.string(),
+  "journalEntryId": zod.string().nullish()
+}))
+})
+
+
