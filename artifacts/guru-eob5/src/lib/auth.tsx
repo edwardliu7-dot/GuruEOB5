@@ -1,4 +1,5 @@
 import { createContext, useContext, ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetMe, useLogin, useLogout, getGetMeQueryKey } from "@workspace/api-client-react";
 import type { Teacher } from "@workspace/api-client-react";
 
@@ -14,11 +15,24 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const { data: user, isLoading } = useGetMe({
     query: { retry: false, queryKey: getGetMeQueryKey() },
   });
-  const loginMutation = useLogin();
-  const logoutMutation = useLogout();
+  const loginMutation = useLogin({
+    mutation: {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      },
+    },
+  });
+  const logoutMutation = useLogout({
+    mutation: {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      },
+    },
+  });
 
   return (
     <AuthContext.Provider
