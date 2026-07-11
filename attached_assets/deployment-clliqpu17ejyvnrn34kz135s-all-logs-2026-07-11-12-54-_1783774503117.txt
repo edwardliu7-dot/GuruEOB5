@@ -1,0 +1,353 @@
+2026-Jul-11 12:50:53.377523 Docker 29.6.1 with BuildKit and Buildx detected on deployment server (localhost).
+2026-Jul-11 12:50:53.411400 Starting deployment of edwardliu7-dot/GuruEOB5:main to localhost.
+2026-Jul-11 12:50:54.056141 Preparing container with helper image: docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-11 12:50:54.335140 [DEBUG] [CMD]: docker stop --time=30 clliqpu17ejyvnrn34kz135s
+2026-Jul-11 12:50:54.335140 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-11 12:50:54.351462 [DEBUG] Error response from daemon: No such container: clliqpu17ejyvnrn34kz135s
+2026-Jul-11 12:50:58.854391 [DEBUG] [CMD]: docker run -d --network 'coolify' --name clliqpu17ejyvnrn34kz135s  --rm -v /root/.docker/buildx:/root/.docker/buildx -v /var/run/docker.sock:/var/run/docker.sock docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-11 12:50:58.854391 [DEBUG] a2d2c63500675476100f2e7664c00c5e1b2576642bf721ed2f4db11cc6d91c5e
+2026-Jul-11 12:51:06.487208 [DEBUG] [CMD]: docker exec clliqpu17ejyvnrn34kz135s bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote '\''https://x-access-token:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''refs/heads/main'\'''
+2026-Jul-11 12:51:06.487208 [DEBUG] 11812f350275f08ae4a57adf88a4664116110d32	refs/heads/main
+2026-Jul-11 12:51:06.764923 Image not found (sfptjjfqgqidt4736qzont0l:11812f350275f08ae4a57adf88a4664116110d32). Building new image.
+2026-Jul-11 12:51:07.299645 ----------------------------------------
+2026-Jul-11 12:51:07.327696 Importing edwardliu7-dot/GuruEOB5:main (commit sha 11812f350275f08ae4a57adf88a4664116110d32) to /artifacts/clliqpu17ejyvnrn34kz135s.
+2026-Jul-11 12:51:07.657512 [DEBUG] [CMD]: docker exec clliqpu17ejyvnrn34kz135s bash -c 'git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 clone --depth=1 --recurse-submodules --shallow-submodules -b '\''main'\'' '\''https:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''/artifacts/clliqpu17ejyvnrn34kz135s'\'' && cd '\''/artifacts/clliqpu17ejyvnrn34kz135s'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 fetch --depth=1 origin '\''11812f350275f08ae4a57adf88a4664116110d32'\'' && git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 -c advice.detachedHead=false checkout '\''11812f350275f08ae4a57adf88a4664116110d32'\'' >/dev/null 2>&1 && cd '\''/artifacts/clliqpu17ejyvnrn34kz135s'\'' && if [ -f .gitmodules ]; then git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule update --init --recursive --depth=1; fi && cd '\''/artifacts/clliqpu17ejyvnrn34kz135s'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 lfs pull'
+2026-Jul-11 12:<REDACTED>@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+2026-Jul-11 12:51:30.711670 [DEBUG] #5 resolve ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de 1.3s done
+2026-Jul-11 12:51:30.711670 [DEBUG] #5 DONE 1.4s
+2026-Jul-11 12:51:30.711670 [DEBUG] 
+2026-Jul-11 12:51:30.711670 [DEBUG] #4 [internal] load build context
+2026-Jul-11 12:51:30.855328 [DEBUG] #4 transferring context: 4.54MB 0.2s done
+2026-Jul-11 12:51:31.163244 [DEBUG] #4 DONE 1.9s
+2026-Jul-11 12:51:31.392495 [DEBUG] #6 [stage-0  2/11] WORKDIR /app/
+2026-Jul-11 12:51:31.392495 [DEBUG] #6 CACHED
+2026-Jul-11 12:51:31.392495 [DEBUG] 
+2026-Jul-11 12:51:31.392495 [DEBUG] #7 [stage-0  3/11] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+2026-Jul-11 12:51:31.392495 [DEBUG] #7 CACHED
+2026-Jul-11 12:51:31.392495 [DEBUG] 
+2026-Jul-11 12:51:31.392495 [DEBUG] #8 [stage-0  4/11] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+2026-Jul-11 12:51:31.392495 [DEBUG] #8 CACHED
+2026-Jul-11 12:51:31.392495 [DEBUG] 
+2026-Jul-11 12:51:31.392495 [DEBUG] #9 [stage-0  5/11] RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends curl wget
+2026-Jul-11 12:51:31.542256 [DEBUG] #9 CACHED
+2026-Jul-11 12:51:31.542256 [DEBUG] 
+2026-Jul-11 12:51:31.542256 [DEBUG] #10 [stage-0  6/11] COPY . /app/.
+2026-Jul-11 12:51:34.040082 [DEBUG] #10 DONE 2.6s
+2026-Jul-11 12:51:34.260556 [DEBUG] #11 [stage-0  7/11] RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-/root/local/share/pnpm/store/v3,target=/root/.local/share/pnpm/store/v3 pnpm install --frozen-lockfile
+2026-Jul-11 12:51:44.860796 [DEBUG] #11 10.74 Scope: all 9 workspace projects
+2026-Jul-11 12:51:45.162090 [DEBUG] #11 11.05 Lockfile is up to date, resolution step is skipped
+2026-Jul-11 12:51:45.283904 [DEBUG] #11 11.18 Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-Jul-11 12:51:45.306704 [DEBUG] 
+2026-Jul-11 12:51:45.540697 [DEBUG] #11 11.43 Packages: +530
+2026-Jul-11 12:51:45.650436 [DEBUG] #11 11.43 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-Jul-11 12:51:46.291114 [DEBUG] #11 12.18 Progress: resolved 530, reused 0, downloaded 0, added 0
+2026-Jul-11 12:51:47.288807 [DEBUG] #11 13.18 Progress: resolved 530, reused 0, downloaded 15, added 0
+2026-Jul-11 12:51:48.303282 [DEBUG] #11 14.19 Progress: resolved 530, reused 0, downloaded 67, added 16
+2026-Jul-11 12:51:48.531170 [DEBUG] 
+2026-Jul-11 12:51:49.307559 [DEBUG] #11 15.20 Progress: resolved 530, reused 0, downloaded 153, added 43
+2026-Jul-11 12:51:50.309361 [DEBUG] #11 16.20 Progress: resolved 530, reused 0, downloaded 182, added 55
+2026-Jul-11 12:51:50.478734 [DEBUG] 
+2026-Jul-11 12:51:51.310707 [DEBUG] #11 17.20 Progress: resolved 530, reused 0, downloaded 231, added 150
+2026-Jul-11 12:51:52.310966 [DEBUG] #11 18.20 Progress: resolved 530, reused 0, downloaded 279, added 166
+2026-Jul-11 12:51:53.312956 [DEBUG] #11 19.20 Progress: resolved 530, reused 0, downloaded 305, added 174
+2026-Jul-11 12:51:54.336730 [DEBUG] #11 20.23 Progress: resolved 530, reused 0, downloaded 316, added 178
+2026-Jul-11 12:51:55.326188 [DEBUG] #11 21.22 Progress: resolved 530, reused 0, downloaded 320, added 178
+2026-Jul-11 12:51:57.271222 [DEBUG] #11 22.22 Progress: resolved 530, reused 0, downloaded 327, added 182
+2026-Jul-11 12:51:57.808524 [DEBUG] #11 23.27 Progress: resolved 530, reused 0, downloaded 328, added 182
+2026-Jul-11 12:51:59.291015 [DEBUG] #11 25.18 Progress: resolved 530, reused 0, downloaded 329, added 182
+2026-Jul-11 12:52:10.017869 [DEBUG] #11 35.91 Progress: resolved 530, reused 0, downloaded 330, added 182
+2026-Jul-11 12:52:11.029501 [DEBUG] #11 36.91 Progress: resolved 530, reused 0, downloaded 335, added 182
+2026-Jul-11 12:52:12.024843 [DEBUG] #11 37.92 Progress: resolved 530, reused 0, downloaded 369, added 194
+2026-Jul-11 12:52:13.029566 [DEBUG] #11 38.92 Progress: resolved 530, reused 0, downloaded 412, added 207
+2026-Jul-11 12:52:14.791664 [DEBUG] #11 39.92 Progress: resolved 530, reused 0, downloaded 418, added 210
+2026-Jul-11 12:52:15.034392 [DEBUG] #11 40.93 Progress: resolved 530, reused 0, downloaded 441, added 234
+2026-Jul-11 12:52:16.036514 [DEBUG] #11 41.93 Progress: resolved 530, reused 0, downloaded 492, added 254
+2026-Jul-11 12:52:17.036933 [DEBUG] #11 42.93 Progress: resolved 530, reused 0, downloaded 497, added 258
+2026-Jul-11 12:52:18.039950 [DEBUG] #11 43.93 Progress: resolved 530, reused 0, downloaded 515, added 262
+2026-Jul-11 12:52:19.041232 [DEBUG] #11 44.93 Progress: resolved 530, reused 0, downloaded 516, added 262
+2026-Jul-11 12:52:20.046780 [DEBUG] #11 45.94 Progress: resolved 530, reused 0, downloaded 524, added 266
+2026-Jul-11 12:52:22.486867 [DEBUG] #11 46.94 Progress: resolved 530, reused 0, downloaded 530, added 316
+2026-Jul-11 12:52:22.966923 [DEBUG] #11 48.86 Progress: resolved 530, reused 0, downloaded 530, added 317
+2026-Jul-11 12:52:23.971791 [DEBUG] #11 49.86 Progress: resolved 530, reused 0, downloaded 530, added 333
+2026-Jul-11 12:52:24.967067 [DEBUG] #11 50.86 Progress: resolved 530, reused 0, downloaded 530, added 497
+2026-Jul-11 12:52:25.474243 [DEBUG] #11 51.30 Progress: resolved 530, reused 0, downloaded 530, added 530, done
+2026-Jul-11 12:52:27.036649 [DEBUG] #11 52.92 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-11 12:52:27.212207 [DEBUG] #11 53.09 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-11 12:52:29.810387 [DEBUG] #11 55.57
+2026-Jul-11 12:52:29.810387 [DEBUG] #11 55.57 dependencies:
+2026-Jul-11 12:52:29.810387 [DEBUG] #11 55.57 + @replit/connectors-sdk 0.4.1
+2026-Jul-11 12:52:29.810387 [DEBUG] #11 55.57
+2026-Jul-11 12:52:29.810387 [DEBUG] #11 55.57 devDependencies:
+2026-Jul-11 12:52:29.810387 [DEBUG] #11 55.57 + prettier 3.9.4
+2026-Jul-11 12:52:29.810387 [DEBUG] #11 55.57 + typescript 5.9.3
+2026-Jul-11 12:52:29.810387 [DEBUG] #11 55.57
+2026-Jul-11 12:52:29.853467 [DEBUG] #11 55.74 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-11 12:52:29.983791 [DEBUG] #11 55.85 . preinstall: Done
+2026-Jul-11 12:52:30.330837 [DEBUG] #11 56.20 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2026-Jul-11 12:52:30.330837 [DEBUG] #11 56.20 │                                                                              │
+2026-Jul-11 12:52:30.330837 [DEBUG] #11 56.20 │   Ignored build scripts: @google/genai@2.10.0, protobufjs@7.6.5.             │
+2026-Jul-11 12:52:30.330837 [DEBUG] #11 56.20 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2026-Jul-11 12:52:30.330837 [DEBUG] #11 56.20 │   to run scripts.                                                            │
+2026-Jul-11 12:52:30.330837 [DEBUG] #11 56.20 │                                                                              │
+2026-Jul-11 12:52:30.330837 [DEBUG] #11 56.20 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-Jul-11 12:52:30.550757 [DEBUG] #11 56.29 Done in 47.1s using pnpm v10.26.1
+2026-Jul-11 12:52:34.258889 [DEBUG] #11 DONE 60.1s
+2026-Jul-11 12:52:34.526286 [DEBUG] 
+2026-Jul-11 12:52:34.552427 [DEBUG] #12 [stage-0  8/11] COPY . /app/.
+2026-Jul-11 12:52:41.810886 [DEBUG] #12 DONE 7.3s
+2026-Jul-11 12:52:42.026422 [DEBUG] #13 [stage-0  9/11] RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-node_modules/cache,target=/app/node_modules/.cache pnpm run build
+2026-Jul-11 12:52:46.275884 [DEBUG] #13 4.398
+2026-Jul-11 12:52:46.275884 [DEBUG] #13 4.398 > workspace@0.0.0 build /app
+2026-Jul-11 12:52:46.275884 [DEBUG] #13 4.398 > pnpm run typecheck && pnpm -r --if-present run build
+2026-Jul-11 12:52:46.275884 [DEBUG] #13 4.398
+2026-Jul-11 12:52:47.711257 [DEBUG] #13 5.834
+2026-Jul-11 12:52:47.711257 [DEBUG] #13 5.834 > workspace@0.0.0 typecheck /app
+2026-Jul-11 12:52:47.711257 [DEBUG] #13 5.834 > pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+2026-Jul-11 12:52:47.711257 [DEBUG] #13 5.834
+2026-Jul-11 12:52:48.764790 [DEBUG] #13 6.888
+2026-Jul-11 12:52:48.764790 [DEBUG] #13 6.888 > workspace@0.0.0 typecheck:libs /app
+2026-Jul-11 12:52:48.764790 [DEBUG] #13 6.888 > tsc --build
+2026-Jul-11 12:52:48.764790 [DEBUG] #13 6.888
+2026-Jul-11 12:53:17.050818 [DEBUG] #13 35.17 Scope: 4 of 9 workspace projects
+2026-Jul-11 12:53:17.228660 [DEBUG] #13 35.20 artifacts/api-server typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 12:53:17.228660 [DEBUG] #13 35.20 artifacts/guru-eob5 typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 12:53:40.957992 [DEBUG] #13 59.08 artifacts/api-server typecheck: Done
+2026-Jul-11 12:53:41.286171 [DEBUG] #13 59.09 artifacts/mockup-sandbox typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 12:54:14.873318 [DEBUG] #13 92.99 artifacts/guru-eob5 typecheck: Done
+2026-Jul-11 12:54:15.034008 [DEBUG] #13 93.01 scripts typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 12:54:19.537407 [DEBUG] #13 97.66 artifacts/mockup-sandbox typecheck: Done
+2026-Jul-11 12:54:20.700419 [DEBUG] #13 98.82 scripts typecheck: Done
+2026-Jul-11 12:54:20.728647 [DEBUG] 
+2026-Jul-11 12:54:22.207336 [DEBUG] #13 100.3 Scope: 8 of 9 workspace projects
+2026-Jul-11 12:54:22.404710 [DEBUG] #13 100.4 artifacts/mockup-sandbox build$ vite build
+2026-Jul-11 12:54:22.575333 [DEBUG] #13 100.7 artifacts/mockup-sandbox build: You are using Node.js 22.11.0. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.
+2026-Jul-11 12:54:26.795893 [DEBUG] #13 104.9 artifacts/mockup-sandbox build: failed to load config from /app/artifacts/mockup-sandbox/vite.config.ts
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 104.9 artifacts/mockup-sandbox build: error during build:
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 104.9 artifacts/mockup-sandbox build: Error: PORT environment variable is required but was not provided.
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 104.9 artifacts/mockup-sandbox build:     at file:///app/artifacts/mockup-sandbox/node_modules/.vite-temp/vite.config.ts.timestamp-1783774464018-afa2a153fbcf7.mjs:145:9
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 104.9 artifacts/mockup-sandbox build:     at ModuleJob.run (node:internal/modules/esm/module_job:268:25)
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 104.9 artifacts/mockup-sandbox build:     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:543:26)
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 104.9 artifacts/mockup-sandbox build:     at async loadConfigFromBundledFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35996:12)
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 105.0 artifacts/mockup-sandbox build:     at async bundleAndLoadConfigFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35884:17)
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 105.0 artifacts/mockup-sandbox build:     at async loadConfigFromFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35851:42)
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 105.0 artifacts/mockup-sandbox build:     at async resolveConfig (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35500:22)
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 105.0 artifacts/mockup-sandbox build:     at async createBuilder (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:33955:19)
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 105.0 artifacts/mockup-sandbox build:     at async CAC.<anonymous> (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/cli.js:629:10)
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 105.0 artifacts/mockup-sandbox build: Failed
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 105.0 /app/artifacts/mockup-sandbox:
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 105.0  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/mockup-sandbox@2.0.0 build: `vite build`
+2026-Jul-11 12:54:26.929034 [DEBUG] #13 105.0 Exit status 1
+2026-Jul-11 12:54:27.086019 [DEBUG] #13 105.2  ELIFECYCLE  Command failed with exit code 1.
+2026-Jul-11 12:54:28.741894 [DEBUG] #13 ERROR: process "/bin/bash -ol pipefail -c pnpm run build" did not complete successfully: exit code: 1
+2026-Jul-11 12:54:32.721320 [DEBUG] ------
+2026-Jul-11 12:54:32.721320 [DEBUG] > [stage-0  9/11] RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-node_modules/cache,target=/app/node_modules/.cache pnpm run build:
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.0 artifacts/mockup-sandbox build:     at async bundleAndLoadConfigFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35884:17)
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.0 artifacts/mockup-sandbox build:     at async loadConfigFromFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35851:42)
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.0 artifacts/mockup-sandbox build:     at async resolveConfig (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35500:22)
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.0 artifacts/mockup-sandbox build:     at async createBuilder (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:33955:19)
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.0 artifacts/mockup-sandbox build:     at async CAC.<anonymous> (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/cli.js:629:10)
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.0 artifacts/mockup-sandbox build: Failed
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.0 /app/artifacts/mockup-sandbox:
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.0  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/mockup-sandbox@2.0.0 build: `vite build`
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.0 Exit status 1
+2026-Jul-11 12:54:32.721320 [DEBUG] 105.2  ELIFECYCLE  Command failed with exit code 1.
+2026-Jul-11 12:54:32.721320 [DEBUG] ------
+2026-Jul-11 12:54:32.762455 [DEBUG] 1 warning found (use docker --debug to expand):
+2026-Jul-11 12:54:32.762455 [DEBUG] - UndefinedVar: Usage of undefined variable '$NIXPACKS_PATH' (line 18)
+2026-Jul-11 12:54:32.809661 [DEBUG] Dockerfile:24
+2026-Jul-11 12:54:32.809661 [DEBUG] --------------------
+2026-Jul-11 12:54:32.809661 [DEBUG] 22 |     # build phase
+2026-Jul-11 12:54:32.809661 [DEBUG] 23 |     COPY . /app/.
+2026-Jul-11 12:54:32.809661 [DEBUG] 24 | >>> RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-node_modules/cache,target=/app/node_modules/.cache pnpm run build
+2026-Jul-11 12:54:32.809661 [DEBUG] 25 |
+2026-Jul-11 12:54:32.809661 [DEBUG] 26 |
+2026-Jul-11 12:54:32.809661 [DEBUG] --------------------
+2026-Jul-11 12:54:32.809661 [DEBUG] ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c pnpm run build" did not complete successfully: exit code: 1
+2026-Jul-11 12:54:32.878314 [DEBUG] exit status 1
+2026-Jul-11 12:54:38.609127 ========================================
+2026-Jul-11 12:54:38.742935 Deployment failed: Command execution failed (exit code 1): docker exec clliqpu17ejyvnrn34kz135s bash -c 'bash /artifacts/build.sh'
+2026-Jul-11 12:54:38.742935 Error: #0 building with "default" instance using docker driver
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #1 [internal] load build definition from Dockerfile
+2026-Jul-11 12:54:38.742935 #1 transferring dockerfile:
+2026-Jul-11 12:54:38.742935 #1 transferring dockerfile: 1.47kB done
+2026-Jul-11 12:54:38.742935 #1 DONE 0.7s
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #2 [internal] load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+2026-Jul-11 12:54:38.742935 #2 DONE 2.2s
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #3 [internal] load .dockerignore
+2026-Jul-11 12:54:38.742935 #3 transferring context:
+2026-Jul-11 12:54:38.742935 #3 transferring context: 2B done
+2026-Jul-11 12:54:38.742935 #3 DONE 1.3s
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #4 [internal] load build context
+2026-Jul-11 12:54:38.742935 #4 ...
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #5 [stage-0  1/11] FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+2026-Jul-11 12:54:38.742935 #5 resolve ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de 1.3s done
+2026-Jul-11 12:54:38.742935 #5 DONE 1.4s
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #4 [internal] load build context
+2026-Jul-11 12:54:38.742935 #4 transferring context: 4.54MB 0.2s done
+2026-Jul-11 12:54:38.742935 #4 DONE 1.9s
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #6 [stage-0  2/11] WORKDIR /app/
+2026-Jul-11 12:54:38.742935 #6 CACHED
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #7 [stage-0  3/11] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+2026-Jul-11 12:54:38.742935 #7 CACHED
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #8 [stage-0  4/11] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+2026-Jul-11 12:54:38.742935 #8 CACHED
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #9 [stage-0  5/11] RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends curl wget
+2026-Jul-11 12:54:38.742935 #9 CACHED
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #10 [stage-0  6/11] COPY . /app/.
+2026-Jul-11 12:54:38.742935 #10 DONE 2.6s
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #11 [stage-0  7/11] RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-/root/local/share/pnpm/store/v3,target=/root/.local/share/pnpm/store/v3 pnpm install --frozen-lockfile
+2026-Jul-11 12:54:38.742935 #11 10.74 Scope: all 9 workspace projects
+2026-Jul-11 12:54:38.742935 #11 11.05 Lockfile is up to date, resolution step is skipped
+2026-Jul-11 12:54:38.742935 #11 11.18 Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-Jul-11 12:54:38.742935 #11 11.43 Packages: +530
+2026-Jul-11 12:54:38.742935 #11 11.43 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-Jul-11 12:54:38.742935 #11 12.18 Progress: resolved 530, reused 0, downloaded 0, added 0
+2026-Jul-11 12:54:38.742935 #11 13.18 Progress: resolved 530, reused 0, downloaded 15, added 0
+2026-Jul-11 12:54:38.742935 #11 14.19 Progress: resolved 530, reused 0, downloaded 67, added 16
+2026-Jul-11 12:54:38.742935 #11 15.20 Progress: resolved 530, reused 0, downloaded 153, added 43
+2026-Jul-11 12:54:38.742935 #11 16.20 Progress: resolved 530, reused 0, downloaded 182, added 55
+2026-Jul-11 12:54:38.742935 #11 17.20 Progress: resolved 530, reused 0, downloaded 231, added 150
+2026-Jul-11 12:54:38.742935 #11 18.20 Progress: resolved 530, reused 0, downloaded 279, added 166
+2026-Jul-11 12:54:38.742935 #11 19.20 Progress: resolved 530, reused 0, downloaded 305, added 174
+2026-Jul-11 12:54:38.742935 #11 20.23 Progress: resolved 530, reused 0, downloaded 316, added 178
+2026-Jul-11 12:54:38.742935 #11 21.22 Progress: resolved 530, reused 0, downloaded 320, added 178
+2026-Jul-11 12:54:38.742935 #11 22.22 Progress: resolved 530, reused 0, downloaded 327, added 182
+2026-Jul-11 12:54:38.742935 #11 23.27 Progress: resolved 530, reused 0, downloaded 328, added 182
+2026-Jul-11 12:54:38.742935 #11 25.18 Progress: resolved 530, reused 0, downloaded 329, added 182
+2026-Jul-11 12:54:38.742935 #11 35.91 Progress: resolved 530, reused 0, downloaded 330, added 182
+2026-Jul-11 12:54:38.742935 #11 36.91 Progress: resolved 530, reused 0, downloaded 335, added 182
+2026-Jul-11 12:54:38.742935 #11 37.92 Progress: resolved 530, reused 0, downloaded 369, added 194
+2026-Jul-11 12:54:38.742935 #11 38.92 Progress: resolved 530, reused 0, downloaded 412, added 207
+2026-Jul-11 12:54:38.742935 #11 39.92 Progress: resolved 530, reused 0, downloaded 418, added 210
+2026-Jul-11 12:54:38.742935 #11 40.93 Progress: resolved 530, reused 0, downloaded 441, added 234
+2026-Jul-11 12:54:38.742935 #11 41.93 Progress: resolved 530, reused 0, downloaded 492, added 254
+2026-Jul-11 12:54:38.742935 #11 42.93 Progress: resolved 530, reused 0, downloaded 497, added 258
+2026-Jul-11 12:54:38.742935 #11 43.93 Progress: resolved 530, reused 0, downloaded 515, added 262
+2026-Jul-11 12:54:38.742935 #11 44.93 Progress: resolved 530, reused 0, downloaded 516, added 262
+2026-Jul-11 12:54:38.742935 #11 45.94 Progress: resolved 530, reused 0, downloaded 524, added 266
+2026-Jul-11 12:54:38.742935 #11 46.94 Progress: resolved 530, reused 0, downloaded 530, added 316
+2026-Jul-11 12:54:38.742935 #11 48.86 Progress: resolved 530, reused 0, downloaded 530, added 317
+2026-Jul-11 12:54:38.742935 #11 49.86 Progress: resolved 530, reused 0, downloaded 530, added 333
+2026-Jul-11 12:54:38.742935 #11 50.86 Progress: resolved 530, reused 0, downloaded 530, added 497
+2026-Jul-11 12:54:38.742935 #11 51.30 Progress: resolved 530, reused 0, downloaded 530, added 530, done
+2026-Jul-11 12:54:38.742935 #11 52.92 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-11 12:54:38.742935 #11 53.09 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-11 12:54:38.742935 #11 55.57
+2026-Jul-11 12:54:38.742935 #11 55.57 dependencies:
+2026-Jul-11 12:54:38.742935 #11 55.57 + @replit/connectors-sdk 0.4.1
+2026-Jul-11 12:54:38.742935 #11 55.57
+2026-Jul-11 12:54:38.742935 #11 55.57 devDependencies:
+2026-Jul-11 12:54:38.742935 #11 55.57 + prettier 3.9.4
+2026-Jul-11 12:54:38.742935 #11 55.57 + typescript 5.9.3
+2026-Jul-11 12:54:38.742935 #11 55.57
+2026-Jul-11 12:54:38.742935 #11 55.74 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-11 12:54:38.742935 #11 55.85 . preinstall: Done
+2026-Jul-11 12:54:38.742935 #11 56.20 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2026-Jul-11 12:54:38.742935 #11 56.20 │                                                                              │
+2026-Jul-11 12:54:38.742935 #11 56.20 │   Ignored build scripts: @google/genai@2.10.0, protobufjs@7.6.5.             │
+2026-Jul-11 12:54:38.742935 #11 56.20 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2026-Jul-11 12:54:38.742935 #11 56.20 │   to run scripts.                                                            │
+2026-Jul-11 12:54:38.742935 #11 56.20 │                                                                              │
+2026-Jul-11 12:54:38.742935 #11 56.20 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-Jul-11 12:54:38.742935 #11 56.29 Done in 47.1s using pnpm v10.26.1
+2026-Jul-11 12:54:38.742935 #11 DONE 60.1s
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #12 [stage-0  8/11] COPY . /app/.
+2026-Jul-11 12:54:38.742935 #12 DONE 7.3s
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 #13 [stage-0  9/11] RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-node_modules/cache,target=/app/node_modules/.cache pnpm run build
+2026-Jul-11 12:54:38.742935 #13 4.398
+2026-Jul-11 12:54:38.742935 #13 4.398 > workspace@0.0.0 build /app
+2026-Jul-11 12:54:38.742935 #13 4.398 > pnpm run typecheck && pnpm -r --if-present run build
+2026-Jul-11 12:54:38.742935 #13 4.398
+2026-Jul-11 12:54:38.742935 #13 5.834
+2026-Jul-11 12:54:38.742935 #13 5.834 > workspace@0.0.0 typecheck /app
+2026-Jul-11 12:54:38.742935 #13 5.834 > pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+2026-Jul-11 12:54:38.742935 #13 5.834
+2026-Jul-11 12:54:38.742935 #13 6.888
+2026-Jul-11 12:54:38.742935 #13 6.888 > workspace@0.0.0 typecheck:libs /app
+2026-Jul-11 12:54:38.742935 #13 6.888 > tsc --build
+2026-Jul-11 12:54:38.742935 #13 6.888
+2026-Jul-11 12:54:38.742935 #13 35.17 Scope: 4 of 9 workspace projects
+2026-Jul-11 12:54:38.742935 #13 35.20 artifacts/api-server typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 12:54:38.742935 #13 35.20 artifacts/guru-eob5 typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 12:54:38.742935 #13 59.08 artifacts/api-server typecheck: Done
+2026-Jul-11 12:54:38.742935 #13 59.09 artifacts/mockup-sandbox typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 12:54:38.742935 #13 92.99 artifacts/guru-eob5 typecheck: Done
+2026-Jul-11 12:54:38.742935 #13 93.01 scripts typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 12:54:38.742935 #13 97.66 artifacts/mockup-sandbox typecheck: Done
+2026-Jul-11 12:54:38.742935 #13 98.82 scripts typecheck: Done
+2026-Jul-11 12:54:38.742935 #13 100.3 Scope: 8 of 9 workspace projects
+2026-Jul-11 12:54:38.742935 #13 100.4 artifacts/mockup-sandbox build$ vite build
+2026-Jul-11 12:54:38.742935 #13 100.7 artifacts/mockup-sandbox build: You are using Node.js 22.11.0. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.
+2026-Jul-11 12:54:38.742935 #13 104.9 artifacts/mockup-sandbox build: failed to load config from /app/artifacts/mockup-sandbox/vite.config.ts
+2026-Jul-11 12:54:38.742935 #13 104.9 artifacts/mockup-sandbox build: error during build:
+2026-Jul-11 12:54:38.742935 #13 104.9 artifacts/mockup-sandbox build: Error: PORT environment variable is required but was not provided.
+2026-Jul-11 12:54:38.742935 #13 104.9 artifacts/mockup-sandbox build:     at file:///app/artifacts/mockup-sandbox/node_modules/.vite-temp/vite.config.ts.timestamp-1783774464018-afa2a153fbcf7.mjs:145:9
+2026-Jul-11 12:54:38.742935 #13 104.9 artifacts/mockup-sandbox build:     at ModuleJob.run (node:internal/modules/esm/module_job:268:25)
+2026-Jul-11 12:54:38.742935 #13 104.9 artifacts/mockup-sandbox build:     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:543:26)
+2026-Jul-11 12:54:38.742935 #13 104.9 artifacts/mockup-sandbox build:     at async loadConfigFromBundledFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35996:12)
+2026-Jul-11 12:54:38.742935 #13 105.0 artifacts/mockup-sandbox build:     at async bundleAndLoadConfigFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35884:17)
+2026-Jul-11 12:54:38.742935 #13 105.0 artifacts/mockup-sandbox build:     at async loadConfigFromFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35851:42)
+2026-Jul-11 12:54:38.742935 #13 105.0 artifacts/mockup-sandbox build:     at async resolveConfig (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35500:22)
+2026-Jul-11 12:54:38.742935 #13 105.0 artifacts/mockup-sandbox build:     at async createBuilder (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:33955:19)
+2026-Jul-11 12:54:38.742935 #13 105.0 artifacts/mockup-sandbox build:     at async CAC.<anonymous> (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/cli.js:629:10)
+2026-Jul-11 12:54:38.742935 #13 105.0 artifacts/mockup-sandbox build: Failed
+2026-Jul-11 12:54:38.742935 #13 105.0 /app/artifacts/mockup-sandbox:
+2026-Jul-11 12:54:38.742935 #13 105.0  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/mockup-sandbox@2.0.0 build: `vite build`
+2026-Jul-11 12:54:38.742935 #13 105.0 Exit status 1
+2026-Jul-11 12:54:38.742935 #13 105.2  ELIFECYCLE  Command failed with exit code 1.
+2026-Jul-11 12:54:38.742935 #13 ERROR: process "/bin/bash -ol pipefail -c pnpm run build" did not complete successfully: exit code: 1
+2026-Jul-11 12:54:38.742935 ------
+2026-Jul-11 12:54:38.742935 > [stage-0  9/11] RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-node_modules/cache,target=/app/node_modules/.cache pnpm run build:
+2026-Jul-11 12:54:38.742935 105.0 artifacts/mockup-sandbox build:     at async bundleAndLoadConfigFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35884:17)
+2026-Jul-11 12:54:38.742935 105.0 artifacts/mockup-sandbox build:     at async loadConfigFromFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35851:42)
+2026-Jul-11 12:54:38.742935 105.0 artifacts/mockup-sandbox build:     at async resolveConfig (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35500:22)
+2026-Jul-11 12:54:38.742935 105.0 artifacts/mockup-sandbox build:     at async createBuilder (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:33955:19)
+2026-Jul-11 12:54:38.742935 105.0 artifacts/mockup-sandbox build:     at async CAC.<anonymous> (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.4_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.0_yaml@2.9.0/node_modules/vite/dist/node/cli.js:629:10)
+2026-Jul-11 12:54:38.742935 105.0 artifacts/mockup-sandbox build: Failed
+2026-Jul-11 12:54:38.742935 105.0 /app/artifacts/mockup-sandbox:
+2026-Jul-11 12:54:38.742935 105.0  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/mockup-sandbox@2.0.0 build: `vite build`
+2026-Jul-11 12:54:38.742935 105.0 Exit status 1
+2026-Jul-11 12:54:38.742935 105.2  ELIFECYCLE  Command failed with exit code 1.
+2026-Jul-11 12:54:38.742935 ------
+2026-Jul-11 12:54:38.742935 
+2026-Jul-11 12:54:38.742935 1 warning found (use docker --debug to expand):
+2026-Jul-11 12:54:38.742935 - UndefinedVar: Usage of undefined variable '$NIXPACKS_PATH' (line 18)
+2026-Jul-11 12:54:38.742935 Dockerfile:24
+2026-Jul-11 12:54:38.742935 --------------------
+2026-Jul-11 12:54:38.742935 22 |     # build phase
+2026-Jul-11 12:54:38.742935 23 |     COPY . /app/.
+2026-Jul-11 12:54:38.742935 24 | >>> RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-node_modules/cache,target=/app/node_modules/.cache pnpm run build
+2026-Jul-11 12:54:38.742935 25 |
+2026-Jul-11 12:54:38.742935 26 |
+2026-Jul-11 12:54:38.742935 --------------------
+2026-Jul-11 12:54:38.742935 ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c pnpm run build" did not complete successfully: exit code: 1
+2026-Jul-11 12:54:38.742935 exit status 1
+2026-Jul-11 12:54:38.797881 [DEBUG] Error type: App\Exceptions\DeploymentException
+2026-Jul-11 12:54:38.844356 [DEBUG] Error code: 0
+2026-Jul-11 12:54:38.877668 [DEBUG] Location: /var/www/html/app/Traits/ExecuteRemoteCommand.php:242
+2026-Jul-11 12:54:38.929070 [DEBUG] Stack trace (first 5 lines):
+2026-Jul-11 12:54:38.970136 [DEBUG] #0 /var/www/html/app/Traits/ExecuteRemoteCommand.php(106): App\Jobs\ApplicationDeploymentJob->executeCommandWithProcess()
+2026-Jul-11 12:54:39.019136 [DEBUG] #1 /var/www/html/vendor/laravel/framework/src/Illuminate/Collections/Traits/EnumeratesValues.php(275): App\Jobs\ApplicationDeploymentJob->{closure:App\Traits\ExecuteRemoteCommand::execute_remote_command():72}()
+2026-Jul-11 12:54:39.054220 [DEBUG] #2 /var/www/html/app/Traits/ExecuteRemoteCommand.php(72): Illuminate\Support\Collection->each()
+2026-Jul-11 12:54:39.112495 [DEBUG] #3 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(3778): App\Jobs\ApplicationDeploymentJob->execute_remote_command()
+2026-Jul-11 12:54:39.154715 [DEBUG] #4 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(946): App\Jobs\ApplicationDeploymentJob->build_image()
+2026-Jul-11 12:54:39.216808 ========================================
+2026-Jul-11 12:54:39.275344 Deployment failed. Removing the new version of your application.
+2026-Jul-11 12:54:41.739057 Gracefully shutting down build container: clliqpu17ejyvnrn34kz135s
+2026-Jul-11 12:54:41.995986 [DEBUG] [CMD]: docker stop --time=30 clliqpu17ejyvnrn34kz135s
+2026-Jul-11 12:54:41.995986 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-11 12:54:47.172569 [DEBUG] clliqpu17ejyvnrn34kz135s
