@@ -4,6 +4,8 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pg from "pg";
 import pinoHttp from "pino-http";
+import path from "node:path";
+import fs from "node:fs";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -87,5 +89,28 @@ app.use(
 );
 
 app.use("/api", router);
+
+// In a single-container deployment (e.g. Coolify), this process also serves
+// the built guru-eob5 frontend so only one start command/container is needed.
+// On Replit, the frontend is served separately by the artifact router, and
+// this directory won't exist in dev, so this block is skipped there.
+const frontendDist = path.resolve(
+  import.meta.dirname,
+  "../../guru-eob5/dist/public",
+);
+
+if (fs.existsSync(frontendDist)) {
+  logger.info({ frontendDist }, "Serving frontend static files");
+  app.use(express.static(frontendDist));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+} else {
+  logger.info({ frontendDist }, "Frontend build not found; skipping static file serving");
+}
 
 export default app;
