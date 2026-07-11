@@ -3,3 +3,4 @@
 - [Route path drift](route-path-drift.md) — backend route paths can silently drift from the OpenAPI spec (e.g. `/journal-entries` vs `/journal`); frontend hooks are generated from the spec so a mismatch causes 404s only at runtime, not typecheck.
 - [Tenant/ownership authz predicates](tenant-authz-predicates.md) — UPDATE/DELETE must bind to the target row's existing owner/school (never trust body FKs); empty `guru.school` must return empty/404, not a cross-school fallback.
 - [Prod session cookies](prod-session-cookies.md) — behind Replit's proxy, secure cookies need trust proxy + a PG session store; connect-pg-simple's createTableIfMissing breaks under esbuild bundling.
+- [Body-trusted ownership fields](body-trusted-ownership.md) — routes that accept teacherId/ownerId in the request body (not just tenant/school) let any authenticated user impersonate or edit others' rows; always override from session, never trust body.

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, journalEntriesTable } from "@workspace/db";
+import { and, eq } from "drizzle-orm";
+import { db, journalEntriesTable, subjectsTable } from "@workspace/db";
 import {
   ListJournalEntriesResponse,
   CreateJournalEntryBody,
@@ -8,37 +8,72 @@ import {
   DeleteJournalEntryParams,
   DeleteJournalEntryResponse,
 } from "@workspace/api-zod";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, getCurrentGuru } from "../lib/auth";
 
 const router: IRouter = Router();
 
 router.get("/journal", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const subjectId =
     typeof req.query["subjectId"] === "string" ? req.query["subjectId"] : undefined;
   const entries = subjectId
     ? await db
         .select()
         .from(journalEntriesTable)
-        .where(eq(journalEntriesTable.subjectId, subjectId))
-    : await db.select().from(journalEntriesTable);
+        .where(
+          and(
+            eq(journalEntriesTable.subjectId, subjectId),
+            eq(journalEntriesTable.teacherId, guru.id),
+          ),
+        )
+    : await db
+        .select()
+        .from(journalEntriesTable)
+        .where(eq(journalEntriesTable.teacherId, guru.id));
   res.json(ListJournalEntriesResponse.parse(entries));
 });
 
 router.post("/journal", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const parsed = CreateJournalEntryBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
+  const [subject] = await db
+    .select({ id: subjectsTable.id })
+    .from(subjectsTable)
+    .where(and(eq(subjectsTable.id, parsed.data.subjectId), eq(subjectsTable.teacherId, guru.id)));
+  if (!subject) {
+    res.status(404).json({ error: "Subject not found" });
+    return;
+  }
+
   const [entry] = await db
     .insert(journalEntriesTable)
-    .values({ ...parsed.data, teacherId: req.session.teacherId as string })
+    .values({ ...parsed.data, teacherId: guru.id })
     .returning();
   res.status(201).json(CreateJournalEntryResponse.parse(entry));
 });
 
 router.delete("/journal/:id", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const params = DeleteJournalEntryParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -47,7 +82,9 @@ router.delete("/journal/:id", requireAuth, async (req, res): Promise<void> => {
 
   const [entry] = await db
     .delete(journalEntriesTable)
-    .where(eq(journalEntriesTable.id, params.data.id))
+    .where(
+      and(eq(journalEntriesTable.id, params.data.id), eq(journalEntriesTable.teacherId, guru.id)),
+    )
     .returning();
 
   if (!entry) {

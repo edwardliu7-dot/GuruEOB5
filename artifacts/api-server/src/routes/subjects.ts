@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, subjectsTable, type Guru } from "@workspace/db";
 import {
   ListSubjectsResponse,
@@ -58,17 +58,33 @@ router.get("/subjects", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.post("/subjects", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const parsed = CreateSubjectBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
-  const [subject] = await db.insert(subjectsTable).values(parsed.data).returning();
+  // Never trust a client-supplied teacherId -- always bind to the caller.
+  const [subject] = await db
+    .insert(subjectsTable)
+    .values({ ...parsed.data, teacherId: guru.id })
+    .returning();
   res.status(201).json(CreateSubjectResponse.parse(subject));
 });
 
 router.patch("/subjects/:id", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const params = UpdateSubjectParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -81,10 +97,12 @@ router.patch("/subjects/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  // Never trust a client-supplied teacherId -- keep ownership bound to the caller,
+  // and only allow updating subjects the caller already owns.
   const [subject] = await db
     .update(subjectsTable)
-    .set(parsed.data)
-    .where(eq(subjectsTable.id, params.data.id))
+    .set({ ...parsed.data, teacherId: guru.id })
+    .where(and(eq(subjectsTable.id, params.data.id), eq(subjectsTable.teacherId, guru.id)))
     .returning();
 
   if (!subject) {
@@ -96,6 +114,12 @@ router.patch("/subjects/:id", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.delete("/subjects/:id", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const params = DeleteSubjectParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -104,7 +128,7 @@ router.delete("/subjects/:id", requireAuth, async (req, res): Promise<void> => {
 
   const [subject] = await db
     .delete(subjectsTable)
-    .where(eq(subjectsTable.id, params.data.id))
+    .where(and(eq(subjectsTable.id, params.data.id), eq(subjectsTable.teacherId, guru.id)))
     .returning();
 
   if (!subject) {
