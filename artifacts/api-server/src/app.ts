@@ -102,8 +102,10 @@ const frontendDist = path.resolve(
 if (fs.existsSync(frontendDist)) {
   logger.info({ frontendDist }, "Serving frontend static files");
   app.use(express.static(frontendDist));
-  app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api")) {
+  // Express 5's router (path-to-regexp v8) rejects a bare "*" path pattern,
+  // so use a path-less middleware for the SPA fallback instead.
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api")) {
       next();
       return;
     }
