@@ -1,0 +1,221 @@
+2026-Jul-11 13:02:28.708951 Docker 29.6.1 with BuildKit and Buildx detected on deployment server (localhost).
+2026-Jul-11 13:02:28.802279 Starting deployment of edwardliu7-dot/GuruEOB5:main to localhost.
+2026-Jul-11 13:02:29.543876 Preparing container with helper image: docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-11 13:02:29.831790 [DEBUG] [CMD]: docker stop --time=30 e9yhmx9mgtsq5edbscrpok4f
+2026-Jul-11 13:02:29.831790 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-11 13:02:29.855128 [DEBUG] Error response from daemon: No such container: e9yhmx9mgtsq5edbscrpok4f
+2026-Jul-11 13:02:33.301060 [DEBUG] [CMD]: docker run -d --network 'coolify' --name e9yhmx9mgtsq5edbscrpok4f  --rm -v /root/.docker/buildx:/root/.docker/buildx -v /var/run/docker.sock:/var/run/docker.sock docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-11 13:02:33.301060 [DEBUG] e318b3a3eaae530d6d6fcff5fcbdb7a2afb31977475c4e491fa54debc5b070a0
+2026-Jul-11 13:02:40.075150 [DEBUG] [CMD]: docker exec e9yhmx9mgtsq5edbscrpok4f bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote '\''https://x-access-token:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''refs/heads/main'\'''
+2026-Jul-11 13:02:40.075150 [DEBUG] 82aa5fb2415d013dd6c4237109364cc08890fce7	refs/heads/main
+2026-Jul-11 13:02:40.415766 Image not found (sfptjjfqgqidt4736qzont0l:82aa5fb2415d013dd6c4237109364cc08890fce7). Building new image.
+2026-Jul-11 13:02:40.927507 ----------------------------------------
+2026-Jul-11 13:02:40.971333 Importing edwardliu7-dot/GuruEOB5:main (commit sha 82aa5fb2415d013dd6c4237109364cc08890fce7) to /artifacts/e9yhmx9mgtsq5edbscrpok4f.
+2026-Jul-11 13:02:41.372849 [DEBUG] [CMD]: docker exec e9yhmx9mgtsq5edbscrpok4f bash -c 'git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 clone --depth=1 --recurse-submodules --shallow-submodules -b '\''main'\'' '\''https:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''/artifacts/e9yhmx9mgtsq5edbscrpok4f'\'' && cd '\''/artifacts/e9yhmx9mgtsq5edbscrpok4f'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 fetch --depth=1 origin '\''82aa5fb2415d013dd6c4237109364cc08890fce7'\'' && git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 -c advice.detachedHead=false checkout '\''82aa5fb2415d013dd6c4237109364cc08890fce7'\'' >/dev/null 2>&1 && cd '\''/artifacts/e9yhmx9mgtsq5edbscrpok4f'\'' && if [ -f .gitmodules ]; then git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule update --init --recursive --depth=1; fi && cd '\''/artifacts/e9yhmx9mgtsq5edbscrpok4f'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 lfs pull'
+2026-Jul-11 13:<REDACTED>@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+2026-Jul-11 13:02:59.962328 [DEBUG] #5 resolve ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de 0.8s done
+2026-Jul-11 13:02:59.962328 [DEBUG] #5 DONE 0.8s
+2026-Jul-11 13:02:59.962328 [DEBUG] 
+2026-Jul-11 13:02:59.962328 [DEBUG] #4 [internal] load build context
+2026-Jul-11 13:03:00.406035 [DEBUG] #4 transferring context: 4.57MB 0.5s done
+2026-Jul-11 13:03:00.705881 [DEBUG] #4 DONE 1.6s
+2026-Jul-11 13:03:00.902809 [DEBUG] #6 [stage-0  4/11] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+2026-Jul-11 13:03:00.902809 [DEBUG] #6 CACHED
+2026-Jul-11 13:03:00.902809 [DEBUG] 
+2026-Jul-11 13:03:00.902809 [DEBUG] #7 [stage-0  2/11] WORKDIR /app/
+2026-Jul-11 13:03:00.902809 [DEBUG] #7 CACHED
+2026-Jul-11 13:03:00.902809 [DEBUG] 
+2026-Jul-11 13:03:00.902809 [DEBUG] #8 [stage-0  3/11] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+2026-Jul-11 13:03:00.902809 [DEBUG] #8 CACHED
+2026-Jul-11 13:03:00.902809 [DEBUG] 
+2026-Jul-11 13:03:00.902809 [DEBUG] #9 [stage-0  5/11] RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends curl wget
+2026-Jul-11 13:03:00.902809 [DEBUG] #9 CACHED
+2026-Jul-11 13:03:01.054382 [DEBUG] 
+2026-Jul-11 13:03:01.118351 [DEBUG] #10 [stage-0  6/11] COPY . /app/.
+2026-Jul-11 13:03:04.724110 [DEBUG] #10 DONE 3.8s
+2026-Jul-11 13:03:04.940029 [DEBUG] #11 [stage-0  7/11] RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-/root/local/share/pnpm/store/v3,target=/root/.local/share/pnpm/store/v3 pnpm install --frozen-lockfile
+2026-Jul-11 13:03:16.332816 [DEBUG] #11 11.54 Scope: all 9 workspace projects
+2026-Jul-11 13:03:16.628396 [DEBUG] #11 11.84 Lockfile is up to date, resolution step is skipped
+2026-Jul-11 13:03:16.813464 [DEBUG] #11 12.02 Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-Jul-11 13:03:17.095960 [DEBUG] #11 12.31 Packages: +530
+2026-Jul-11 13:03:17.095960 [DEBUG] #11 12.31 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-Jul-11 13:03:17.822574 [DEBUG] #11 13.03 Progress: resolved 530, reused 0, downloaded 0, added 0
+2026-Jul-11 13:03:18.823447 [DEBUG] #11 14.03 Progress: resolved 530, reused 0, downloaded 15, added 0
+2026-Jul-11 13:03:19.838350 [DEBUG] #11 15.05 Progress: resolved 530, reused 0, downloaded 83, added 22
+2026-Jul-11 13:03:21.231896 [DEBUG] #11 16.05 Progress: resolved 530, reused 0, downloaded 99, added 27
+2026-Jul-11 13:03:21.847832 [DEBUG] #11 17.05 Progress: resolved 530, reused 0, downloaded 127, added 36
+2026-Jul-11 13:03:22.841743 [DEBUG] #11 18.05 Progress: resolved 530, reused 0, downloaded 171, added 48
+2026-Jul-11 13:03:23.358993 [DEBUG] 
+2026-Jul-11 13:03:23.873814 [DEBUG] #11 19.06 Progress: resolved 530, reused 0, downloaded 196, added 56
+2026-Jul-11 13:03:24.849790 [DEBUG] #11 20.06 Progress: resolved 530, reused 0, downloaded 263, added 89
+2026-Jul-11 13:03:25.859352 [DEBUG] #11 21.07 Progress: resolved 530, reused 0, downloaded 293, added 97
+2026-Jul-11 13:03:26.870624 [DEBUG] #11 22.08 Progress: resolved 530, reused 0, downloaded 319, added 105
+2026-Jul-11 13:03:27.876305 [DEBUG] #11 23.09 Progress: resolved 530, reused 0, downloaded 320, added 105
+2026-Jul-11 13:03:28.927476 [DEBUG] #11 24.14 Progress: resolved 530, reused 0, downloaded 321, added 105
+2026-Jul-11 13:03:28.971370 [DEBUG] 
+2026-Jul-11 13:03:29.927944 [DEBUG] #11 25.14 Progress: resolved 530, reused 0, downloaded 326, added 109
+2026-Jul-11 13:03:31.083778 [DEBUG] #11 26.14 Progress: resolved 530, reused 0, downloaded 327, added 109
+2026-Jul-11 13:03:33.870997 [DEBUG] #11 29.08 Progress: resolved 530, reused 0, downloaded 328, added 109
+2026-Jul-11 13:03:35.129298 [DEBUG] #11 30.34 Progress: resolved 530, reused 0, downloaded 329, added 109
+2026-Jul-11 13:03:36.145389 [DEBUG] #11 31.35 Progress: resolved 530, reused 0, downloaded 335, added 109
+2026-Jul-11 13:03:38.529671 [DEBUG] #11 33.74 Progress: resolved 530, reused 0, downloaded 336, added 109
+2026-Jul-11 13:03:39.537683 [DEBUG] #11 34.75 Progress: resolved 530, reused 0, downloaded 352, added 113
+2026-Jul-11 13:03:40.538394 [DEBUG] #11 35.75 Progress: resolved 530, reused 0, downloaded 399, added 129
+2026-Jul-11 13:03:41.537459 [DEBUG] #11 36.75 Progress: resolved 530, reused 0, downloaded 414, added 133
+2026-Jul-11 13:03:42.540175 [DEBUG] #11 37.75 Progress: resolved 530, reused 0, downloaded 425, added 137
+2026-Jul-11 13:03:43.571354 [DEBUG] #11 38.75 Progress: resolved 530, reused 0, downloaded 448, added 155
+2026-Jul-11 13:03:44.544710 [DEBUG] #11 39.76 Progress: resolved 530, reused 0, downloaded 496, added 169
+2026-Jul-11 13:03:45.549443 [DEBUG] #11 40.76 Progress: resolved 530, reused 0, downloaded 499, added 169
+2026-Jul-11 13:03:46.550446 [DEBUG] #11 41.76 Progress: resolved 530, reused 0, downloaded 516, added 175
+2026-Jul-11 13:03:47.551515 [DEBUG] #11 42.76 Progress: resolved 530, reused 0, downloaded 523, added 177
+2026-Jul-11 13:03:48.561099 [DEBUG] #11 43.77 Progress: resolved 530, reused 0, downloaded 530, added 287
+2026-Jul-11 13:03:49.558530 [DEBUG] #11 44.77 Progress: resolved 530, reused 0, downloaded 530, added 320
+2026-Jul-11 13:03:50.706525 [DEBUG] #11 45.92 Progress: resolved 530, reused 0, downloaded 530, added 321
+2026-Jul-11 13:03:51.706756 [DEBUG] #11 46.92 Progress: resolved 530, reused 0, downloaded 530, added 334
+2026-Jul-11 13:03:52.706553 [DEBUG] #11 47.92 Progress: resolved 530, reused 0, downloaded 530, added 516
+2026-Jul-11 13:03:52.893355 [DEBUG] #11 48.11 Progress: resolved 530, reused 0, downloaded 530, added 530, done
+2026-Jul-11 13:03:55.035735 [DEBUG] #11 50.25 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-11 13:03:55.719519 [DEBUG] #11 50.92 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-11 13:03:56.711417 [DEBUG] #11 51.92
+2026-Jul-11 13:03:56.711417 [DEBUG] #11 51.92 dependencies:
+2026-Jul-11 13:03:56.711417 [DEBUG] #11 51.92 + @replit/connectors-sdk 0.4.1
+2026-Jul-11 13:03:56.711417 [DEBUG] #11 51.92
+2026-Jul-11 13:03:56.711417 [DEBUG] #11 51.92 devDependencies:
+2026-Jul-11 13:03:56.711417 [DEBUG] #11 51.92 + prettier 3.9.4
+2026-Jul-11 13:03:56.711417 [DEBUG] #11 51.92 + typescript 5.9.3
+2026-Jul-11 13:03:56.711417 [DEBUG] #11 51.92
+2026-Jul-11 13:03:56.953835 [DEBUG] #11 52.16 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-11 13:03:57.172682 [DEBUG] #11 52.23 . preinstall: Done
+2026-Jul-11 13:03:57.564141 [DEBUG] #11 52.77 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2026-Jul-11 13:03:57.564141 [DEBUG] #11 52.77 │                                                                              │
+2026-Jul-11 13:03:57.564141 [DEBUG] #11 52.77 │   Ignored build scripts: @google/genai@2.10.0, protobufjs@7.6.5.             │
+2026-Jul-11 13:03:57.564141 [DEBUG] #11 52.77 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2026-Jul-11 13:03:57.564141 [DEBUG] #11 52.77 │   to run scripts.                                                            │
+2026-Jul-11 13:03:57.564141 [DEBUG] #11 52.77 │                                                                              │
+2026-Jul-11 13:03:57.564141 [DEBUG] #11 52.77 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-Jul-11 13:03:57.784321 [DEBUG] #11 52.84 Done in 42.7s using pnpm v10.26.1
+2026-Jul-11 13:04:01.324419 [DEBUG] #11 DONE 56.5s
+2026-Jul-11 13:04:01.496815 [DEBUG] 
+2026-Jul-11 13:04:01.594225 [DEBUG] #12 [stage-0  8/11] COPY . /app/.
+2026-Jul-11 13:04:08.698940 [DEBUG] #12 DONE 7.3s
+2026-Jul-11 13:04:08.933216 [DEBUG] #13 [stage-0  9/11] RUN --mount=type=cache,id=sfptjjfqgqidt4736qzont0l-node_modules/cache,target=/app/node_modules/.cache pnpm run build
+2026-Jul-11 13:04:12.452265 [DEBUG] #13 3.675
+2026-Jul-11 13:04:12.452265 [DEBUG] #13 3.675 > workspace@0.0.0 build /app
+2026-Jul-11 13:04:12.452265 [DEBUG] #13 3.675 > pnpm run typecheck && pnpm -r --if-present --filter '!@workspace/mockup-sandbox' run build
+2026-Jul-11 13:04:12.452265 [DEBUG] #13 3.675
+2026-Jul-11 13:04:13.515067 [DEBUG] #13 4.739
+2026-Jul-11 13:04:13.515067 [DEBUG] #13 4.739 > workspace@0.0.0 typecheck /app
+2026-Jul-11 13:04:13.515067 [DEBUG] #13 4.739 > pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+2026-Jul-11 13:04:13.515067 [DEBUG] #13 4.739
+2026-Jul-11 13:04:14.612574 [DEBUG] #13 5.837
+2026-Jul-11 13:04:14.612574 [DEBUG] #13 5.837 > workspace@0.0.0 typecheck:libs /app
+2026-Jul-11 13:04:14.612574 [DEBUG] #13 5.837 > tsc --build
+2026-Jul-11 13:04:14.612574 [DEBUG] #13 5.837
+2026-Jul-11 13:04:39.829366 [DEBUG] #13 31.06 Scope: 4 of 9 workspace projects
+2026-Jul-11 13:04:40.010890 [DEBUG] #13 31.08 artifacts/api-server typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 13:04:40.010890 [DEBUG] #13 31.09 artifacts/guru-eob5 typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 13:05:06.250476 [DEBUG] #13 57.47 artifacts/api-server typecheck: Done
+2026-Jul-11 13:05:06.437081 [DEBUG] #13 57.51 artifacts/mockup-sandbox typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 13:05:39.772639 [DEBUG] #13 91.00 artifacts/guru-eob5 typecheck: Done
+2026-Jul-11 13:05:39.941207 [DEBUG] #13 91.01 scripts typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-11 13:05:45.284361 [DEBUG] #13 96.51 scripts typecheck: Done
+2026-Jul-11 13:05:46.127931 [DEBUG] #13 97.35 artifacts/mockup-sandbox typecheck: Done
+2026-Jul-11 13:05:47.693458 [DEBUG] #13 98.92 Scope: 7 of 9 workspace projects
+2026-Jul-11 13:05:47.883422 [DEBUG] #13 98.95 artifacts/api-server build$ node ./build.mjs
+2026-Jul-11 13:05:47.883422 [DEBUG] #13 98.96 artifacts/guru-eob5 build$ vite build --config vite.config.ts
+2026-Jul-11 13:05:48.095173 [DEBUG] #13 99.32 artifacts/guru-eob5 build: You are using Node.js 22.11.0. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.
+2026-Jul-11 13:05:52.355644 [DEBUG] #13 103.6 artifacts/guru-eob5 build: vite v7.3.6 building client environment for production...
+2026-Jul-11 13:05:52.868435 [DEBUG] #13 104.1 artifacts/guru-eob5 build: transforming...
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/index.mjs                       2.3mb ⚠️
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/pino-worker.mjs               153.4kb
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/pino-file.mjs                 142.0kb
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/pino-pretty.mjs               114.6kb
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/thread-stream-worker.mjs        7.3kb
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/index.mjs.map                   4.0mb
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/pino-worker.mjs.map           256.9kb
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/pino-file.mjs.map             229.0kb
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/pino-pretty.mjs.map           204.0kb
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build:   dist/thread-stream-worker.mjs.map   12.0kb
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.1 artifacts/api-server build: ⚡ Done in 4445ms
+2026-Jul-11 13:05:53.089397 [DEBUG] #13 104.2 artifacts/api-server build: Done
+2026-Jul-11 13:05:56.117581 [DEBUG] #13 107.3 artifacts/guru-eob5 build: src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-11 13:05:58.742659 [DEBUG] #13 110.0 artifacts/guru-eob5 build: src/components/ui/dropdown-menu.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-11 13:05:58.961084 [DEBUG] #13 110.0 artifacts/guru-eob5 build: src/components/ui/label.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-11 13:05:58.961084 [DEBUG] #13 110.0 artifacts/guru-eob5 build: src/components/ui/select.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-11 13:05:58.961084 [DEBUG] #13 110.0 artifacts/guru-eob5 build: src/components/ui/progress.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-11 13:06:13.270109 [DEBUG] #13 124.5 artifacts/guru-eob5 build: src/components/ui/avatar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-11 13:06:30.679126 [DEBUG] #13 141.9 artifacts/guru-eob5 build: ✓ 3317 modules transformed.
+2026-Jul-11 13:06:34.013062 [DEBUG] #13 145.2 artifacts/guru-eob5 build: rendering chunks...
+2026-Jul-11 13:06:34.187645 [DEBUG] #13 145.3 artifacts/guru-eob5 build: computing gzip size...
+2026-Jul-11 13:06:34.187645 [DEBUG] #13 145.4 artifacts/guru-eob5 build: dist/public/index.html                     1.36 kB │ gzip:   0.54 kB
+2026-Jul-11 13:06:34.358106 [DEBUG] #13 145.4 artifacts/guru-eob5 build: dist/public/assets/logo-C8q4zXk9.png      73.99 kB
+2026-Jul-11 13:06:34.358106 [DEBUG] #13 145.4 artifacts/guru-eob5 build: dist/public/assets/index-Bol4t0GD.css    103.61 kB │ gzip:  17.05 kB
+2026-Jul-11 13:06:34.358106 [DEBUG] #13 145.4 artifacts/guru-eob5 build: dist/public/assets/index-CUgh8d32.js   1,385.76 kB │ gzip: 412.45 kB
+2026-Jul-11 13:06:34.358106 [DEBUG] #13 145.4 artifacts/guru-eob5 build:
+2026-Jul-11 13:06:34.358106 [DEBUG] #13 145.4 artifacts/guru-eob5 build: (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-Jul-11 13:06:34.358106 [DEBUG] #13 145.4 artifacts/guru-eob5 build: - Using dynamic import() to code-split the application
+2026-Jul-11 13:06:34.358106 [DEBUG] #13 145.4 artifacts/guru-eob5 build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-Jul-11 13:06:34.358106 [DEBUG] #13 145.4 artifacts/guru-eob5 build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+2026-Jul-11 13:06:34.358106 [DEBUG] #13 145.4 artifacts/guru-eob5 build: ✓ built in 41.61s
+2026-Jul-11 13:06:34.397638 [DEBUG] #13 145.6 artifacts/guru-eob5 build: Done
+2026-Jul-11 13:06:34.909231 [DEBUG] #13 DONE 146.1s
+2026-Jul-11 13:06:35.144421 [DEBUG] #14 [stage-0 10/11] RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+2026-Jul-11 13:06:36.976245 [DEBUG] #14 DONE 2.0s
+2026-Jul-11 13:06:37.189453 [DEBUG] #15 [stage-0 11/11] COPY . /app
+2026-Jul-11 13:06:41.334842 [DEBUG] #15 DONE 4.3s
+2026-Jul-11 13:06:41.514678 [DEBUG] #16 exporting to image
+2026-Jul-11 13:06:41.680722 [DEBUG] #16 exporting layers
+2026-Jul-11 13:09:28.175384 [DEBUG] #16 exporting layers 166.6s done
+2026-Jul-11 13:09:28.387798 [DEBUG] #16 exporting manifest sha256:2ca0b048dcca90026d8566eb8ae0fe362c38ebf8a6f008085fa4c4e3e5febb65
+2026-Jul-11 13:09:28.552475 [DEBUG] #16 exporting manifest sha256:2ca0b048dcca90026d8566eb8ae0fe362c38ebf8a6f008085fa4c4e3e5febb65 0.3s done
+2026-Jul-11 13:09:28.552475 [DEBUG] #16 exporting config sha256:3f34d98b7e7b369c3d20e772659e9ebc692b8d3d2da94863154570c5987d75a7
+2026-Jul-11 13:09:28.813965 [DEBUG] #16 exporting config sha256:3f34d98b7e7b369c3d20e772659e9ebc692b8d3d2da94863154570c5987d75a7 0.3s done
+2026-Jul-11 13:09:29.238012 [DEBUG] #16 exporting attestation manifest sha256:39b9c6569661345e4e7b05f7b78dbdd8dbd3bc23a725fa13a18563d0a30377e8
+2026-Jul-11 13:09:29.767057 [DEBUG] #16 exporting attestation manifest sha256:39b9c6569661345e4e7b05f7b78dbdd8dbd3bc23a725fa13a18563d0a30377e8 0.5s done
+2026-Jul-11 13:09:29.801412 [DEBUG] #16 exporting manifest list sha256:eb4e49486d795ffcd85772144617413159c51e6672dca4d35f85c940c1bbac19
+2026-Jul-11 13:09:30.186496 [DEBUG] #16 exporting manifest list sha256:eb4e49486d795ffcd85772144617413159c51e6672dca4d35f85c940c1bbac19 0.4s done
+2026-Jul-11 13:09:30.186496 [DEBUG] #16 naming to docker.io/library/sfptjjfqgqidt4736qzont0l:82aa5fb2415d013dd6c4237109364cc08890fce7
+2026-Jul-11 13:09:30.294276 [DEBUG] #16 naming to docker.io/library/sfptjjfqgqidt4736qzont0l:82aa5fb2415d013dd6c4237109364cc08890fce7 0.1s done
+2026-Jul-11 13:09:30.294276 [DEBUG] #16 unpacking to docker.io/library/sfptjjfqgqidt4736qzont0l:82aa5fb2415d013dd6c4237109364cc08890fce7
+2026-Jul-11 13:10:45.161676 [DEBUG] #16 unpacking to docker.io/library/sfptjjfqgqidt4736qzont0l:82aa5fb2415d013dd6c4237109364cc08890fce7 74.9s done
+2026-Jul-11 13:10:45.890563 [DEBUG] #16 DONE 244.4s
+2026-Jul-11 13:10:48.753696 [DEBUG] 
+2026-Jul-11 13:10:50.068880 [DEBUG] 1 warning found (use docker --debug to expand):
+2026-Jul-11 13:10:50.068880 [DEBUG] - UndefinedVar: Usage of undefined variable '$NIXPACKS_PATH' (line 18)
+2026-Jul-11 13:10:54.533529 Building docker image completed.
+2026-Jul-11 13:10:56.066802 [DEBUG] Creating .env file with runtime variables for container.
+2026-Jul-11 13:10:56.869831 ----------------------------------------
+2026-Jul-11 13:10:56.934856 Rolling update started.
+2026-Jul-11 13:11:01.205489 [DEBUG] [CMD]: docker exec e9yhmx9mgtsq5edbscrpok4f bash -c 'COOLIFY_URL=http://eob5guru.sslip.io COOLIFY_FQDN=eob5guru.sslip.io COOLIFY_BRANCH='\''main'\'' COOLIFY_RESOURCE_UUID=sfptjjfqgqidt4736qzont0l  docker compose --project-name sfptjjfqgqidt4736qzont0l --project-directory /artifacts/e9yhmx9mgtsq5edbscrpok4f -f /artifacts/e9yhmx9mgtsq5edbscrpok4f/docker-compose.yaml up --build -d'
+2026-Jul-11 13:11:01.205489 [DEBUG] Container sfptjjfqgqidt4736qzont0l-130222815732  Creating
+2026-Jul-11 13:11:01.304157 [DEBUG] Container sfptjjfqgqidt4736qzont0l-130222815732  Error response from daemon: You should always set the Memory limit when using Memoryswap limit, see usage
+2026-Jul-11 13:11:01.304157 [DEBUG] Error response from daemon: You should always set the Memory limit when using Memoryswap limit, see usage
+2026-Jul-11 13:11:01.304157 [DEBUG] exit status 1
+2026-Jul-11 13:11:05.560740 ========================================
+2026-Jul-11 13:11:05.601990 Deployment failed: Rolling update failed (App\Exceptions\DeploymentException): Failed to start container: Command execution failed (exit code 1): docker exec e9yhmx9mgtsq5edbscrpok4f bash -c 'COOLIFY_URL=http://eob5guru.sslip.io COOLIFY_FQDN=eob5guru.sslip.io COOLIFY_BRANCH='\''main'\'' COOLIFY_RESOURCE_UUID=sfptjjfqgqidt4736qzont0l  docker compose --project-name sfptjjfqgqidt4736qzont0l --project-directory /artifacts/e9yhmx9mgtsq5edbscrpok4f -f /artifacts/e9yhmx9mgtsq5edbscrpok4f/docker-compose.yaml up --build -d'
+2026-Jul-11 13:11:05.601990 Error:  Container sfptjjfqgqidt4736qzont0l-130222815732  Creating
+2026-Jul-11 13:11:05.601990 Container sfptjjfqgqidt4736qzont0l-130222815732  Error response from daemon: You should always set the Memory limit when using Memoryswap limit, see usage
+2026-Jul-11 13:11:05.601990 Error response from daemon: You should always set the Memory limit when using Memoryswap limit, see usage
+2026-Jul-11 13:11:05.601990 exit status 1
+2026-Jul-11 13:11:05.640954 [DEBUG] Error type: App\Exceptions\DeploymentException
+2026-Jul-11 13:11:05.684623 [DEBUG] Error code: 0
+2026-Jul-11 13:11:05.743737 [DEBUG] Location: /var/www/html/app/Jobs/ApplicationDeploymentJob.php:1951
+2026-Jul-11 13:11:05.804492 [DEBUG] Caused by:
+2026-Jul-11 13:11:05.838608 [DEBUG] App\Exceptions\DeploymentException: Failed to start container: Command execution failed (exit code 1): docker exec e9yhmx9mgtsq5edbscrpok4f bash -c 'COOLIFY_URL=http://eob5guru.sslip.io COOLIFY_FQDN=eob5guru.sslip.io COOLIFY_BRANCH='\''main'\'' COOLIFY_RESOURCE_UUID=sfptjjfqgqidt4736qzont0l  docker compose --project-name sfptjjfqgqidt4736qzont0l --project-directory /artifacts/e9yhmx9mgtsq5edbscrpok4f -f /artifacts/e9yhmx9mgtsq5edbscrpok4f/docker-compose.yaml up --build -d'
+2026-Jul-11 13:11:05.838608 [DEBUG] Error:  Container sfptjjfqgqidt4736qzont0l-130222815732  Creating
+2026-Jul-11 13:11:05.838608 [DEBUG] Container sfptjjfqgqidt4736qzont0l-130222815732  Error response from daemon: You should always set the Memory limit when using Memoryswap limit, see usage
+2026-Jul-11 13:11:05.838608 [DEBUG] Error response from daemon: You should always set the Memory limit when using Memoryswap limit, see usage
+2026-Jul-11 13:11:05.838608 [DEBUG] exit status 1
+2026-Jul-11 13:11:05.880728 [DEBUG] at /var/www/html/app/Jobs/ApplicationDeploymentJob.php:3933
+2026-Jul-11 13:11:05.926002 [DEBUG] Stack trace (first 5 lines):
+2026-Jul-11 13:11:05.973904 [DEBUG] #0 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(952): App\Jobs\ApplicationDeploymentJob->rolling_update()
+2026-Jul-11 13:11:06.004639 [DEBUG] #1 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(503): App\Jobs\ApplicationDeploymentJob->deploy_nixpacks_buildpack()
+2026-Jul-11 13:11:06.039353 [DEBUG] #2 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(363): App\Jobs\ApplicationDeploymentJob->decide_what_to_do()
+2026-Jul-11 13:11:06.068643 [DEBUG] #3 /var/www/html/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\Jobs\ApplicationDeploymentJob->handle()
+2026-Jul-11 13:11:06.099381 [DEBUG] #4 /var/www/html/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\Container\BoundMethod::{closure:Illuminate\Container\BoundMethod::call():35}()
+2026-Jul-11 13:11:06.124212 ========================================
+2026-Jul-11 13:11:06.147876 Deployment failed. Removing the new version of your application.
+2026-Jul-11 13:11:08.193776 Gracefully shutting down build container: e9yhmx9mgtsq5edbscrpok4f
+2026-Jul-11 13:11:08.553900 [DEBUG] [CMD]: docker stop --time=30 e9yhmx9mgtsq5edbscrpok4f
+2026-Jul-11 13:11:08.553900 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-11 13:11:12.015063 [DEBUG] e9yhmx9mgtsq5edbscrpok4f
