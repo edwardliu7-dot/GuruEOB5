@@ -7,6 +7,28 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileDialog } from "@/components/profile-dialog";
 import { formatJabatan } from "@/lib/options";
 import logoUrl from "@/assets/logo.png";
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+
+const SIDEBAR_COOKIE_NAME = "sidebar_state";
+
+function getStoredSidebarOpen(): boolean {
+  if (typeof document === "undefined") return true;
+  const match = document.cookie.match(new RegExp(`${SIDEBAR_COOKIE_NAME}=(true|false)`));
+  return match ? match[1] === "true" : true;
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -61,89 +83,95 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border shrink-0">
-        <div className="h-16 flex items-center px-6 border-b border-sidebar-border shrink-0">
-          <div className="flex items-center gap-2">
-            <img src={logoUrl} alt="GuruEOB5" className="h-12 w-auto" />
-          </div>
-        </div>
-        
-        <div className="flex-1 py-6 px-4 flex flex-col gap-1 overflow-y-auto">
-          <div className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2 px-2">Menu Utama</div>
-          {navItems.map((item) => {
-            const isActive = location === item.href || (location === "/" && item.href === "/dashboard");
-            const Icon = item.icon;
-            return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors ${
-                isActive 
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              }`}>
-                <Icon className="w-4 h-4" />
-                <span className="text-sm">{item.label}</span>
-              </Link>
-            );
-          })}
+    <SidebarProvider defaultOpen={getStoredSidebarOpen()}>
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="h-16 flex-row items-center justify-center border-b border-sidebar-border px-2">
+          <img src={logoUrl} alt="GuruEOB5" className="h-10 w-auto group-data-[collapsible=icon]:h-7" />
+        </SidebarHeader>
 
-          {roleNavItems.length > 0 && (
-            <>
-              <div className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2 mt-6 px-2">Menu Jabatan</div>
-              {roleNavItems.map((item) => {
-                const isActive = location === item.href;
+        <SidebarContent className="px-2 py-4">
+          <SidebarGroup>
+            <SidebarGroupLabel>Menu Utama</SidebarGroupLabel>
+            <SidebarMenu>
+              {navItems.map((item) => {
+                const isActive = location === item.href || (location === "/" && item.href === "/dashboard");
                 const Icon = item.icon;
                 return (
-                  <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors ${
-                    isActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                  }`}>
-                    <Icon className="w-4 h-4" />
-                    <span className="text-sm">{item.label}</span>
-                  </Link>
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 );
               })}
-            </>
+            </SidebarMenu>
+          </SidebarGroup>
+
+          {roleNavItems.length > 0 && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Menu Jabatan</SidebarGroupLabel>
+              <SidebarMenu>
+                {roleNavItems.map((item) => {
+                  const isActive = location === item.href;
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                        <Link href={item.href}>
+                          <Icon />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
           )}
-        </div>
-        
-        <div className="p-4 border-t border-sidebar-border shrink-0">
+        </SidebarContent>
+
+        <SidebarFooter className="border-t border-sidebar-border p-3">
           <button
             type="button"
             onClick={() => setProfileOpen(true)}
-            className="w-full flex items-center gap-3 mb-4 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/50 transition-colors text-left"
+            className="w-full flex items-center gap-3 mb-3 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/50 transition-colors text-left group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
           >
-            <Avatar className="w-9 h-9">
+            <Avatar className="w-9 h-9 shrink-0">
               {user?.photoUrl ? <AvatarImage src={user.photoUrl} alt={user.name} /> : null}
               <AvatarFallback className="bg-sidebar-accent text-sidebar-foreground/70 text-xs">{initials}</AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
               <p className="text-sm font-medium truncate">{user?.name}</p>
               <p className="text-xs text-sidebar-foreground/50 truncate">{formatJabatan(user?.jabatan)}</p>
             </div>
           </button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50" 
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
             onClick={handleLogout}
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Keluar
+            <LogOut className="w-4 h-4 group-data-[collapsible=icon]:mr-0 mr-2" />
+            <span className="group-data-[collapsible=icon]:hidden">Keluar</span>
           </Button>
-        </div>
-      </aside>
+        </SidebarFooter>
+      </Sidebar>
 
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#F8FAFC]">
-        <div className="flex-1 overflow-y-auto p-6 md:p-10">
+      <SidebarInset className="h-svh min-w-0 overflow-hidden bg-[#F8FAFC]">
+        <div className="h-14 flex items-center gap-2 px-4 border-b border-border shrink-0 md:h-16 md:px-6 bg-white">
+          <SidebarTrigger />
+          <img src={logoUrl} alt="GuruEOB5" className="h-8 w-auto md:hidden" />
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10">
           <div className="max-w-6xl mx-auto">
             {children}
           </div>
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

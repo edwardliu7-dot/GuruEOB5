@@ -314,6 +314,7 @@ export default function Kalender() {
               {calendars?.length ? "Pilih kalender." : "Belum ada kalender akademik."}
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50/50">
@@ -375,6 +376,7 @@ export default function Kalender() {
                 )}
               </TableBody>
             </Table>
+            </div>
           )}
         </div>
       </div>

@@ -302,6 +302,7 @@ export default function Prosem() {
                 </Select>
               )}
             </div>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50/50">
@@ -357,6 +358,7 @@ export default function Prosem() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
         ) : (
           <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
@@ -377,6 +379,7 @@ export default function Prosem() {
                 <Plus className="w-4 h-4 mr-2" /> Tambah Materi
               </Button>
             </div>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50/50">
@@ -439,6 +442,7 @@ export default function Prosem() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
         )}
       </div>

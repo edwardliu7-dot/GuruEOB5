@@ -100,6 +100,7 @@ export default function Guru() {
         </Dialog>
 
         <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/50">
@@ -139,6 +140,7 @@ export default function Guru() {
               )}
             </TableBody>
           </Table>
+          </div>
         </div>
       </div>
     </Layout>

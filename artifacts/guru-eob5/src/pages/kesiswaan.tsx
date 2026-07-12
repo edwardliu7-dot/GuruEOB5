@@ -43,6 +43,7 @@ export default function Kesiswaan() {
                 {data?.perKelas.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">Belum ada data siswa.</p>
                 ) : (
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -75,6 +76,7 @@ export default function Kesiswaan() {
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -91,6 +93,7 @@ export default function Kesiswaan() {
                     Belum ada catatan poin pelanggaran.
                   </p>
                 ) : (
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -111,6 +114,7 @@ export default function Kesiswaan() {
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>

@@ -41,6 +41,7 @@ export default function Kepsek() {
                 ))}
               </div>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -98,6 +99,7 @@ export default function Kepsek() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>

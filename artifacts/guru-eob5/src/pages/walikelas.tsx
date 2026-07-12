@@ -47,6 +47,7 @@ export default function WaliKelas() {
                 Belum ada siswa terdaftar di kelas ini.
               </p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -83,6 +84,7 @@ export default function WaliKelas() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
