@@ -29,7 +29,6 @@ import type {
   AttendanceRecord,
   AttendanceRecordInput,
   BulkCreateAttendanceInput,
-  BulkCreateGradesInput,
   BulkCreatePointsInput,
   BulkCreatePointsResult,
   BulkCreateResult,
@@ -39,6 +38,7 @@ import type {
   GetInfoPekananParams,
   Grade,
   GradeInput,
+  GradeUpdate,
   HealthStatus,
   InfoPekanan,
   JournalEntry,
@@ -2731,7 +2731,7 @@ export const getCreateGradeUrl = () => {
 }
 
 /**
- * @summary Record a grade
+ * @summary Record or update a grade (upsert by student/subject/calendar/jenis/lingkup materi/tp)
  */
 export const createGrade = async (gradeInput: GradeInput, options?: RequestInit): Promise<Grade> => {
 
@@ -2780,7 +2780,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateGradeMutationError = ErrorType<unknown>
 
     /**
- * @summary Record a grade
+ * @summary Record or update a grade (upsert by student/subject/calendar/jenis/lingkup materi/tp)
  */
 export const useCreateGrade = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGrade>>, TError,{data: BodyType<GradeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -2793,25 +2793,26 @@ export const useCreateGrade = <TError = ErrorType<unknown>,
       return useMutation(getCreateGradeMutationOptions(options));
     }
 
-export const getBulkCreateGradesUrl = () => {
+export const getUpdateGradeUrl = (id: string,) => {
 
 
 
 
-  return `/api/grades/bulk`
+  return `/api/grades/${id}`
 }
 
 /**
- * @summary Record the same grade for a group of students
+ * @summary Update a grade's score
  */
-export const bulkCreateGrades = async (bulkCreateGradesInput: BulkCreateGradesInput, options?: RequestInit): Promise<BulkCreateResult> => {
+export const updateGrade = async (id: string,
+    gradeUpdate: GradeUpdate, options?: RequestInit): Promise<Grade> => {
 
-  return customFetch<BulkCreateResult>(getBulkCreateGradesUrl(),
+  return customFetch<Grade>(getUpdateGradeUrl(id),
   {
     ...options,
-    method: 'POST',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(bulkCreateGradesInput)
+    body: JSON.stringify(gradeUpdate)
   }
 );}
 
@@ -2819,11 +2820,11 @@ export const bulkCreateGrades = async (bulkCreateGradesInput: BulkCreateGradesIn
 
 
 
-export const getBulkCreateGradesMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateGrades>>, TError,{data: BodyType<BulkCreateGradesInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof bulkCreateGrades>>, TError,{data: BodyType<BulkCreateGradesInput>}, TContext> => {
+export const getUpdateGradeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGrade>>, TError,{id: string;data: BodyType<GradeUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateGrade>>, TError,{id: string;data: BodyType<GradeUpdate>}, TContext> => {
 
-const mutationKey = ['bulkCreateGrades'];
+const mutationKey = ['updateGrade'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -2833,10 +2834,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkCreateGrades>>, {data: BodyType<BulkCreateGradesInput>}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateGrade>>, {id: string;data: BodyType<GradeUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  bulkCreateGrades(data,requestOptions)
+          return  updateGrade(id,data,requestOptions)
         }
 
 
@@ -2846,22 +2847,93 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type BulkCreateGradesMutationResult = NonNullable<Awaited<ReturnType<typeof bulkCreateGrades>>>
-    export type BulkCreateGradesMutationBody = BodyType<BulkCreateGradesInput>
-    export type BulkCreateGradesMutationError = ErrorType<unknown>
+    export type UpdateGradeMutationResult = NonNullable<Awaited<ReturnType<typeof updateGrade>>>
+    export type UpdateGradeMutationBody = BodyType<GradeUpdate>
+    export type UpdateGradeMutationError = ErrorType<unknown>
 
     /**
- * @summary Record the same grade for a group of students
+ * @summary Update a grade's score
  */
-export const useBulkCreateGrades = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateGrades>>, TError,{data: BodyType<BulkCreateGradesInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdateGrade = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGrade>>, TError,{id: string;data: BodyType<GradeUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof bulkCreateGrades>>,
+        Awaited<ReturnType<typeof updateGrade>>,
         TError,
-        {data: BodyType<BulkCreateGradesInput>},
+        {id: string;data: BodyType<GradeUpdate>},
         TContext
       > => {
-      return useMutation(getBulkCreateGradesMutationOptions(options));
+      return useMutation(getUpdateGradeMutationOptions(options));
+    }
+
+export const getDeleteGradeUrl = (id: string,) => {
+
+
+
+
+  return `/api/grades/${id}`
+}
+
+/**
+ * @summary Delete a grade
+ */
+export const deleteGrade = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteGradeUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteGradeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteGrade>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteGrade>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteGrade'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteGrade>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteGrade(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteGradeMutationResult = NonNullable<Awaited<ReturnType<typeof deleteGrade>>>
+
+    export type DeleteGradeMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a grade
+ */
+export const useDeleteGrade = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteGrade>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteGrade>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteGradeMutationOptions(options));
     }
 
 export const getListPointsUrl = (params?: ListPointsParams,) => {

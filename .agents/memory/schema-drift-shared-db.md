@@ -35,3 +35,12 @@ the same pattern already used for the session table, then creating the new
 table fresh with plain `CREATE TABLE IF NOT EXISTS` (not push, for the same
 reason as above). This is a code change (schema file edit), not just a DB
 fix, so it requires a redeploy — unlike a pure `ALTER TABLE ADD COLUMN` fix.
+
+This Replit workspace's own dev `DATABASE_URL` can independently drift from a
+rename applied elsewhere (e.g. only to a separately-managed production DB):
+found the schema file already renamed `students` → `guru_eob5_students` in
+code, but the dev DB still had the old `students` table, so any query on that
+table 500'd in dev even though the rename "was already done." Always verify
+the *current* DATABASE_URL's actual table names (`information_schema.tables`)
+against the schema file before trusting that a documented past fix is live
+everywhere; apply the same rename/`ALTER` there too if it's missing.

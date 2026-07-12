@@ -10,7 +10,17 @@ import type { GradeInputJenis } from './gradeInputJenis';
 export interface GradeInput {
   studentId: string;
   subjectId: string;
+  calendarId: string;
   jenis: GradeInputJenis;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  lingkupMateri?: number;
+  /**
+     * @minimum 1
+     * @maximum 4
+     */
+  tpNumber?: number;
   nilai: number;
-  tanggal: string;
 }

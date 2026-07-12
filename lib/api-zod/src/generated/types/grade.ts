@@ -11,8 +11,20 @@ export interface Grade {
   id: string;
   studentId: string;
   subjectId: string;
+  calendarId: string;
   jenis: GradeJenis;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  lingkupMateri?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 4
+     * @nullable
+     */
+  tpNumber?: number | null;
   nilai: number;
-  tanggal: string;
   createdAt: Date;
 }

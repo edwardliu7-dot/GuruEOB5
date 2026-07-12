@@ -1,214 +1,364 @@
 import { Layout } from "@/components/layout";
-import { useListGrades, useBulkCreateGrades, useListSubjects, useListStudents } from "@workspace/api-client-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useListGrades,
+  useCreateGrade,
+  useDeleteGrade,
+  useListSubjects,
+  useListStudents,
+  useListAcademicCalendars,
+} from "@workspace/api-client-react";
+import { useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
-import { format } from "date-fns";
+import { Download } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
 
-const gradeSchema = z.object({
-  studentIds: z.array(z.string()).min(1, "Pilih minimal satu siswa"),
-  subjectId: z.string().min(1, "Mata pelajaran harus dipilih"),
-  jenis: z.enum(["tugas", "uts", "uas"]),
-  nilai: z.coerce.number().min(0).max(100),
-  tanggal: z.string().min(1, "Tanggal harus diisi"),
-});
+const LM_LIST = [1, 2, 3, 4, 5];
+const TP_LIST = [1, 2, 3, 4];
+
+type Grade = {
+  id: string;
+  studentId: string;
+  subjectId: string;
+  calendarId: string;
+  jenis: "formatif" | "sumatif_lm" | "sumatif_akhir";
+  lingkupMateri: number | null;
+  tpNumber: number | null;
+  nilai: number;
+};
+
+function gradeKey(jenis: string, lm: number | null, tp: number | null) {
+  return `${jenis}|${lm ?? "-"}|${tp ?? "-"}`;
+}
+
+function GradeCell({
+  value,
+  onSave,
+  disabled,
+}: {
+  value: number | null;
+  onSave: (nilai: number | null) => void;
+  disabled?: boolean;
+}) {
+  const [local, setLocal] = useState(value === null ? "" : String(value));
+
+  useEffect(() => {
+    setLocal(value === null ? "" : String(value));
+  }, [value]);
+
+  return (
+    <Input
+      type="number"
+      min={0}
+      max={100}
+      disabled={disabled}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => {
+        const trimmed = local.trim();
+        const parsed = trimmed === "" ? null : Number(trimmed);
+        if (parsed !== null && (Number.isNaN(parsed) || parsed < 0 || parsed > 100)) {
+          setLocal(value === null ? "" : String(value));
+          return;
+        }
+        if (parsed === value) return;
+        onSave(parsed);
+      }}
+      className="h-8 w-16 text-center px-1"
+    />
+  );
+}
 
 export default function Nilai() {
   const { data: subjects } = useListSubjects();
   const { data: students } = useListStudents();
-  const [selectedSubject, setSelectedSubject] = useState<string>("");
-
-  const subjectFilter = selectedSubject && selectedSubject !== "all" ? selectedSubject : undefined;
-  const { data: gradesList, isLoading } = useListGrades(
-    { subjectId: subjectFilter },
-    { query: { queryKey: ["/api/grades", subjectFilter ?? ""] } }
-  );
-
-  const bulkCreateGrades = useBulkCreateGrades();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [kelasFilter, setKelasFilter] = useState<string>("all");
+  const { data: calendars } = useListAcademicCalendars();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<z.infer<typeof gradeSchema>>({
-    resolver: zodResolver(gradeSchema),
-    defaultValues: { studentIds: [], subjectId: "", jenis: "tugas", nilai: 0, tanggal: new Date().toISOString().split("T")[0] },
-  });
+  const [kelasFilter, setKelasFilter] = useState<string>("");
+  const [subjectId, setSubjectId] = useState<string>("");
+  const [calendarId, setCalendarId] = useState<string>("");
 
-  const kelasList = [...new Set((students ?? []).map((s: any) => s.kelas))].sort();
-  const visibleStudents = (students ?? []).filter(
-    (s: any) => kelasFilter === "all" || s.kelas === kelasFilter,
+  const kelasList = useMemo(
+    () => [...new Set((students ?? []).map((s: any) => s.kelas))].sort(),
+    [students],
   );
 
-  const onSubmit = async (data: z.infer<typeof gradeSchema>) => {
-    try {
-      const result = await bulkCreateGrades.mutateAsync({ data });
-      toast({ title: "Berhasil", description: `Nilai dicatat untuk ${result.count} siswa` });
-      setIsDialogOpen(false);
-      form.reset();
-      setKelasFilter("all");
-      queryClient.invalidateQueries({ queryKey: ["/api/grades"] });
-    } catch {
-      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+  useEffect(() => {
+    if (!kelasFilter && kelasList.length) setKelasFilter(kelasList[0]);
+  }, [kelasList, kelasFilter]);
+
+  useEffect(() => {
+    if (!subjectId && subjects?.length) setSubjectId(subjects[0].id);
+  }, [subjects, subjectId]);
+
+  useEffect(() => {
+    if (!calendarId && calendars?.length) setCalendarId(calendars[0].id);
+  }, [calendars, calendarId]);
+
+  const kelasStudents = useMemo(
+    () =>
+      (students ?? [])
+        .filter((s: any) => s.kelas === kelasFilter)
+        .sort((a: any, b: any) => a.namaLengkap.localeCompare(b.namaLengkap)),
+    [students, kelasFilter],
+  );
+
+  const ready = !!subjectId && !!calendarId && !!kelasFilter;
+
+  const { data: gradesList, isLoading } = useListGrades(
+    { subjectId: subjectId || undefined, calendarId: calendarId || undefined },
+    {
+      query: {
+        queryKey: ["/api/grades", subjectId, calendarId],
+        enabled: ready,
+      },
+    },
+  );
+
+  const createGrade = useCreateGrade();
+  const deleteGrade = useDeleteGrade();
+
+  const gradeMap = useMemo(() => {
+    const map = new Map<string, Grade>();
+    for (const g of (gradesList ?? []) as Grade[]) {
+      map.set(`${g.studentId}::${gradeKey(g.jenis, g.lingkupMateri, g.tpNumber)}`, g);
     }
+    return map;
+  }, [gradesList]);
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["/api/grades", subjectId, calendarId] });
+
+  const saveCell = async (
+    studentId: string,
+    jenis: Grade["jenis"],
+    lingkupMateri: number | null,
+    tpNumber: number | null,
+    nilai: number | null,
+  ) => {
+    const existing = gradeMap.get(`${studentId}::${gradeKey(jenis, lingkupMateri, tpNumber)}`);
+    try {
+      if (nilai === null) {
+        if (existing) {
+          await deleteGrade.mutateAsync({ id: existing.id });
+          invalidate();
+        }
+        return;
+      }
+      await createGrade.mutateAsync({
+        data: {
+          studentId,
+          subjectId,
+          calendarId,
+          jenis,
+          nilai,
+          ...(lingkupMateri !== null ? { lingkupMateri } : {}),
+          ...(tpNumber !== null ? { tpNumber } : {}),
+        },
+      });
+      invalidate();
+    } catch {
+      toast({ variant: "destructive", title: "Gagal", description: "Nilai tidak tersimpan" });
+    }
+  };
+
+  const selectedSubjectName = subjects?.find((s: any) => s.id === subjectId)?.name ?? "";
+  const selectedCalendar = calendars?.find((c: any) => c.id === calendarId);
+
+  const handleExport = () => {
+    if (!kelasStudents.length) return;
+
+    const groupRow: (string | { v: string; s?: unknown })[] = ["No", "NISN", "Nama Siswa"];
+    const subRow: string[] = ["", "", ""];
+    const merges: XLSX.Range[] = [];
+    let col = 3;
+    for (const lm of LM_LIST) {
+      groupRow.push(`Formatif - Lingkup Materi ${lm}`, "", "", "");
+      for (const tp of TP_LIST) subRow.push(`TP${tp}`);
+      merges.push({ s: { r: 0, c: col }, e: { r: 0, c: col + 3 } });
+      col += 4;
+    }
+    for (const lm of LM_LIST) {
+      groupRow.push(`Sumatif LM${lm}`);
+      subRow.push("");
+      col += 1;
+    }
+    groupRow.push("Sumatif Akhir Semester");
+    subRow.push("");
+
+    merges.push({ s: { r: 0, c: 0 }, e: { r: 1, c: 0 } });
+    merges.push({ s: { r: 0, c: 1 }, e: { r: 1, c: 1 } });
+    merges.push({ s: { r: 0, c: 2 }, e: { r: 1, c: 2 } });
+    merges.push({ s: { r: 0, c: col }, e: { r: 1, c: col } });
+
+    const dataRows = kelasStudents.map((s: any, i: number) => {
+      const row: (string | number)[] = [i + 1, s.nisn || "-", s.namaLengkap];
+      for (const lm of LM_LIST) {
+        for (const tp of TP_LIST) {
+          const g = gradeMap.get(`${s.id}::${gradeKey("formatif", lm, tp)}`);
+          row.push(g ? g.nilai : "");
+        }
+      }
+      for (const lm of LM_LIST) {
+        const g = gradeMap.get(`${s.id}::${gradeKey("sumatif_lm", lm, null)}`);
+        row.push(g ? g.nilai : "");
+      }
+      const akhir = gradeMap.get(`${s.id}::${gradeKey("sumatif_akhir", null, null)}`);
+      row.push(akhir ? akhir.nilai : "");
+      return row;
+    });
+
+    const infoRows = [
+      [`Mata Pelajaran: ${selectedSubjectName}`],
+      [`Kelas: ${kelasFilter}`],
+      [
+        `Tahun Ajaran: ${selectedCalendar?.tahunAjaran ?? "-"}  Semester: ${selectedCalendar?.semester ?? "-"}`,
+      ],
+      [],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet([...infoRows, groupRow, subRow, ...dataRows]);
+    const headerOffset = infoRows.length;
+    ws["!merges"] = merges.map((m) => ({
+      s: { r: m.s.r + headerOffset, c: m.s.c },
+      e: { r: m.e.r + headerOffset, c: m.e.c },
+    }));
+    ws["!cols"] = [
+      { wch: 5 },
+      { wch: 12 },
+      { wch: 24 },
+      ...Array(LM_LIST.length * TP_LIST.length + LM_LIST.length + 1).fill({ wch: 9 }),
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
+    XLSX.writeFile(wb, `Rekap_Nilai_${kelasFilter}_${selectedSubjectName || "mapel"}.xlsx`);
   };
 
   return (
     <Layout>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold font-serif">Data Nilai</h1>
-            <p className="text-muted-foreground mt-1">Catat dan pantau nilai akademik siswa.</p>
+            <p className="text-muted-foreground mt-1">
+              Formatif per Tujuan Pembelajaran (TP), Sumatif per Lingkup Materi, dan Sumatif Akhir Semester (Kurikulum
+              Merdeka).
+            </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" /> Input Nilai</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Input Nilai</DialogTitle></DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField control={form.control} name="studentIds" render={({ field }) => {
-                    const visibleIds = visibleStudents.map((s: any) => s.id);
-                    const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id: string) => field.value.includes(id));
-                    return (
-                      <FormItem>
-                        <div className="flex items-center justify-between">
-                          <FormLabel>Siswa ({field.value.length} dipilih)</FormLabel>
-                          <Select value={kelasFilter} onValueChange={setKelasFilter}>
-                            <SelectTrigger className="w-[150px] h-8"><SelectValue placeholder="Semua Kelas" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Semua Kelas</SelectItem>
-                              {kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="border rounded-md max-h-48 overflow-y-auto">
-                          <label className="flex items-center gap-2 px-3 py-2 border-b bg-gray-50/50 cursor-pointer text-sm font-medium">
-                            <Checkbox
-                              checked={allVisibleSelected}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  field.onChange([...new Set([...field.value, ...visibleIds])]);
-                                } else {
-                                  field.onChange(field.value.filter((id: string) => !visibleIds.includes(id)));
-                                }
-                              }}
-                            />
-                            Pilih Semua {kelasFilter !== "all" ? `(${kelasFilter})` : ""}
-                          </label>
-                          {visibleStudents.length === 0 ? (
-                            <p className="px-3 py-4 text-sm text-muted-foreground text-center">Tidak ada siswa.</p>
-                          ) : (
-                            visibleStudents.map((s: any) => (
-                              <label key={s.id} className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-50 text-sm">
-                                <Checkbox
-                                  checked={field.value.includes(s.id)}
-                                  onCheckedChange={(checked) => {
-                                    field.onChange(
-                                      checked
-                                        ? [...field.value, s.id]
-                                        : field.value.filter((id: string) => id !== s.id),
-                                    );
-                                  }}
-                                />
-                                <span className="flex-1">{s.namaLengkap}</span>
-                                <span className="text-xs text-muted-foreground">{s.kelas}</span>
-                              </label>
-                            ))
-                          )}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }} />
-                  <FormField control={form.control} name="subjectId" render={({ field }) => (
-                    <FormItem><FormLabel>Mata Pelajaran</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih Mapel" /></SelectTrigger></FormControl>
-                        <SelectContent>{subjects?.map((s:any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                      </Select><FormMessage />
-                    </FormItem>
-                  )} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="jenis" render={({ field }) => (
-                      <FormItem><FormLabel>Jenis Nilai</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Pilih Jenis" /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            <SelectItem value="tugas">Tugas</SelectItem>
-                            <SelectItem value="uts">UTS</SelectItem>
-                            <SelectItem value="uas">UAS</SelectItem>
-                          </SelectContent>
-                        </Select><FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="nilai" render={({ field }) => (
-                      <FormItem><FormLabel>Nilai</FormLabel><FormControl><Input type="number" min="0" max="100" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                  </div>
-                  <FormField control={form.control} name="tanggal" render={({ field }) => (
-                    <FormItem><FormLabel>Tanggal</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <DialogFooter><Button type="submit" disabled={bulkCreateGrades.isPending}>Simpan</Button></DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <Button variant="outline" onClick={handleExport} disabled={!ready || !kelasStudents.length}>
+            <Download className="w-4 h-4 mr-2" /> Download Rekap Nilai
+          </Button>
         </div>
 
         <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border bg-gray-50/50 flex gap-4">
-             <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-              <SelectTrigger className="w-[250px] bg-white"><SelectValue placeholder="Semua Mata Pelajaran" /></SelectTrigger>
+          <div className="p-4 border-b border-border bg-gray-50/50 flex flex-wrap gap-3">
+            <Select value={kelasFilter} onValueChange={setKelasFilter}>
+              <SelectTrigger className="w-[150px] bg-white"><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
+              <SelectContent>{kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={subjectId} onValueChange={setSubjectId}>
+              <SelectTrigger className="w-[220px] bg-white"><SelectValue placeholder="Pilih Mata Pelajaran" /></SelectTrigger>
+              <SelectContent>{subjects?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={calendarId} onValueChange={setCalendarId}>
+              <SelectTrigger className="w-[220px] bg-white"><SelectValue placeholder="Pilih Tahun Ajaran/Semester" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Mata Pelajaran</SelectItem>
-                {subjects?.map((s:any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                {calendars?.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.tahunAjaran} - Semester {c.semester}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50/50">
-                <TableHead>Nama Siswa</TableHead>
-                <TableHead>Mata Pelajaran</TableHead>
-                <TableHead>Jenis</TableHead>
-                <TableHead>Nilai</TableHead>
-                <TableHead>Tanggal</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
-              ) : !gradesList?.length ? (
-                <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Belum ada data nilai.</TableCell></TableRow>
-              ) : (
-                gradesList.map((g:any) => (
-                  <TableRow key={g.id}>
-                    <TableCell className="font-medium">{students?.find((s:any) => s.id === g.studentId)?.namaLengkap}</TableCell>
-                    <TableCell>{subjects?.find((s:any) => s.id === g.subjectId)?.name}</TableCell>
-                    <TableCell className="uppercase text-muted-foreground text-xs font-semibold">{g.jenis}</TableCell>
-                    <TableCell className="font-bold text-primary">{g.nilai}</TableCell>
-                    <TableCell className="text-muted-foreground">{format(new Date(g.tanggal), "dd MMM yyyy")}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+
+          {!calendars?.length ? (
+            <p className="p-8 text-center text-muted-foreground">
+              Belum ada kalender akademik. Buat tahun ajaran/semester di halaman Kalender Akademik terlebih dahulu.
+            </p>
+          ) : !subjects?.length ? (
+            <p className="p-8 text-center text-muted-foreground">Belum ada mata pelajaran.</p>
+          ) : !kelasStudents.length ? (
+            <p className="p-8 text-center text-muted-foreground">Belum ada siswa di kelas ini.</p>
+          ) : isLoading ? (
+            <div className="p-6 space-y-2">
+              {Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="text-sm border-collapse w-full">
+                <thead>
+                  <tr className="bg-gray-50/70">
+                    <th rowSpan={2} className="sticky left-0 bg-gray-50/70 border px-2 py-1 min-w-[40px]">No</th>
+                    <th rowSpan={2} className="sticky left-[40px] bg-gray-50/70 border px-2 py-1 min-w-[180px] text-left">Nama Siswa</th>
+                    {LM_LIST.map((lm) => (
+                      <th key={lm} colSpan={4} className="border px-2 py-1 whitespace-nowrap">Formatif - LM {lm}</th>
+                    ))}
+                    {LM_LIST.map((lm) => (
+                      <th key={lm} rowSpan={2} className="border px-2 py-1 whitespace-nowrap">Sumatif LM{lm}</th>
+                    ))}
+                    <th rowSpan={2} className="border px-2 py-1 whitespace-nowrap">Sumatif Akhir Semester</th>
+                  </tr>
+                  <tr className="bg-gray-50/70">
+                    {LM_LIST.map((lm) =>
+                      TP_LIST.map((tp) => (
+                        <th key={`${lm}-${tp}`} className="border px-1 py-1 font-normal text-xs">TP{tp}</th>
+                      )),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {kelasStudents.map((s: any, i: number) => (
+                    <tr key={s.id} className="hover:bg-gray-50/50">
+                      <td className="sticky left-0 bg-white border px-2 py-1 text-center text-muted-foreground">{i + 1}</td>
+                      <td className="sticky left-[40px] bg-white border px-2 py-1 font-medium whitespace-nowrap">{s.namaLengkap}</td>
+                      {LM_LIST.map((lm) =>
+                        TP_LIST.map((tp) => {
+                          const g = gradeMap.get(`${s.id}::${gradeKey("formatif", lm, tp)}`);
+                          return (
+                            <td key={`${lm}-${tp}`} className="border px-1 py-1">
+                              <GradeCell
+                                value={g ? g.nilai : null}
+                                onSave={(v) => saveCell(s.id, "formatif", lm, tp, v)}
+                              />
+                            </td>
+                          );
+                        }),
+                      )}
+                      {LM_LIST.map((lm) => {
+                        const g = gradeMap.get(`${s.id}::${gradeKey("sumatif_lm", lm, null)}`);
+                        return (
+                          <td key={lm} className="border px-1 py-1">
+                            <GradeCell
+                              value={g ? g.nilai : null}
+                              onSave={(v) => saveCell(s.id, "sumatif_lm", lm, null, v)}
+                            />
+                          </td>
+                        );
+                      })}
+                      <td className="border px-1 py-1">
+                        <GradeCell
+                          value={gradeMap.get(`${s.id}::${gradeKey("sumatif_akhir", null, null)}`)?.nilai ?? null}
+                          onSave={(v) => saveCell(s.id, "sumatif_akhir", null, null, v)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
+        <p className="text-xs text-muted-foreground">
+          Klik sel nilai untuk mengisi atau mengubahnya, kosongkan lalu klik di luar sel untuk menghapus nilai.
+        </p>
       </div>
     </Layout>
   );

@@ -601,6 +601,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: calendarId
+          in: query
+          schema:
+            type: string
       responses:
         "200":
           description: List of grades
@@ -613,7 +617,7 @@ paths:
     post:
       operationId: createGrade
       tags: [grades]
-      summary: Record a grade
+      summary: Record or update a grade (upsert by student/subject/calendar/jenis/lingkup materi/tp)
       requestBody:
         required: true
         content:
@@ -622,30 +626,45 @@ paths:
               $ref: "#/components/schemas/GradeInput"
       responses:
         "200":
-          description: Created grade
+          description: Created or updated grade
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Grade"
 
-  /grades/bulk:
-    post:
-      operationId: bulkCreateGrades
+  /grades/{id}:
+    patch:
+      operationId: updateGrade
       tags: [grades]
-      summary: Record the same grade for a group of students
+      summary: Update a grade's score
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BulkCreateGradesInput"
+              $ref: "#/components/schemas/GradeUpdate"
       responses:
         "200":
-          description: Bulk create result
+          description: Updated grade
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BulkCreateResult"
+                $ref: "#/components/schemas/Grade"
+    delete:
+      operationId: deleteGrade
+      tags: [grades]
+      summary: Delete a grade
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
 
   /points:
     get:
@@ -1232,26 +1251,6 @@ components:
           enum: [hadir, izin, sakit, alpa]
       required: [studentIds, subjectId, tanggal, status]
 
-    BulkCreateGradesInput:
-      type: object
-      properties:
-        studentIds:
-          type: array
-          minItems: 1
-          maxItems: 500
-          items:
-            type: string
-        subjectId:
-          type: string
-        jenis:
-          type: string
-          enum: [tugas, uts, uas]
-        nilai:
-          type: number
-        tanggal:
-          type: string
-      required: [studentIds, subjectId, jenis, nilai, tanggal]
-
     BulkCreateStudentsResult:
       type: object
       properties:
@@ -1390,17 +1389,25 @@ components:
           type: string
         subjectId:
           type: string
+        calendarId:
+          type: string
         jenis:
           type: string
-          enum: [tugas, uts, uas]
+          enum: [formatif, sumatif_lm, sumatif_akhir]
+        lingkupMateri:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 5
+        tpNumber:
+          type: ["integer", "null"]
+          minimum: 1
+          maximum: 4
         nilai:
           type: number
-        tanggal:
-          type: string
         createdAt:
           type: string
           format: date-time
-      required: [id, studentId, subjectId, jenis, nilai, tanggal, createdAt]
+      required: [id, studentId, subjectId, calendarId, jenis, nilai, createdAt]
 
     GradeInput:
       type: object
@@ -1409,14 +1416,29 @@ components:
           type: string
         subjectId:
           type: string
+        calendarId:
+          type: string
         jenis:
           type: string
-          enum: [tugas, uts, uas]
+          enum: [formatif, sumatif_lm, sumatif_akhir]
+        lingkupMateri:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tpNumber:
+          type: integer
+          minimum: 1
+          maximum: 4
         nilai:
           type: number
-        tanggal:
-          type: string
-      required: [studentId, subjectId, jenis, nilai, tanggal]
+      required: [studentId, subjectId, calendarId, jenis, nilai]
+
+    GradeUpdate:
+      type: object
+      properties:
+        nilai:
+          type: number
+      required: [nilai]
 
     PointRecord:
       type: object

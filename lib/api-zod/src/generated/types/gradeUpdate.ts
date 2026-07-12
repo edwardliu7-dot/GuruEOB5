@@ -6,8 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListGradesParams = {
-subjectId?: string;
-studentId?: string;
-calendarId?: string;
-};
+export interface GradeUpdate {
+  nilai: number;
+}

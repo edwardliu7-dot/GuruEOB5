@@ -10,7 +10,7 @@ export type GradeInputJenis = typeof GradeInputJenis[keyof typeof GradeInputJeni
 
 
 export const GradeInputJenis = {
-  tugas: 'tugas',
-  uts: 'uts',
-  uas: 'uas',
+  formatif: 'formatif',
+  sumatif_lm: 'sumatif_lm',
+  sumatif_akhir: 'sumatif_akhir',
 } as const;

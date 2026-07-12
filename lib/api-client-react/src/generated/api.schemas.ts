@@ -202,27 +202,6 @@ export interface BulkCreateAttendanceInput {
   status: BulkCreateAttendanceInputStatus;
 }
 
-export type BulkCreateGradesInputJenis = typeof BulkCreateGradesInputJenis[keyof typeof BulkCreateGradesInputJenis];
-
-
-export const BulkCreateGradesInputJenis = {
-  tugas: 'tugas',
-  uts: 'uts',
-  uas: 'uas',
-} as const;
-
-export interface BulkCreateGradesInput {
-  /**
-     * @minItems 1
-     * @maxItems 500
-     */
-  studentIds: string[];
-  subjectId: string;
-  jenis: BulkCreateGradesInputJenis;
-  nilai: number;
-  tanggal: string;
-}
-
 export interface BulkCreateStudentsResult {
   count: number;
   skipped: number;
@@ -313,18 +292,30 @@ export type GradeJenis = typeof GradeJenis[keyof typeof GradeJenis];
 
 
 export const GradeJenis = {
-  tugas: 'tugas',
-  uts: 'uts',
-  uas: 'uas',
+  formatif: 'formatif',
+  sumatif_lm: 'sumatif_lm',
+  sumatif_akhir: 'sumatif_akhir',
 } as const;
 
 export interface Grade {
   id: string;
   studentId: string;
   subjectId: string;
+  calendarId: string;
   jenis: GradeJenis;
+  /**
+     * @minimum 1
+     * @maximum 5
+     * @nullable
+     */
+  lingkupMateri?: number | null;
+  /**
+     * @minimum 1
+     * @maximum 4
+     * @nullable
+     */
+  tpNumber?: number | null;
   nilai: number;
-  tanggal: string;
   createdAt: string;
 }
 
@@ -332,17 +323,31 @@ export type GradeInputJenis = typeof GradeInputJenis[keyof typeof GradeInputJeni
 
 
 export const GradeInputJenis = {
-  tugas: 'tugas',
-  uts: 'uts',
-  uas: 'uas',
+  formatif: 'formatif',
+  sumatif_lm: 'sumatif_lm',
+  sumatif_akhir: 'sumatif_akhir',
 } as const;
 
 export interface GradeInput {
   studentId: string;
   subjectId: string;
+  calendarId: string;
   jenis: GradeInputJenis;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  lingkupMateri?: number;
+  /**
+     * @minimum 1
+     * @maximum 4
+     */
+  tpNumber?: number;
   nilai: number;
-  tanggal: string;
+}
+
+export interface GradeUpdate {
+  nilai: number;
 }
 
 export type PointRecordJenis = typeof PointRecordJenis[keyof typeof PointRecordJenis];
@@ -595,6 +600,7 @@ date?: string;
 export type ListGradesParams = {
 subjectId?: string;
 studentId?: string;
+calendarId?: string;
 };
 
 export type ListPointsParams = {

@@ -1,9 +1,15 @@
-import { pgTable, text, timestamp, uuid, date, numeric, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, integer, numeric, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { sql } from "drizzle-orm";
 import { z } from "zod/v4";
 import { studentsTable } from "./students";
 import { subjectsTable } from "./subjects";
+import { academicCalendarsTable } from "./academic-calendar";
 
+// Kurikulum Merdeka grade model:
+// - "formatif": one score per Lingkup Materi (1-5) x Tujuan Pembelajaran/TP (1-4)
+// - "sumatif_lm": one score per Lingkup Materi (1-5)
+// - "sumatif_akhir": a single end-of-semester score (lingkupMateri/tpNumber are null)
 export const gradesTable = pgTable(
   "grades",
   {
@@ -14,18 +20,25 @@ export const gradesTable = pgTable(
     subjectId: uuid("subject_id")
       .notNull()
       .references(() => subjectsTable.id, { onDelete: "cascade" }),
-    jenis: text("jenis", { enum: ["tugas", "uts", "uas"] }).notNull(),
+    calendarId: uuid("calendar_id")
+      .notNull()
+      .references(() => academicCalendarsTable.id, { onDelete: "cascade" }),
+    jenis: text("jenis", { enum: ["formatif", "sumatif_lm", "sumatif_akhir"] }).notNull(),
+    lingkupMateri: integer("lingkup_materi"),
+    tpNumber: integer("tp_number"),
     nilai: numeric("nilai", { mode: "number" }).notNull(),
-    tanggal: date("tanggal", { mode: "string" }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex("grades_student_subject_jenis_tanggal_unique").on(
-      t.studentId,
-      t.subjectId,
-      t.jenis,
-      t.tanggal,
-    ),
+    uniqueIndex("grades_formatif_unique")
+      .on(t.studentId, t.subjectId, t.calendarId, t.lingkupMateri, t.tpNumber)
+      .where(sql`${t.jenis} = 'formatif'`),
+    uniqueIndex("grades_sumatif_lm_unique")
+      .on(t.studentId, t.subjectId, t.calendarId, t.lingkupMateri)
+      .where(sql`${t.jenis} = 'sumatif_lm'`),
+    uniqueIndex("grades_sumatif_akhir_unique")
+      .on(t.studentId, t.subjectId, t.calendarId)
+      .where(sql`${t.jenis} = 'sumatif_akhir'`),
   ],
 );
 
