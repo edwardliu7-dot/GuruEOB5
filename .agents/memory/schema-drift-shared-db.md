@@ -24,3 +24,14 @@ bug. On a DB shared with other apps, prefer manual, additive
 for fixes — push compares the whole table to the schema file and may offer to
 drop columns (e.g. `email`, `whatsapp`) that other apps still use but aren't
 declared in this app's schema.
+
+Sometimes the mismatch isn't missing columns but a full table-name collision:
+a table this app's schema declares (e.g. `students`) may already exist in the
+shared DB owned by a totally different, incompatible app (different PK type,
+different columns entirely). `\d <table>` reveals this immediately (columns
+don't remotely resemble the Drizzle schema). Fix by renaming the app's table
+in the schema file to a namespaced name (e.g. `guru_eob5_students`), matching
+the same pattern already used for the session table, then creating the new
+table fresh with plain `CREATE TABLE IF NOT EXISTS` (not push, for the same
+reason as above). This is a code change (schema file edit), not just a DB
+fix, so it requires a redeploy — unlike a pure `ALTER TABLE ADD COLUMN` fix.
