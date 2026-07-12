@@ -24,15 +24,20 @@ if (!databaseUrl) {
 const PgSessionStore = connectPgSimple(session);
 const sessionPool = new pg.Pool({ connectionString: databaseUrl });
 
+// NOTE: DATABASE_URL/NEON_DATABASE_URL point at a Postgres instance shared
+// across multiple unrelated apps/projects. Generic names like "session" /
+// "session_pkey" collide with other apps' tables in the same "public"
+// schema (constraint/index names must be unique per-schema, not per-table),
+// so every identifier here is namespaced to this app to avoid that.
 const sessionTableReady = sessionPool
   .query(
-    `CREATE TABLE IF NOT EXISTS "session" (
+    `CREATE TABLE IF NOT EXISTS "guru_eob5_session" (
       "sid" varchar NOT NULL COLLATE "default",
       "sess" json NOT NULL,
       "expire" timestamp(6) NOT NULL,
-      CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+      CONSTRAINT "guru_eob5_session_pkey" PRIMARY KEY ("sid")
     );
-    CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");`,
+    CREATE INDEX IF NOT EXISTS "IDX_guru_eob5_session_expire" ON "guru_eob5_session" ("expire");`,
   )
   .then(() => {
     logger.info("Session table ready");
@@ -74,7 +79,7 @@ app.use(
   session({
     store: new PgSessionStore({
       pool: sessionPool,
-      tableName: "session",
+      tableName: "guru_eob5_session",
     }),
     secret: sessionSecret,
     resave: false,

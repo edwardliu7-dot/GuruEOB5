@@ -4,3 +4,4 @@
 - [Tenant/ownership authz predicates](tenant-authz-predicates.md) — UPDATE/DELETE must bind to the target row's existing owner/school (never trust body FKs); empty `guru.school` must return empty/404, not a cross-school fallback.
 - [Prod session cookies](prod-session-cookies.md) — behind Replit's proxy, secure cookies need trust proxy + a PG session store; connect-pg-simple's createTableIfMissing breaks under esbuild bundling.
 - [Body-trusted ownership fields](body-trusted-ownership.md) — routes that accept teacherId/ownerId in the request body (not just tenant/school) let any authenticated user impersonate or edit others' rows; always override from session, never trust body.
+- [Shared DB naming collisions](shared-db-naming-collisions.md) — generic table/constraint/index names on a DB shared across apps can collide with unrelated apps' objects.
