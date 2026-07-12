@@ -1,0 +1,146 @@
+2026-Jul-12 07:04:04.506540 Docker 29.6.1 with BuildKit and Buildx detected on deployment server (localhost).
+2026-Jul-12 07:04:04.559734 Starting deployment of edwardliu7-dot/GuruEOB5:main to localhost.
+2026-Jul-12 07:04:05.657775 Preparing container with helper image: docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-12 07:04:05.927669 [DEBUG] [CMD]: docker stop --time=30 gpi5alm42hdh0207nnhd5f9a
+2026-Jul-12 07:04:05.927669 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-12 07:04:05.934863 [DEBUG] Error response from daemon: No such container: gpi5alm42hdh0207nnhd5f9a
+2026-Jul-12 07:04:09.535246 [DEBUG] [CMD]: docker run -d --network 'coolify' --name gpi5alm42hdh0207nnhd5f9a  --rm -v /root/.docker/buildx:/root/.docker/buildx -v /var/run/docker.sock:/var/run/docker.sock docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-12 07:04:09.535246 [DEBUG] ba7b885ec20810314062cd4c2eb7a73df7b3cea49e5624f721ec9e792d1a0158
+2026-Jul-12 07:04:14.286481 [DEBUG] [CMD]: docker exec gpi5alm42hdh0207nnhd5f9a bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote '\''https://x-access-token:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''refs/heads/main'\'''
+2026-Jul-12 07:04:14.286481 [DEBUG] fcf6e34ddf50222c131ebd4829453873883a240b	refs/heads/main
+2026-Jul-12 07:04:14.779355 ----------------------------------------
+2026-Jul-12 07:04:14.802075 Importing edwardliu7-dot/GuruEOB5:main (commit sha fcf6e34ddf50222c131ebd4829453873883a240b) to /artifacts/gpi5alm42hdh0207nnhd5f9a.
+2026-Jul-12 07:04:15.242485 [DEBUG] [CMD]: docker exec gpi5alm42hdh0207nnhd5f9a bash -c 'git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 clone --depth=1 --recurse-submodules --shallow-submodules -b '\''main'\'' '\''https:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''/artifacts/gpi5alm42hdh0207nnhd5f9a'\'' && cd '\''/artifacts/gpi5alm42hdh0207nnhd5f9a'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 fetch --depth=1 origin '\''fcf6e34ddf50222c131ebd4829453873883a240b'\'' && git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 -c advice.detachedHead=false checkout '\''fcf6e34ddf50222c131ebd4829453873883a240b'\'' >/dev/null 2>&1 && cd '\''/artifacts/gpi5alm42hdh0207nnhd5f9a'\'' && if [ -f .gitmodules ]; then git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule update --init --recursive --depth=1; fi && cd '\''/artifacts/gpi5alm42hdh0207nnhd5f9a'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 lfs pull'
+2026-Jul-12 07:<REDACTED>@google/genai)
+2026-Jul-12 07:04:20.888710 [DEBUG] # are deliberately left external in artifacts/api-server/build.mjs. Use
+2026-Jul-12 07:04:20.888710 [DEBUG] # `pnpm deploy` to produce a small, self-contained node_modules with just
+2026-Jul-12 07:04:20.888710 [DEBUG] # those production dependencies, so the runtime image doesn't need the
+2026-Jul-12 07:04:20.888710 [DEBUG] # full (devDependencies-heavy) workspace node_modules.
+2026-Jul-12 07:04:20.888710 [DEBUG] RUN pnpm --filter @workspace/api-server --prod deploy --legacy /app/deploy
+2026-Jul-12 07:04:20.888710 [DEBUG] 
+2026-Jul-12 07:04:20.888710 [DEBUG] # ---------- Stage 2: runtime ----------
+2026-Jul-12 07:04:20.888710 [DEBUG] FROM node:22-slim AS runtime
+2026-Jul-12 07:04:20.888710 [DEBUG] 
+2026-Jul-12 07:04:20.888710 [DEBUG] WORKDIR /app
+2026-Jul-12 07:04:20.888710 [DEBUG] 
+2026-Jul-12 07:04:20.888710 [DEBUG] ENV NODE_ENV=production
+2026-Jul-12 07:04:20.888710 [DEBUG] ENV PORT=3000
+2026-Jul-12 07:04:20.888710 [DEBUG] 
+2026-Jul-12 07:04:20.888710 [DEBUG] # Only the compiled output + the small set of external prod dependencies
+2026-Jul-12 07:04:20.888710 [DEBUG] # are needed to run the app.
+2026-Jul-12 07:04:20.888710 [DEBUG] COPY --from=build /app/deploy/node_modules ./node_modules
+2026-Jul-12 07:04:20.888710 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Jul-12 07:04:20.888710 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Jul-12 07:04:20.888710 [DEBUG] 
+2026-Jul-12 07:04:20.888710 [DEBUG] EXPOSE 3000
+2026-Jul-12 07:04:20.888710 [DEBUG] 
+2026-Jul-12 07:04:20.888710 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Jul-12 07:04:21.353516 [DEBUG] Creating .env file with runtime variables for container.
+2026-Jul-12 07:04:21.956740 ----------------------------------------
+2026-Jul-12 07:04:21.978172 Rolling update started.
+2026-Jul-12 07:04:22.793014 [DEBUG] [CMD]: docker exec gpi5alm42hdh0207nnhd5f9a bash -c 'COOLIFY_URL=http://eob5guru.sslip.io COOLIFY_FQDN=eob5guru.sslip.io COOLIFY_BRANCH='\''main'\'' COOLIFY_RESOURCE_UUID=sfptjjfqgqidt4736qzont0l  docker compose --project-name sfptjjfqgqidt4736qzont0l --project-directory /artifacts/gpi5alm42hdh0207nnhd5f9a -f /artifacts/gpi5alm42hdh0207nnhd5f9a/docker-compose.yaml up --build -d'
+2026-Jul-12 07:04:22.793014 [DEBUG] time="2026-07-12T07:04:22Z" level=warning msg="Found orphan containers ([sfptjjfqgqidt4736qzont0l-065815988722 sfptjjfqgqidt4736qzont0l-063733024063]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+2026-Jul-12 07:04:22.793014 [DEBUG] Container sfptjjfqgqidt4736qzont0l-070401102346  Creating
+2026-Jul-12 07:04:25.121840 [DEBUG] sfptjjfqgqidt4736qzont0l-070401102346 Your kernel does not support memory swappiness capabilities or the cgroup is not mounted. Memory swappiness discarded.
+2026-Jul-12 07:04:25.134369 [DEBUG] Container sfptjjfqgqidt4736qzont0l-070401102346  Created
+2026-Jul-12 07:04:25.178717 [DEBUG] Container sfptjjfqgqidt4736qzont0l-070401102346  Starting
+2026-Jul-12 07:04:26.271259 [DEBUG] Container sfptjjfqgqidt4736qzont0l-070401102346  Started
+2026-Jul-12 07:04:26.312581 New container started.
+2026-Jul-12 07:04:26.354840 Waiting for healthcheck to pass on the new container.
+2026-Jul-12 07:04:26.390071 Healthcheck URL (inside the container): GET: http://localhost:8080/
+2026-Jul-12 07:04:26.425644 Waiting for the start period (5 seconds) before starting healthcheck.
+2026-Jul-12 07:04:31.707372 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:31.707372 [DEBUG] "starting"
+2026-Jul-12 07:04:31.923362 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:31.923362 [DEBUG] [{"Start":"2026-07-12T07:04:31.270401732Z","End":"2026-07-12T07:04:31.37677149Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:04:31.937285 Attempt 1 of 10 | Healthcheck status: "starting"
+2026-Jul-12 07:04:31.963154 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:04:31.963154 /bin/sh: 1: wget: not found
+2026-Jul-12 07:04:31.963154 | Return code: 1
+2026-Jul-12 07:04:37.204528 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:37.204528 [DEBUG] "starting"
+2026-Jul-12 07:04:37.416477 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:37.416477 [DEBUG] [{"Start":"2026-07-12T07:04:31.270401732Z","End":"2026-07-12T07:04:31.37677149Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:36.381201469Z","End":"2026-07-12T07:04:36.46492695Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:04:37.428996 Attempt 2 of 10 | Healthcheck status: "starting"
+2026-Jul-12 07:04:37.447781 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:04:37.447781 /bin/sh: 1: wget: not found
+2026-Jul-12 07:04:37.447781 | Return code: 1
+2026-Jul-12 07:04:42.687396 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:42.687396 [DEBUG] "starting"
+2026-Jul-12 07:04:42.907138 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:42.907138 [DEBUG] [{"Start":"2026-07-12T07:04:31.270401732Z","End":"2026-07-12T07:04:31.37677149Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:36.381201469Z","End":"2026-07-12T07:04:36.46492695Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:41.467183092Z","End":"2026-07-12T07:04:41.592627144Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:04:42.923724 Attempt 3 of 10 | Healthcheck status: "starting"
+2026-Jul-12 07:04:42.948813 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:04:42.948813 /bin/sh: 1: wget: not found
+2026-Jul-12 07:04:42.948813 | Return code: 1
+2026-Jul-12 07:04:48.259206 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:48.259206 [DEBUG] "starting"
+2026-Jul-12 07:04:48.506704 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:48.506704 [DEBUG] [{"Start":"2026-07-12T07:04:31.270401732Z","End":"2026-07-12T07:04:31.37677149Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:36.381201469Z","End":"2026-07-12T07:04:36.46492695Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:41.467183092Z","End":"2026-07-12T07:04:41.592627144Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:46.594634575Z","End":"2026-07-12T07:04:46.710103306Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:04:48.521284 Attempt 4 of 10 | Healthcheck status: "starting"
+2026-Jul-12 07:04:48.541567 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:04:48.541567 /bin/sh: 1: wget: not found
+2026-Jul-12 07:04:48.541567 | Return code: 1
+2026-Jul-12 07:04:53.780262 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:53.780262 [DEBUG] "starting"
+2026-Jul-12 07:04:54.002643 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:54.002643 [DEBUG] [{"Start":"2026-07-12T07:04:31.270401732Z","End":"2026-07-12T07:04:31.37677149Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:36.381201469Z","End":"2026-07-12T07:04:36.46492695Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:41.467183092Z","End":"2026-07-12T07:04:41.592627144Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:46.594634575Z","End":"2026-07-12T07:04:46.710103306Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:51.712298906Z","End":"2026-07-12T07:04:51.804134509Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:04:54.015579 Attempt 5 of 10 | Healthcheck status: "starting"
+2026-Jul-12 07:04:54.035929 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:04:54.035929 /bin/sh: 1: wget: not found
+2026-Jul-12 07:04:54.035929 | Return code: 1
+2026-Jul-12 07:04:59.275539 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:59.275539 [DEBUG] "starting"
+2026-Jul-12 07:04:59.650716 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:04:59.650716 [DEBUG] [{"Start":"2026-07-12T07:04:36.381201469Z","End":"2026-07-12T07:04:36.46492695Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:41.467183092Z","End":"2026-07-12T07:04:41.592627144Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:46.594634575Z","End":"2026-07-12T07:04:46.710103306Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:51.712298906Z","End":"2026-07-12T07:04:51.804134509Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:56.805782502Z","End":"2026-07-12T07:04:56.903266826Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:04:59.664766 Attempt 6 of 10 | Healthcheck status: "starting"
+2026-Jul-12 07:04:59.686388 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:04:59.686388 /bin/sh: 1: wget: not found
+2026-Jul-12 07:04:59.686388 | Return code: 1
+2026-Jul-12 07:05:04.963467 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:04.963467 [DEBUG] "starting"
+2026-Jul-12 07:05:05.219669 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:05.219669 [DEBUG] [{"Start":"2026-07-12T07:04:41.467183092Z","End":"2026-07-12T07:04:41.592627144Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:46.594634575Z","End":"2026-07-12T07:04:46.710103306Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:51.712298906Z","End":"2026-07-12T07:04:51.804134509Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:56.805782502Z","End":"2026-07-12T07:04:56.903266826Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:01.905064781Z","End":"2026-07-12T07:05:02.046809889Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:05:05.247579 Attempt 7 of 10 | Healthcheck status: "starting"
+2026-Jul-12 07:05:05.275071 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:05:05.275071 /bin/sh: 1: wget: not found
+2026-Jul-12 07:05:05.275071 | Return code: 1
+2026-Jul-12 07:05:10.510157 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:10.510157 [DEBUG] "starting"
+2026-Jul-12 07:05:10.724977 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:10.724977 [DEBUG] [{"Start":"2026-07-12T07:04:46.594634575Z","End":"2026-07-12T07:04:46.710103306Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:51.712298906Z","End":"2026-07-12T07:04:51.804134509Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:56.805782502Z","End":"2026-07-12T07:04:56.903266826Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:01.905064781Z","End":"2026-07-12T07:05:02.046809889Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:07.053206656Z","End":"2026-07-12T07:05:07.151765555Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:05:10.741549 Attempt 8 of 10 | Healthcheck status: "starting"
+2026-Jul-12 07:05:10.762408 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:05:10.762408 /bin/sh: 1: wget: not found
+2026-Jul-12 07:05:10.762408 | Return code: 1
+2026-Jul-12 07:05:16.024293 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:16.024293 [DEBUG] "starting"
+2026-Jul-12 07:05:16.268124 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:16.268124 [DEBUG] [{"Start":"2026-07-12T07:04:51.712298906Z","End":"2026-07-12T07:04:51.804134509Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:04:56.805782502Z","End":"2026-07-12T07:04:56.903266826Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:01.905064781Z","End":"2026-07-12T07:05:02.046809889Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:07.053206656Z","End":"2026-07-12T07:05:07.151765555Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:12.154657364Z","End":"2026-07-12T07:05:12.315268239Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:05:16.565041 Attempt 9 of 10 | Healthcheck status: "starting"
+2026-Jul-12 07:05:16.586056 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:05:16.586056 /bin/sh: 1: wget: not found
+2026-Jul-12 07:05:16.586056 | Return code: 1
+2026-Jul-12 07:05:21.906310 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:21.906310 [DEBUG] "unhealthy"
+2026-Jul-12 07:05:22.162483 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:22.162483 [DEBUG] [{"Start":"2026-07-12T07:04:56.805782502Z","End":"2026-07-12T07:04:56.903266826Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:01.905064781Z","End":"2026-07-12T07:05:02.046809889Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:07.053206656Z","End":"2026-07-12T07:05:07.151765555Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:12.154657364Z","End":"2026-07-12T07:05:12.315268239Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"},{"Start":"2026-07-12T07:05:17.316884414Z","End":"2026-07-12T07:05:17.449558495Z","ExitCode":1,"Output":"/bin/sh: 1: curl: not found\n/bin/sh: 1: wget: not found\n"}]
+2026-Jul-12 07:05:22.178225 Attempt 10 of 10 | Healthcheck status: "unhealthy"
+2026-Jul-12 07:05:22.208331 Healthcheck logs: /bin/sh: 1: curl: not found
+2026-Jul-12 07:05:22.208331 /bin/sh: 1: wget: not found
+2026-Jul-12 07:05:22.208331 | Return code: 1
+2026-Jul-12 07:05:22.231385 New container is unhealthy.
+2026-Jul-12 07:05:22.251794 ----------------------------------------
+2026-Jul-12 07:05:22.272300 Container logs:
+2026-Jul-12 07:05:22.522493 [CMD]: docker logs -n 100 sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:22.522493 {"level":30,"time":1783839867040,"pid":1,"hostname":"d5dc04bb5d74","frontendDist":"/app/artifacts/guru-eob5/dist/public","msg":"Serving frontend static files"}
+2026-Jul-12 07:05:22.522493 {"level":30,"time":1783839867090,"pid":1,"hostname":"d5dc04bb5d74","msg":"Session table ready"}
+2026-Jul-12 07:05:22.522493 {"level":30,"time":1783839867093,"pid":1,"hostname":"d5dc04bb5d74","port":8080,"msg":"Server listening"}
+2026-Jul-12 07:05:22.544161 ----------------------------------------
+2026-Jul-12 07:05:22.565558 Removing old containers.
+2026-Jul-12 07:05:22.594554 ----------------------------------------
+2026-Jul-12 07:05:22.616384 WARNING: Dockerfile or Docker Image based deployment detected. The healthcheck needs a curl or wget command to check the health of the application. Please make sure that it is available in the image or turn off healthcheck on Coolify's UI.
+2026-Jul-12 07:05:22.634193 ----------------------------------------
+2026-Jul-12 07:05:22.652195 New container is not healthy, rolling back to the old container.
+2026-Jul-12 07:05:22.932648 [DEBUG] [CMD]: docker stop --time=30 sfptjjfqgqidt4736qzont0l-070401102346
+2026-Jul-12 07:05:22.932648 [DEBUG] Flag --time has been deprecated, use --timeout instead

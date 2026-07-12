@@ -44,6 +44,13 @@ FROM node:22-slim AS runtime
 
 WORKDIR /app
 
+# Coolify's healthcheck runs `curl`/`wget` inside the container to verify
+# the app is up. node:22-slim has neither by default, so the check always
+# fails and Coolify rolls back a perfectly working deployment. Install curl.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
+
 ENV NODE_ENV=production
 ENV PORT=3000
 
