@@ -1,0 +1,425 @@
+2026-Jul-12 05:43:45.400722 Docker 29.6.1 with BuildKit and Buildx detected on deployment server (localhost).
+2026-Jul-12 05:43:45.448321 Starting deployment of edwardliu7-dot/GuruEOB5:main to localhost.
+2026-Jul-12 05:43:46.015070 Preparing container with helper image: docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-12 05:43:46.270081 [DEBUG] [CMD]: docker stop --time=30 nvdoeyg6wfxvf85d0eyrar5v
+2026-Jul-12 05:43:46.270081 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-12 05:43:46.301846 [DEBUG] Error response from daemon: No such container: nvdoeyg6wfxvf85d0eyrar5v
+2026-Jul-12 05:43:47.824381 [DEBUG] [CMD]: docker run -d --network 'coolify' --name nvdoeyg6wfxvf85d0eyrar5v  --rm -v /root/.docker/buildx:/root/.docker/buildx -v /var/run/docker.sock:/var/run/docker.sock docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-12 05:43:47.824381 [DEBUG] bd0738c47ab931e7699f14a7999bfa5bec0795d72bf93b0f2c4b2a6c18d760d6
+2026-Jul-12 05:43:53.561529 [DEBUG] [CMD]: docker exec nvdoeyg6wfxvf85d0eyrar5v bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote '\''https://x-access-token:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''refs/heads/main'\'''
+2026-Jul-12 05:43:53.561529 [DEBUG] 84abcf416be42b2ac1d8b04eefe738c50172443b	refs/heads/main
+2026-Jul-12 05:43:54.550706 ----------------------------------------
+2026-Jul-12 05:43:54.591584 Importing edwardliu7-dot/GuruEOB5:main (commit sha 84abcf416be42b2ac1d8b04eefe738c50172443b) to /artifacts/nvdoeyg6wfxvf85d0eyrar5v.
+2026-Jul-12 05:43:54.964441 [DEBUG] [CMD]: docker exec nvdoeyg6wfxvf85d0eyrar5v bash -c 'git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 clone --depth=1 --recurse-submodules --shallow-submodules -b '\''main'\'' '\''https:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''/artifacts/nvdoeyg6wfxvf85d0eyrar5v'\'' && cd '\''/artifacts/nvdoeyg6wfxvf85d0eyrar5v'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 fetch --depth=1 origin '\''84abcf416be42b2ac1d8b04eefe738c50172443b'\'' && git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 -c advice.detachedHead=false checkout '\''84abcf416be42b2ac1d8b04eefe738c50172443b'\'' >/dev/null 2>&1 && cd '\''/artifacts/nvdoeyg6wfxvf85d0eyrar5v'\'' && if [ -f .gitmodules ]; then git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule update --init --recursive --depth=1; fi && cd '\''/artifacts/nvdoeyg6wfxvf85d0eyrar5v'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 lfs pull'
+2026-Jul-12 05:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-12 05:44:05.294377 [DEBUG] ARG DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-12 05:44:05.294377 [DEBUG] ARG COOLIFY_URL=http://eob5guru.sslip.io
+2026-Jul-12 05:<REDACTED>@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:44:15.134315 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:44:15.379850 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf 0.4s done
+2026-Jul-12 05:44:17.191038 [DEBUG] #5 ...
+2026-Jul-12 05:44:17.191038 [DEBUG] 
+2026-Jul-12 05:44:17.191038 [DEBUG] #4 [internal] load build context
+2026-Jul-12 05:44:17.191038 [DEBUG] #4 transferring context: 1.36MB 0.2s done
+2026-Jul-12 05:44:17.191038 [DEBUG] #4 DONE 1.8s
+2026-Jul-12 05:44:17.365959 [DEBUG] #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:44:18.270217 [DEBUG] #5 DONE 3.3s
+2026-Jul-12 05:44:18.395567 [DEBUG] #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:44:19.088732 [DEBUG] #5 sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd 0B / 1.71MB 0.2s
+2026-Jul-12 05:44:19.689837 [DEBUG] #5 sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd 1.71MB / 1.71MB 0.8s
+2026-Jul-12 05:44:19.689837 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 0B / 49.94MB 0.2s
+2026-Jul-12 05:44:19.951254 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 3.15MB / 49.94MB 0.5s
+2026-Jul-12 05:44:19.951254 [DEBUG] #5 sha256:c08735c7f0f9602a107c9b3b786ca0e9d07d35af36c3434a8c3fd9328aa4dd16 0B / 446B 0.2s
+2026-Jul-12 05:44:20.213222 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 10.49MB / 49.94MB 0.6s
+2026-Jul-12 05:44:20.262771 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 17.83MB / 49.94MB 0.8s
+2026-Jul-12 05:44:20.384606 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 25.17MB / 49.94MB 0.9s
+2026-Jul-12 05:44:20.487926 [DEBUG] #5 sha256:c08735c7f0f9602a107c9b3b786ca0e9d07d35af36c3434a8c3fd9328aa4dd16 446B / 446B 0.6s done
+2026-Jul-12 05:44:20.487926 [DEBUG] #5 sha256:8a8f99d8b62deb507fbd5795068231986ca9788dc403c54373a862cbbdc1090a 0B / 3.31kB 0.2s
+2026-Jul-12 05:44:20.638989 [DEBUG] #5 sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd 1.71MB / 1.71MB 1.6s done
+2026-Jul-12 05:44:20.638989 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 32.51MB / 49.94MB 1.1s
+2026-Jul-12 05:44:20.638989 [DEBUG] #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 0B / 28.24MB 0.2s
+2026-Jul-12 05:44:20.754396 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 39.85MB / 49.94MB 1.2s
+2026-Jul-12 05:44:20.754396 [DEBUG] #5 sha256:8a8f99d8b62deb507fbd5795068231986ca9788dc403c54373a862cbbdc1090a 3.31kB / 3.31kB 0.5s done
+2026-Jul-12 05:44:20.949198 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 47.19MB / 49.94MB 1.4s
+2026-Jul-12 05:44:21.680128 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 49.94MB / 49.94MB 1.5s
+2026-Jul-12 05:44:21.680128 [DEBUG] #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 3.15MB / 28.24MB 0.8s
+2026-Jul-12 05:44:21.680128 [DEBUG] #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 9.44MB / 28.24MB 0.9s
+2026-Jul-12 05:44:21.680128 [DEBUG] #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 13.63MB / 28.24MB 1.1s
+2026-Jul-12 05:44:21.746868 [DEBUG] #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 17.83MB / 28.24MB 1.2s
+2026-Jul-12 05:44:21.847230 [DEBUG] #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 22.02MB / 28.24MB 1.4s
+2026-Jul-12 05:44:21.992852 [DEBUG] #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 27.26MB / 28.24MB 1.5s
+2026-Jul-12 05:44:22.289823 [DEBUG] #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 49.94MB / 49.94MB 2.7s done
+2026-Jul-12 05:44:22.404964 [DEBUG] #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 28.24MB / 28.24MB 1.9s done
+2026-Jul-12 05:44:22.617085 [DEBUG] #5 DONE 7.4s
+2026-Jul-12 05:44:22.789353 [DEBUG] #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:44:22.789353 [DEBUG] #5 extracting sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3
+2026-Jul-12 05:44:26.634730 [DEBUG] #5 extracting sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 3.8s done
+2026-Jul-12 05:44:26.634730 [DEBUG] #5 DONE 11.3s
+2026-Jul-12 05:44:26.786483 [DEBUG] #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:44:26.786483 [DEBUG] #5 extracting sha256:8a8f99d8b62deb507fbd5795068231986ca9788dc403c54373a862cbbdc1090a
+2026-Jul-12 05:44:27.061884 [DEBUG] #5 extracting sha256:8a8f99d8b62deb507fbd5795068231986ca9788dc403c54373a862cbbdc1090a 0.4s done
+2026-Jul-12 05:44:27.061884 [DEBUG] #5 DONE 11.7s
+2026-Jul-12 05:44:27.212311 [DEBUG] #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:44:27.212311 [DEBUG] #5 extracting sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468
+2026-Jul-12 05:44:34.181544 [DEBUG] #5 extracting sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 7.1s done
+2026-Jul-12 05:44:34.181544 [DEBUG] #5 DONE 18.8s
+2026-Jul-12 05:44:34.331463 [DEBUG] 
+2026-Jul-12 05:44:34.355096 [DEBUG] #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:44:34.355096 [DEBUG] #5 extracting sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd
+2026-Jul-12 05:44:34.818920 [DEBUG] #5 extracting sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd 0.6s done
+2026-Jul-12 05:44:34.818920 [DEBUG] #5 DONE 19.4s
+2026-Jul-12 05:44:34.969817 [DEBUG] #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:44:34.969817 [DEBUG] #5 extracting sha256:c08735c7f0f9602a107c9b3b786ca0e9d07d35af36c3434a8c3fd9328aa4dd16
+2026-Jul-12 05:44:35.162176 [DEBUG] #5 extracting sha256:c08735c7f0f9602a107c9b3b786ca0e9d07d35af36c3434a8c3fd9328aa4dd16 0.3s done
+2026-Jul-12 05:44:35.162176 [DEBUG] #5 DONE 19.8s
+2026-Jul-12 05:44:35.371822 [DEBUG] #6 [2/6] RUN corepack enable
+2026-Jul-12 05:44:38.127813 [DEBUG] #6 DONE 2.9s
+2026-Jul-12 05:44:38.376666 [DEBUG] #7 [3/6] WORKDIR /app
+2026-Jul-12 05:44:40.126013 [DEBUG] #7 DONE 1.9s
+2026-Jul-12 05:44:40.365946 [DEBUG] #8 [4/6] COPY . .
+2026-Jul-12 05:44:42.848276 [DEBUG] #8 DONE 2.6s
+2026-Jul-12 05:44:43.084954 [DEBUG] #9 [5/6] RUN pnpm install --frozen-lockfile
+2026-Jul-12 05:44:44.316822 [DEBUG] #9 1.379 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.26.1.tgz
+2026-Jul-12 05:<REDACTED>@11.12.0   │
+2026-Jul-12 05:44:50.406652 [DEBUG] #9 7.442    │                                               │
+2026-Jul-12 05:44:50.406652 [DEBUG] #9 7.442    ╰───────────────────────────────────────────────╯
+2026-Jul-12 05:44:50.406652 [DEBUG] #9 7.442
+2026-Jul-12 05:44:50.522912 [DEBUG] #9 7.589 Progress: resolved 530, reused 0, downloaded 1, added 0
+2026-Jul-12 05:44:51.533555 [DEBUG] #9 8.597 Progress: resolved 530, reused 0, downloaded 31, added 4
+2026-Jul-12 05:44:52.538297 [DEBUG] #9 9.598 Progress: resolved 530, reused 0, downloaded 127, added 35
+2026-Jul-12 05:44:53.540384 [DEBUG] #9 10.60 Progress: resolved 530, reused 0, downloaded 169, added 48
+2026-Jul-12 05:44:54.541030 [DEBUG] #9 11.60 Progress: resolved 530, reused 0, downloaded 210, added 63
+2026-Jul-12 05:44:55.540415 [DEBUG] #9 12.61 Progress: resolved 530, reused 0, downloaded 255, added 113
+2026-Jul-12 05:44:56.539567 [DEBUG] #9 13.60 Progress: resolved 530, reused 0, downloaded 288, added 124
+2026-Jul-12 05:44:57.543945 [DEBUG] #9 14.61 Progress: resolved 530, reused 0, downloaded 315, added 131
+2026-Jul-12 05:44:58.540906 [DEBUG] #9 15.61 Progress: resolved 530, reused 0, downloaded 317, added 133
+2026-Jul-12 05:44:59.548379 [DEBUG] #9 16.61 Progress: resolved 530, reused 0, downloaded 324, added 135
+2026-Jul-12 05:45:00.697122 [DEBUG] #9 17.61 Progress: resolved 530, reused 0, downloaded 326, added 135
+2026-Jul-12 05:45:01.553305 [DEBUG] #9 18.62 Progress: resolved 530, reused 0, downloaded 327, added 135
+2026-Jul-12 05:45:02.688453 [DEBUG] #9 19.75 Progress: resolved 530, reused 0, downloaded 328, added 135
+2026-Jul-12 05:45:04.793001 [DEBUG] #9 21.86 Progress: resolved 530, reused 0, downloaded 329, added 135
+2026-Jul-12 05:45:05.802461 [DEBUG] #9 22.86 Progress: resolved 530, reused 0, downloaded 334, added 138
+2026-Jul-12 05:45:06.819763 [DEBUG] #9 23.87 Progress: resolved 530, reused 0, downloaded 336, added 139
+2026-Jul-12 05:45:09.536193 [DEBUG] #9 25.18 Progress: resolved 530, reused 0, downloaded 337, added 139
+2026-Jul-12 05:45:09.536193 [DEBUG] #9 26.18 Progress: resolved 530, reused 0, downloaded 378, added 150
+2026-Jul-12 05:45:12.182519 [DEBUG] #9 27.18 Progress: resolved 530, reused 0, downloaded 379, added 151
+2026-Jul-12 05:45:12.182519 [DEBUG] #9 28.18 Progress: resolved 530, reused 0, downloaded 411, added 159
+2026-Jul-12 05:45:12.182519 [DEBUG] #9 29.18 Progress: resolved 530, reused 0, downloaded 436, added 169
+2026-Jul-12 05:45:13.124017 [DEBUG] #9 30.18 Progress: resolved 530, reused 0, downloaded 468, added 186
+2026-Jul-12 05:45:15.710189 [DEBUG] #9 31.18 Progress: resolved 530, reused 0, downloaded 498, added 195
+2026-Jul-12 05:45:16.385034 [DEBUG] #9 33.45 Progress: resolved 530, reused 0, downloaded 499, added 195
+2026-Jul-12 05:45:16.613323 [DEBUG] 
+2026-Jul-12 05:45:17.386435 [DEBUG] #9 34.45 Progress: resolved 530, reused 0, downloaded 517, added 201
+2026-Jul-12 05:45:18.389435 [DEBUG] #9 35.45 Progress: resolved 530, reused 0, downloaded 527, added 204
+2026-Jul-12 05:45:19.390038 [DEBUG] #9 36.46 Progress: resolved 530, reused 0, downloaded 530, added 315
+2026-Jul-12 05:45:20.395071 [DEBUG] #9 37.46 Progress: resolved 530, reused 0, downloaded 530, added 328
+2026-Jul-12 05:45:21.558803 [DEBUG] #9 38.62 Progress: resolved 530, reused 0, downloaded 530, added 329
+2026-Jul-12 05:45:23.223867 [DEBUG] #9 39.63 Progress: resolved 530, reused 0, downloaded 530, added 459
+2026-Jul-12 05:45:24.246416 [DEBUG] #9 40.63 Progress: resolved 530, reused 0, downloaded 530, added 500
+2026-Jul-12 05:45:24.420445 [DEBUG] #9 40.98 Progress: resolved 530, reused 0, downloaded 530, added 530, done
+2026-Jul-12 05:45:30.075301 [DEBUG] #9 47.13 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-12 05:45:30.933474 [DEBUG] #9 48.00 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-12 05:45:33.324714 [DEBUG] #9 50.39
+2026-Jul-12 05:45:33.324714 [DEBUG] #9 50.39 dependencies:
+2026-Jul-12 05:45:33.324714 [DEBUG] #9 50.39 + @replit/connectors-sdk 0.4.1
+2026-Jul-12 05:45:33.324714 [DEBUG] #9 50.39
+2026-Jul-12 05:45:33.324714 [DEBUG] #9 50.39 devDependencies:
+2026-Jul-12 05:45:33.324714 [DEBUG] #9 50.39 + prettier 3.9.4
+2026-Jul-12 05:45:33.324714 [DEBUG] #9 50.39 + typescript 5.9.3
+2026-Jul-12 05:45:33.324714 [DEBUG] #9 50.39
+2026-Jul-12 05:45:33.490500 [DEBUG] #9 50.55 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-12 05:45:33.691205 [DEBUG] #9 50.60 . preinstall: Done
+2026-Jul-12 05:45:33.923701 [DEBUG] #9 50.98 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2026-Jul-12 05:45:33.971462 [DEBUG] #9 50.98 │                                                                              │
+2026-Jul-12 05:45:33.971462 [DEBUG] #9 50.98 │   Ignored build scripts: @google/genai@2.10.0, protobufjs@7.6.5.             │
+2026-Jul-12 05:45:33.971462 [DEBUG] #9 50.98 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2026-Jul-12 05:45:33.971462 [DEBUG] #9 50.98 │   to run scripts.                                                            │
+2026-Jul-12 05:45:33.971462 [DEBUG] #9 50.98 │                                                                              │
+2026-Jul-12 05:45:33.971462 [DEBUG] #9 50.98 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-Jul-12 05:45:34.151273 [DEBUG] #9 51.06 Done in 46.3s using pnpm v10.26.1
+2026-Jul-12 05:45:34.892259 [DEBUG] #9 DONE 51.9s
+2026-Jul-12 05:45:35.041116 [DEBUG] 
+2026-Jul-12 05:45:35.120342 [DEBUG] #10 [6/6] RUN pnpm run build
+2026-Jul-12 05:45:40.464155 [DEBUG] #10 5.424
+2026-Jul-12 05:45:40.540995 [DEBUG] #10 5.424 > workspace@0.0.0 build /app
+2026-Jul-12 05:45:40.540995 [DEBUG] #10 5.424 > pnpm run typecheck && pnpm -r --workspace-concurrency=1 --if-present --filter '!@workspace/mockup-sandbox' run build
+2026-Jul-12 05:45:40.540995 [DEBUG] #10 5.424
+2026-Jul-12 05:45:41.857510 [DEBUG] #10 6.816
+2026-Jul-12 05:45:41.857510 [DEBUG] #10 6.816 > workspace@0.0.0 typecheck /app
+2026-Jul-12 05:45:41.857510 [DEBUG] #10 6.816 > pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+2026-Jul-12 05:45:41.857510 [DEBUG] #10 6.816
+2026-Jul-12 05:45:42.836235 [DEBUG] #10 7.797
+2026-Jul-12 05:45:42.870424 [DEBUG] #10 7.797 > workspace@0.0.0 typecheck:libs /app
+2026-Jul-12 05:45:42.870424 [DEBUG] #10 7.797 > tsc --build
+2026-Jul-12 05:45:42.870424 [DEBUG] #10 7.797
+2026-Jul-12 05:46:10.303044 [DEBUG] #10 35.26 Scope: 4 of 9 workspace projects
+2026-Jul-12 05:46:10.884087 [DEBUG] #10 35.28 artifacts/api-server typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-12 05:46:10.884087 [DEBUG] #10 35.28 artifacts/guru-eob5 typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-12 05:46:35.436244 [DEBUG] #10 60.40 artifacts/api-server typecheck: Done
+2026-Jul-12 05:46:35.458319 [DEBUG] 
+2026-Jul-12 05:46:35.600149 [DEBUG] #10 60.41 artifacts/mockup-sandbox typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-12 05:47:10.714753 [DEBUG] #10 95.57 artifacts/guru-eob5 typecheck: Done
+2026-Jul-12 05:47:10.870749 [DEBUG] #10 95.58 scripts typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-12 05:47:12.647023 [DEBUG] #10 97.61 artifacts/mockup-sandbox typecheck: Done
+2026-Jul-12 05:47:15.026138 [DEBUG] #10 99.99 scripts typecheck: Done
+2026-Jul-12 05:47:15.049904 [DEBUG] 
+2026-Jul-12 05:47:16.441680 [DEBUG] #10 101.4 Scope: 7 of 9 workspace projects
+2026-Jul-12 05:47:16.620189 [DEBUG] #10 101.4
+2026-Jul-12 05:47:16.620189 [DEBUG] #10 101.4 > @workspace/api-server@0.0.0 build /app/artifacts/api-server
+2026-Jul-12 05:47:16.620189 [DEBUG] #10 101.4 > node ./build.mjs
+2026-Jul-12 05:47:16.620189 [DEBUG] #10 101.4
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/index.mjs                       2.3mb ⚠️
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/pino-worker.mjs               153.4kb
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/pino-file.mjs                 142.0kb
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/pino-pretty.mjs               114.6kb
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/thread-stream-worker.mjs        7.3kb
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/index.mjs.map                   4.0mb
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/pino-worker.mjs.map           256.9kb
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/pino-file.mjs.map             229.0kb
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/pino-pretty.mjs.map           204.0kb
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2   dist/thread-stream-worker.mjs.map   12.0kb
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2
+2026-Jul-12 05:47:20.249266 [DEBUG] #10 105.2 ⚡ Done in 3314ms
+2026-Jul-12 05:47:20.754276 [DEBUG] #10 105.2
+2026-Jul-12 05:47:20.754276 [DEBUG] #10 105.2 > @workspace/guru-eob5@0.0.0 build /app/artifacts/guru-eob5
+2026-Jul-12 05:47:20.754276 [DEBUG] #10 105.2 > vite build --config vite.config.ts
+2026-Jul-12 05:47:20.754276 [DEBUG] #10 105.2
+2026-Jul-12 05:47:22.471047 [DEBUG] #10 107.4 vite v7.3.6 building client environment for production...
+2026-Jul-12 05:47:22.811449 [DEBUG] #10 107.8 transforming...
+2026-Jul-12 05:47:25.876087 [DEBUG] #10 110.8 src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:47:27.538486 [DEBUG] #10 112.5 src/components/ui/progress.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:47:27.719022 [DEBUG] #10 112.5 src/components/ui/dropdown-menu.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:47:27.719022 [DEBUG] #10 112.5 src/components/ui/select.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:47:32.035475 [DEBUG] #10 117.0 src/components/ui/label.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:47:32.434275 [DEBUG] 
+2026-Jul-12 05:47:37.413472 [DEBUG] #10 122.4 src/components/ui/avatar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:47:52.944530 [DEBUG] #10 137.9 ✓ 3317 modules transformed.
+2026-Jul-12 05:47:57.222365 [DEBUG] #10 142.2 rendering chunks...
+2026-Jul-12 05:47:57.415997 [DEBUG] #10 142.2 computing gzip size...
+2026-Jul-12 05:47:57.536475 [DEBUG] #10 142.5 dist/public/index.html                     1.36 kB │ gzip:   0.54 kB
+2026-Jul-12 05:47:57.962167 [DEBUG] #10 142.9 dist/public/assets/logo-C8q4zXk9.png      73.99 kB
+2026-Jul-12 05:47:57.962167 [DEBUG] #10 142.9 dist/public/assets/index-Bol4t0GD.css    103.61 kB │ gzip:  17.07 kB
+2026-Jul-12 05:47:57.962167 [DEBUG] #10 142.9 dist/public/assets/index-CUgh8d32.js   1,385.76 kB │ gzip: 414.87 kB
+2026-Jul-12 05:47:58.119029 [DEBUG] #10 142.9
+2026-Jul-12 05:47:58.119029 [DEBUG] #10 142.9 (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-Jul-12 05:47:58.119029 [DEBUG] #10 142.9 - Using dynamic import() to code-split the application
+2026-Jul-12 05:47:58.119029 [DEBUG] #10 142.9 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-Jul-12 05:<REDACTED>@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:48:32.052639 #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:48:32.052639 #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf 0.4s done
+2026-Jul-12 05:48:32.052639 #5 ...
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #4 [internal] load build context
+2026-Jul-12 05:48:32.052639 #4 transferring context: 1.36MB 0.2s done
+2026-Jul-12 05:48:32.052639 #4 DONE 1.8s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:48:32.052639 #5 DONE 3.3s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:48:32.052639 #5 sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd 0B / 1.71MB 0.2s
+2026-Jul-12 05:48:32.052639 #5 sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd 1.71MB / 1.71MB 0.8s
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 0B / 49.94MB 0.2s
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 3.15MB / 49.94MB 0.5s
+2026-Jul-12 05:48:32.052639 #5 sha256:c08735c7f0f9602a107c9b3b786ca0e9d07d35af36c3434a8c3fd9328aa4dd16 0B / 446B 0.2s
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 10.49MB / 49.94MB 0.6s
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 17.83MB / 49.94MB 0.8s
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 25.17MB / 49.94MB 0.9s
+2026-Jul-12 05:48:32.052639 #5 sha256:c08735c7f0f9602a107c9b3b786ca0e9d07d35af36c3434a8c3fd9328aa4dd16 446B / 446B 0.6s done
+2026-Jul-12 05:48:32.052639 #5 sha256:8a8f99d8b62deb507fbd5795068231986ca9788dc403c54373a862cbbdc1090a 0B / 3.31kB 0.2s
+2026-Jul-12 05:48:32.052639 #5 sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd 1.71MB / 1.71MB 1.6s done
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 32.51MB / 49.94MB 1.1s
+2026-Jul-12 05:48:32.052639 #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 0B / 28.24MB 0.2s
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 39.85MB / 49.94MB 1.2s
+2026-Jul-12 05:48:32.052639 #5 sha256:8a8f99d8b62deb507fbd5795068231986ca9788dc403c54373a862cbbdc1090a 3.31kB / 3.31kB 0.5s done
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 47.19MB / 49.94MB 1.4s
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 49.94MB / 49.94MB 1.5s
+2026-Jul-12 05:48:32.052639 #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 3.15MB / 28.24MB 0.8s
+2026-Jul-12 05:48:32.052639 #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 9.44MB / 28.24MB 0.9s
+2026-Jul-12 05:48:32.052639 #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 13.63MB / 28.24MB 1.1s
+2026-Jul-12 05:48:32.052639 #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 17.83MB / 28.24MB 1.2s
+2026-Jul-12 05:48:32.052639 #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 22.02MB / 28.24MB 1.4s
+2026-Jul-12 05:48:32.052639 #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 27.26MB / 28.24MB 1.5s
+2026-Jul-12 05:48:32.052639 #5 sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 49.94MB / 49.94MB 2.7s done
+2026-Jul-12 05:48:32.052639 #5 sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 28.24MB / 28.24MB 1.9s done
+2026-Jul-12 05:48:32.052639 #5 DONE 7.4s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:68629629b516c3cd6f5e71ffbe18e32afb1ae5b4926c92d058c0f11ef1fd58a3 3.8s done
+2026-Jul-12 05:48:32.052639 #5 DONE 11.3s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:8a8f99d8b62deb507fbd5795068231986ca9788dc403c54373a862cbbdc1090a
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:8a8f99d8b62deb507fbd5795068231986ca9788dc403c54373a862cbbdc1090a 0.4s done
+2026-Jul-12 05:48:32.052639 #5 DONE 11.7s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:3de69d675a4de6c71e2311f1e547de804e6e68f051a0b9e17e6283d500894468 7.1s done
+2026-Jul-12 05:48:32.052639 #5 DONE 18.8s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:6c81c36100ac3e6b034b455564d4455ecaa854542bc46cfb4a0bbca4817a6dcd 0.6s done
+2026-Jul-12 05:48:32.052639 #5 DONE 19.4s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #5 [1/6] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:c08735c7f0f9602a107c9b3b786ca0e9d07d35af36c3434a8c3fd9328aa4dd16
+2026-Jul-12 05:48:32.052639 #5 extracting sha256:c08735c7f0f9602a107c9b3b786ca0e9d07d35af36c3434a8c3fd9328aa4dd16 0.3s done
+2026-Jul-12 05:48:32.052639 #5 DONE 19.8s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #6 [2/6] RUN corepack enable
+2026-Jul-12 05:48:32.052639 #6 DONE 2.9s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #7 [3/6] WORKDIR /app
+2026-Jul-12 05:48:32.052639 #7 DONE 1.9s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #8 [4/6] COPY . .
+2026-Jul-12 05:48:32.052639 #8 DONE 2.6s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #9 [5/6] RUN pnpm install --frozen-lockfile
+2026-Jul-12 05:48:32.052639 #9 1.379 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.26.1.tgz
+2026-Jul-12 05:<REDACTED>@11.12.0   │
+2026-Jul-12 05:48:32.052639 #9 7.442    │                                               │
+2026-Jul-12 05:48:32.052639 #9 7.442    ╰───────────────────────────────────────────────╯
+2026-Jul-12 05:48:32.052639 #9 7.442
+2026-Jul-12 05:48:32.052639 #9 7.589 Progress: resolved 530, reused 0, downloaded 1, added 0
+2026-Jul-12 05:48:32.052639 #9 8.597 Progress: resolved 530, reused 0, downloaded 31, added 4
+2026-Jul-12 05:48:32.052639 #9 9.598 Progress: resolved 530, reused 0, downloaded 127, added 35
+2026-Jul-12 05:48:32.052639 #9 10.60 Progress: resolved 530, reused 0, downloaded 169, added 48
+2026-Jul-12 05:48:32.052639 #9 11.60 Progress: resolved 530, reused 0, downloaded 210, added 63
+2026-Jul-12 05:48:32.052639 #9 12.61 Progress: resolved 530, reused 0, downloaded 255, added 113
+2026-Jul-12 05:48:32.052639 #9 13.60 Progress: resolved 530, reused 0, downloaded 288, added 124
+2026-Jul-12 05:48:32.052639 #9 14.61 Progress: resolved 530, reused 0, downloaded 315, added 131
+2026-Jul-12 05:48:32.052639 #9 15.61 Progress: resolved 530, reused 0, downloaded 317, added 133
+2026-Jul-12 05:48:32.052639 #9 16.61 Progress: resolved 530, reused 0, downloaded 324, added 135
+2026-Jul-12 05:48:32.052639 #9 17.61 Progress: resolved 530, reused 0, downloaded 326, added 135
+2026-Jul-12 05:48:32.052639 #9 18.62 Progress: resolved 530, reused 0, downloaded 327, added 135
+2026-Jul-12 05:48:32.052639 #9 19.75 Progress: resolved 530, reused 0, downloaded 328, added 135
+2026-Jul-12 05:48:32.052639 #9 21.86 Progress: resolved 530, reused 0, downloaded 329, added 135
+2026-Jul-12 05:48:32.052639 #9 22.86 Progress: resolved 530, reused 0, downloaded 334, added 138
+2026-Jul-12 05:48:32.052639 #9 23.87 Progress: resolved 530, reused 0, downloaded 336, added 139
+2026-Jul-12 05:48:32.052639 #9 25.18 Progress: resolved 530, reused 0, downloaded 337, added 139
+2026-Jul-12 05:48:32.052639 #9 26.18 Progress: resolved 530, reused 0, downloaded 378, added 150
+2026-Jul-12 05:48:32.052639 #9 27.18 Progress: resolved 530, reused 0, downloaded 379, added 151
+2026-Jul-12 05:48:32.052639 #9 28.18 Progress: resolved 530, reused 0, downloaded 411, added 159
+2026-Jul-12 05:48:32.052639 #9 29.18 Progress: resolved 530, reused 0, downloaded 436, added 169
+2026-Jul-12 05:48:32.052639 #9 30.18 Progress: resolved 530, reused 0, downloaded 468, added 186
+2026-Jul-12 05:48:32.052639 #9 31.18 Progress: resolved 530, reused 0, downloaded 498, added 195
+2026-Jul-12 05:48:32.052639 #9 33.45 Progress: resolved 530, reused 0, downloaded 499, added 195
+2026-Jul-12 05:48:32.052639 #9 34.45 Progress: resolved 530, reused 0, downloaded 517, added 201
+2026-Jul-12 05:48:32.052639 #9 35.45 Progress: resolved 530, reused 0, downloaded 527, added 204
+2026-Jul-12 05:48:32.052639 #9 36.46 Progress: resolved 530, reused 0, downloaded 530, added 315
+2026-Jul-12 05:48:32.052639 #9 37.46 Progress: resolved 530, reused 0, downloaded 530, added 328
+2026-Jul-12 05:48:32.052639 #9 38.62 Progress: resolved 530, reused 0, downloaded 530, added 329
+2026-Jul-12 05:48:32.052639 #9 39.63 Progress: resolved 530, reused 0, downloaded 530, added 459
+2026-Jul-12 05:48:32.052639 #9 40.63 Progress: resolved 530, reused 0, downloaded 530, added 500
+2026-Jul-12 05:48:32.052639 #9 40.98 Progress: resolved 530, reused 0, downloaded 530, added 530, done
+2026-Jul-12 05:48:32.052639 #9 47.13 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-12 05:48:32.052639 #9 48.00 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-12 05:48:32.052639 #9 50.39
+2026-Jul-12 05:48:32.052639 #9 50.39 dependencies:
+2026-Jul-12 05:48:32.052639 #9 50.39 + @replit/connectors-sdk 0.4.1
+2026-Jul-12 05:48:32.052639 #9 50.39
+2026-Jul-12 05:48:32.052639 #9 50.39 devDependencies:
+2026-Jul-12 05:48:32.052639 #9 50.39 + prettier 3.9.4
+2026-Jul-12 05:48:32.052639 #9 50.39 + typescript 5.9.3
+2026-Jul-12 05:48:32.052639 #9 50.39
+2026-Jul-12 05:48:32.052639 #9 50.55 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-12 05:48:32.052639 #9 50.60 . preinstall: Done
+2026-Jul-12 05:48:32.052639 #9 50.98 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2026-Jul-12 05:48:32.052639 #9 50.98 │                                                                              │
+2026-Jul-12 05:48:32.052639 #9 50.98 │   Ignored build scripts: @google/genai@2.10.0, protobufjs@7.6.5.             │
+2026-Jul-12 05:48:32.052639 #9 50.98 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2026-Jul-12 05:48:32.052639 #9 50.98 │   to run scripts.                                                            │
+2026-Jul-12 05:48:32.052639 #9 50.98 │                                                                              │
+2026-Jul-12 05:48:32.052639 #9 50.98 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-Jul-12 05:48:32.052639 #9 51.06 Done in 46.3s using pnpm v10.26.1
+2026-Jul-12 05:48:32.052639 #9 DONE 51.9s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #10 [6/6] RUN pnpm run build
+2026-Jul-12 05:48:32.052639 #10 5.424
+2026-Jul-12 05:48:32.052639 #10 5.424 > workspace@0.0.0 build /app
+2026-Jul-12 05:48:32.052639 #10 5.424 > pnpm run typecheck && pnpm -r --workspace-concurrency=1 --if-present --filter '!@workspace/mockup-sandbox' run build
+2026-Jul-12 05:48:32.052639 #10 5.424
+2026-Jul-12 05:48:32.052639 #10 6.816
+2026-Jul-12 05:48:32.052639 #10 6.816 > workspace@0.0.0 typecheck /app
+2026-Jul-12 05:48:32.052639 #10 6.816 > pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+2026-Jul-12 05:48:32.052639 #10 6.816
+2026-Jul-12 05:48:32.052639 #10 7.797
+2026-Jul-12 05:48:32.052639 #10 7.797 > workspace@0.0.0 typecheck:libs /app
+2026-Jul-12 05:48:32.052639 #10 7.797 > tsc --build
+2026-Jul-12 05:48:32.052639 #10 7.797
+2026-Jul-12 05:48:32.052639 #10 35.26 Scope: 4 of 9 workspace projects
+2026-Jul-12 05:48:32.052639 #10 35.28 artifacts/api-server typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-12 05:48:32.052639 #10 35.28 artifacts/guru-eob5 typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-12 05:48:32.052639 #10 60.40 artifacts/api-server typecheck: Done
+2026-Jul-12 05:48:32.052639 #10 60.41 artifacts/mockup-sandbox typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-12 05:48:32.052639 #10 95.57 artifacts/guru-eob5 typecheck: Done
+2026-Jul-12 05:48:32.052639 #10 95.58 scripts typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-12 05:48:32.052639 #10 97.61 artifacts/mockup-sandbox typecheck: Done
+2026-Jul-12 05:48:32.052639 #10 99.99 scripts typecheck: Done
+2026-Jul-12 05:48:32.052639 #10 101.4 Scope: 7 of 9 workspace projects
+2026-Jul-12 05:48:32.052639 #10 101.4
+2026-Jul-12 05:48:32.052639 #10 101.4 > @workspace/api-server@0.0.0 build /app/artifacts/api-server
+2026-Jul-12 05:48:32.052639 #10 101.4 > node ./build.mjs
+2026-Jul-12 05:48:32.052639 #10 101.4
+2026-Jul-12 05:48:32.052639 #10 105.2
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/index.mjs                       2.3mb ⚠️
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/pino-worker.mjs               153.4kb
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/pino-file.mjs                 142.0kb
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/pino-pretty.mjs               114.6kb
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/thread-stream-worker.mjs        7.3kb
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/index.mjs.map                   4.0mb
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/pino-worker.mjs.map           256.9kb
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/pino-file.mjs.map             229.0kb
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/pino-pretty.mjs.map           204.0kb
+2026-Jul-12 05:48:32.052639 #10 105.2   dist/thread-stream-worker.mjs.map   12.0kb
+2026-Jul-12 05:48:32.052639 #10 105.2
+2026-Jul-12 05:48:32.052639 #10 105.2 ⚡ Done in 3314ms
+2026-Jul-12 05:48:32.052639 #10 105.2
+2026-Jul-12 05:48:32.052639 #10 105.2 > @workspace/guru-eob5@0.0.0 build /app/artifacts/guru-eob5
+2026-Jul-12 05:48:32.052639 #10 105.2 > vite build --config vite.config.ts
+2026-Jul-12 05:48:32.052639 #10 105.2
+2026-Jul-12 05:48:32.052639 #10 107.4 vite v7.3.6 building client environment for production...
+2026-Jul-12 05:48:32.052639 #10 107.8 transforming...
+2026-Jul-12 05:48:32.052639 #10 110.8 src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:48:32.052639 #10 112.5 src/components/ui/progress.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:48:32.052639 #10 112.5 src/components/ui/dropdown-menu.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:48:32.052639 #10 112.5 src/components/ui/select.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:48:32.052639 #10 117.0 src/components/ui/label.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:48:32.052639 #10 122.4 src/components/ui/avatar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-12 05:48:32.052639 #10 137.9 ✓ 3317 modules transformed.
+2026-Jul-12 05:48:32.052639 #10 142.2 rendering chunks...
+2026-Jul-12 05:48:32.052639 #10 142.2 computing gzip size...
+2026-Jul-12 05:48:32.052639 #10 142.5 dist/public/index.html                     1.36 kB │ gzip:   0.54 kB
+2026-Jul-12 05:48:32.052639 #10 142.9 dist/public/assets/logo-C8q4zXk9.png      73.99 kB
+2026-Jul-12 05:48:32.052639 #10 142.9 dist/public/assets/index-Bol4t0GD.css    103.61 kB │ gzip:  17.07 kB
+2026-Jul-12 05:48:32.052639 #10 142.9 dist/public/assets/index-CUgh8d32.js   1,385.76 kB │ gzip: 414.87 kB
+2026-Jul-12 05:48:32.052639 #10 142.9
+2026-Jul-12 05:48:32.052639 #10 142.9 (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-Jul-12 05:48:32.052639 #10 142.9 - Using dynamic import() to code-split the application
+2026-Jul-12 05:48:32.052639 #10 142.9 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-Jul-12 05:48:32.052639 #10 142.9 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+2026-Jul-12 05:48:32.052639 #10 142.9 ✓ built in 35.34s
+2026-Jul-12 05:48:32.052639 #10 DONE 145.1s
+2026-Jul-12 05:48:32.052639 
+2026-Jul-12 05:48:32.052639 #11 exporting to image
+2026-Jul-12 05:48:32.052639 #11 exporting layers
+2026-Jul-12 05:48:32.117150 [DEBUG] Error type: App\Exceptions\DeploymentException
+2026-Jul-12 05:48:32.191583 [DEBUG] Error code: 0
+2026-Jul-12 05:48:32.240546 [DEBUG] Location: /var/www/html/app/Traits/ExecuteRemoteCommand.php:242
+2026-Jul-12 05:48:32.276174 [DEBUG] Stack trace (first 5 lines):
+2026-Jul-12 05:48:32.328767 [DEBUG] #0 /var/www/html/app/Traits/ExecuteRemoteCommand.php(106): App\Jobs\ApplicationDeploymentJob->executeCommandWithProcess()
+2026-Jul-12 05:48:32.368944 [DEBUG] #1 /var/www/html/vendor/laravel/framework/src/Illuminate/Collections/Traits/EnumeratesValues.php(275): App\Jobs\ApplicationDeploymentJob->{closure:App\Traits\ExecuteRemoteCommand::execute_remote_command():72}()
+2026-Jul-12 05:48:32.406567 [DEBUG] #2 /var/www/html/app/Traits/ExecuteRemoteCommand.php(72): Illuminate\Support\Collection->each()
+2026-Jul-12 05:48:32.439650 [DEBUG] #3 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(3821): App\Jobs\ApplicationDeploymentJob->execute_remote_command()
+2026-Jul-12 05:48:32.479305 [DEBUG] #4 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(912): App\Jobs\ApplicationDeploymentJob->build_image()
+2026-Jul-12 05:48:32.537538 ========================================
+2026-Jul-12 05:48:32.600497 Deployment failed. Removing the new version of your application.
+2026-Jul-12 05:48:35.068830 Gracefully shutting down build container: nvdoeyg6wfxvf85d0eyrar5v
+2026-Jul-12 05:48:35.378381 [DEBUG] [CMD]: docker stop --time=30 nvdoeyg6wfxvf85d0eyrar5v
+2026-Jul-12 05:48:35.378381 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-12 05:48:38.363729 [DEBUG] nvdoeyg6wfxvf85d0eyrar5v
