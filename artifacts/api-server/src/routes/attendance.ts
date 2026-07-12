@@ -7,25 +7,33 @@ import {
   CreateAttendanceRecordResponse,
   BulkCreateAttendanceBody,
   BulkCreateAttendanceResponse,
+  UpdateAttendanceRecordParams,
+  UpdateAttendanceRecordBody,
+  UpdateAttendanceRecordResponse,
+  DeleteAttendanceRecordParams,
+  DeleteAttendanceRecordResponse,
 } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru } from "../lib/auth";
 import type { Request } from "express";
 
 const router: IRouter = Router();
 
-async function schoolStudentIds(req: Request): Promise<Set<string> | null> {
+async function schoolStudentIds(req: Request, kelas?: string): Promise<Set<string> | null> {
   const guru = await getCurrentGuru(req);
   if (!guru) return null;
   if (!guru.school) return new Set();
+  const conditions: SQL[] = [eq(studentsTable.school, guru.school)];
+  if (kelas) conditions.push(eq(studentsTable.kelas, kelas));
   const rows = await db
     .select({ id: studentsTable.id })
     .from(studentsTable)
-    .where(eq(studentsTable.school, guru.school));
+    .where(and(...conditions));
   return new Set(rows.map((r) => r.id));
 }
 
 router.get("/attendance", requireAuth, async (req, res): Promise<void> => {
-  const allowed = await schoolStudentIds(req);
+  const kelas = typeof req.query["kelas"] === "string" ? req.query["kelas"] : undefined;
+  const allowed = await schoolStudentIds(req, kelas);
   if (allowed === null) {
     res.status(401).json({ error: "Unauthorized" });
     return;
@@ -73,6 +81,78 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
     })
     .returning();
   res.status(201).json(CreateAttendanceRecordResponse.parse(record));
+});
+
+router.patch("/attendance/:id", requireAuth, async (req, res): Promise<void> => {
+  const params = UpdateAttendanceRecordParams.safeParse(req.params);
+  const body = UpdateAttendanceRecordBody.safeParse(req.body);
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: (params.error ?? body.error)!.message });
+    return;
+  }
+
+  const allowed = await schoolStudentIds(req);
+  if (allowed === null) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (allowed.size === 0) {
+    res.status(404).json({ error: "Attendance record not found" });
+    return;
+  }
+
+  const [record] = await db
+    .update(attendanceTable)
+    .set({ status: body.data.status })
+    .where(
+      and(
+        eq(attendanceTable.id, params.data.id),
+        inArray(attendanceTable.studentId, [...allowed]),
+      ),
+    )
+    .returning();
+
+  if (!record) {
+    res.status(404).json({ error: "Attendance record not found" });
+    return;
+  }
+
+  res.json(UpdateAttendanceRecordResponse.parse(record));
+});
+
+router.delete("/attendance/:id", requireAuth, async (req, res): Promise<void> => {
+  const params = DeleteAttendanceRecordParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const allowed = await schoolStudentIds(req);
+  if (allowed === null) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (allowed.size === 0) {
+    res.status(404).json({ error: "Attendance record not found" });
+    return;
+  }
+
+  const [record] = await db
+    .delete(attendanceTable)
+    .where(
+      and(
+        eq(attendanceTable.id, params.data.id),
+        inArray(attendanceTable.studentId, [...allowed]),
+      ),
+    )
+    .returning();
+
+  if (!record) {
+    res.status(404).json({ error: "Attendance record not found" });
+    return;
+  }
+
+  res.json(DeleteAttendanceRecordResponse.parse({ success: true }));
 });
 
 router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => {

@@ -28,6 +28,7 @@ import type {
   AdminDocumentInput,
   AttendanceRecord,
   AttendanceRecordInput,
+  AttendanceUpdate,
   BulkCreateAttendanceInput,
   BulkCreatePointsInput,
   BulkCreatePointsResult,
@@ -58,6 +59,7 @@ import type {
   LoginInput,
   PointRecord,
   PointRecordInput,
+  PointUpdate,
   Prosem,
   ProsemInput,
   ProsemItem,
@@ -2341,6 +2343,78 @@ export const useCreateJournalEntry = <TError = ErrorType<unknown>,
       return useMutation(getCreateJournalEntryMutationOptions(options));
     }
 
+export const getUpdateJournalEntryUrl = (id: string,) => {
+
+
+
+
+  return `/api/journal/${id}`
+}
+
+/**
+ * @summary Update a journal entry
+ */
+export const updateJournalEntry = async (id: string,
+    journalEntryInput: JournalEntryInput, options?: RequestInit): Promise<JournalEntry> => {
+
+  return customFetch<JournalEntry>(getUpdateJournalEntryUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(journalEntryInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateJournalEntryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJournalEntry>>, TError,{id: string;data: BodyType<JournalEntryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateJournalEntry>>, TError,{id: string;data: BodyType<JournalEntryInput>}, TContext> => {
+
+const mutationKey = ['updateJournalEntry'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateJournalEntry>>, {id: string;data: BodyType<JournalEntryInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateJournalEntry(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateJournalEntryMutationResult = NonNullable<Awaited<ReturnType<typeof updateJournalEntry>>>
+    export type UpdateJournalEntryMutationBody = BodyType<JournalEntryInput>
+    export type UpdateJournalEntryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a journal entry
+ */
+export const useUpdateJournalEntry = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJournalEntry>>, TError,{id: string;data: BodyType<JournalEntryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateJournalEntry>>,
+        TError,
+        {id: string;data: BodyType<JournalEntryInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateJournalEntryMutationOptions(options));
+    }
+
 export const getDeleteJournalEntryUrl = (id: string,) => {
 
 
@@ -2565,6 +2639,149 @@ export const useCreateAttendanceRecord = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateAttendanceRecordMutationOptions(options));
+    }
+
+export const getUpdateAttendanceRecordUrl = (id: string,) => {
+
+
+
+
+  return `/api/attendance/${id}`
+}
+
+/**
+ * @summary Update an attendance record's status
+ */
+export const updateAttendanceRecord = async (id: string,
+    attendanceUpdate: AttendanceUpdate, options?: RequestInit): Promise<AttendanceRecord> => {
+
+  return customFetch<AttendanceRecord>(getUpdateAttendanceRecordUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(attendanceUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateAttendanceRecordMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAttendanceRecord>>, TError,{id: string;data: BodyType<AttendanceUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAttendanceRecord>>, TError,{id: string;data: BodyType<AttendanceUpdate>}, TContext> => {
+
+const mutationKey = ['updateAttendanceRecord'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAttendanceRecord>>, {id: string;data: BodyType<AttendanceUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateAttendanceRecord(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAttendanceRecordMutationResult = NonNullable<Awaited<ReturnType<typeof updateAttendanceRecord>>>
+    export type UpdateAttendanceRecordMutationBody = BodyType<AttendanceUpdate>
+    export type UpdateAttendanceRecordMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update an attendance record's status
+ */
+export const useUpdateAttendanceRecord = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAttendanceRecord>>, TError,{id: string;data: BodyType<AttendanceUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAttendanceRecord>>,
+        TError,
+        {id: string;data: BodyType<AttendanceUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateAttendanceRecordMutationOptions(options));
+    }
+
+export const getDeleteAttendanceRecordUrl = (id: string,) => {
+
+
+
+
+  return `/api/attendance/${id}`
+}
+
+/**
+ * @summary Delete an attendance record
+ */
+export const deleteAttendanceRecord = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteAttendanceRecordUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAttendanceRecordMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAttendanceRecord>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAttendanceRecord>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteAttendanceRecord'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAttendanceRecord>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAttendanceRecord(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAttendanceRecordMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAttendanceRecord>>>
+
+    export type DeleteAttendanceRecordMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete an attendance record
+ */
+export const useDeleteAttendanceRecord = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAttendanceRecord>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAttendanceRecord>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteAttendanceRecordMutationOptions(options));
     }
 
 export const getBulkCreateAttendanceUrl = () => {
@@ -3089,6 +3306,149 @@ export const useCreatePoint = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreatePointMutationOptions(options));
+    }
+
+export const getUpdatePointUrl = (id: string,) => {
+
+
+
+
+  return `/api/points/${id}`
+}
+
+/**
+ * @summary Update a point record
+ */
+export const updatePoint = async (id: string,
+    pointUpdate: PointUpdate, options?: RequestInit): Promise<PointRecord> => {
+
+  return customFetch<PointRecord>(getUpdatePointUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(pointUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdatePointMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePoint>>, TError,{id: string;data: BodyType<PointUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePoint>>, TError,{id: string;data: BodyType<PointUpdate>}, TContext> => {
+
+const mutationKey = ['updatePoint'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePoint>>, {id: string;data: BodyType<PointUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updatePoint(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePointMutationResult = NonNullable<Awaited<ReturnType<typeof updatePoint>>>
+    export type UpdatePointMutationBody = BodyType<PointUpdate>
+    export type UpdatePointMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a point record
+ */
+export const useUpdatePoint = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePoint>>, TError,{id: string;data: BodyType<PointUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePoint>>,
+        TError,
+        {id: string;data: BodyType<PointUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePointMutationOptions(options));
+    }
+
+export const getDeletePointUrl = (id: string,) => {
+
+
+
+
+  return `/api/points/${id}`
+}
+
+/**
+ * @summary Delete a point record
+ */
+export const deletePoint = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeletePointUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeletePointMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePoint>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deletePoint>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deletePoint'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deletePoint>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deletePoint(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeletePointMutationResult = NonNullable<Awaited<ReturnType<typeof deletePoint>>>
+
+    export type DeletePointMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a point record
+ */
+export const useDeletePoint = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deletePoint>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deletePoint>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeletePointMutationOptions(options));
     }
 
 export const getBulkCreatePointsUrl = () => {

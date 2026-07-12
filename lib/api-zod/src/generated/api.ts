@@ -601,6 +601,33 @@ export const CreateJournalEntryResponse = zod.object({
 
 
 /**
+ * @summary Update a journal entry
+ */
+export const UpdateJournalEntryParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateJournalEntryBody = zod.object({
+  "subjectId": zod.string(),
+  "tanggal": zod.string(),
+  "kelas": zod.string(),
+  "materi": zod.string(),
+  "catatan": zod.string().optional()
+})
+
+export const UpdateJournalEntryResponse = zod.object({
+  "id": zod.string(),
+  "subjectId": zod.string(),
+  "teacherId": zod.string(),
+  "tanggal": zod.string(),
+  "kelas": zod.string(),
+  "materi": zod.string(),
+  "catatan": zod.string().optional(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Delete a journal entry
  */
 export const DeleteJournalEntryParams = zod.object({
@@ -617,7 +644,8 @@ export const DeleteJournalEntryResponse = zod.object({
  */
 export const ListAttendanceQueryParams = zod.object({
   "subjectId": zod.coerce.string().optional(),
-  "date": zod.coerce.string().optional()
+  "date": zod.coerce.string().optional(),
+  "kelas": zod.coerce.string().optional()
 })
 
 export const ListAttendanceResponseItem = zod.object({
@@ -648,6 +676,39 @@ export const CreateAttendanceRecordResponse = zod.object({
   "tanggal": zod.string(),
   "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa']),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update an attendance record's status
+ */
+export const UpdateAttendanceRecordParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateAttendanceRecordBody = zod.object({
+  "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa'])
+})
+
+export const UpdateAttendanceRecordResponse = zod.object({
+  "id": zod.string(),
+  "studentId": zod.string(),
+  "subjectId": zod.string(),
+  "tanggal": zod.string(),
+  "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa']),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete an attendance record
+ */
+export const DeleteAttendanceRecordParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteAttendanceRecordResponse = zod.object({
+  "success": zod.boolean()
 })
 
 
@@ -817,6 +878,43 @@ export const CreatePointResponse = zod.object({
   "keterangan": zod.string(),
   "tanggal": zod.string(),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a point record
+ */
+export const UpdatePointParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdatePointBody = zod.object({
+  "jenis": zod.enum(['positif', 'negatif']),
+  "poin": zod.number(),
+  "keterangan": zod.string(),
+  "tanggal": zod.string()
+})
+
+export const UpdatePointResponse = zod.object({
+  "id": zod.string(),
+  "studentId": zod.string(),
+  "jenis": zod.enum(['positif', 'negatif']),
+  "poin": zod.number(),
+  "keterangan": zod.string(),
+  "tanggal": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a point record
+ */
+export const DeletePointParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeletePointResponse = zod.object({
+  "success": zod.boolean()
 })
 
 

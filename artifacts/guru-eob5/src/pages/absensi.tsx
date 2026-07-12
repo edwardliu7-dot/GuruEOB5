@@ -1,5 +1,12 @@
 import { Layout } from "@/components/layout";
-import { useListAttendance, useBulkCreateAttendance, useListSubjects, useListStudents } from "@workspace/api-client-react";
+import {
+  useListAttendance,
+  useBulkCreateAttendance,
+  useUpdateAttendanceRecord,
+  useDeleteAttendanceRecord,
+  useListSubjects,
+  useListStudents,
+} from "@workspace/api-client-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -11,7 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,10 +44,36 @@ export default function Absensi() {
   );
 
   const bulkCreateAttendance = useBulkCreateAttendance();
+  const updateAttendance = useUpdateAttendanceRecord();
+  const deleteAttendance = useDeleteAttendanceRecord();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [kelasFilter, setKelasFilter] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const invalidateAttendance = () =>
+    queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      await updateAttendance.mutateAsync({ id, data: { status: status as any } });
+      invalidateAttendance();
+      toast({ title: "Berhasil", description: "Status kehadiran diperbarui" });
+    } catch {
+      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+    }
+  };
+
+  const handleDeleteAttendance = async (id: string) => {
+    if (!confirm("Hapus catatan kehadiran ini?")) return;
+    try {
+      await deleteAttendance.mutateAsync({ id });
+      invalidateAttendance();
+      toast({ title: "Berhasil", description: "Catatan kehadiran dihapus" });
+    } catch {
+      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+    }
+  };
 
   const form = useForm<z.infer<typeof attendanceSchema>>({
     resolver: zodResolver(attendanceSchema),
@@ -192,13 +225,14 @@ export default function Absensi() {
                 <TableHead>Nama Siswa</TableHead>
                 <TableHead>Mata Pelajaran</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
+                Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
               ) : !attendanceList?.length ? (
-                <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Belum ada data kehadiran.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Belum ada data kehadiran.</TableCell></TableRow>
               ) : (
                 attendanceList.map((a:any) => (
                   <TableRow key={a.id}>
@@ -206,9 +240,24 @@ export default function Absensi() {
                     <TableCell className="font-medium">{students?.find((s:any) => s.id === a.studentId)?.namaLengkap}</TableCell>
                     <TableCell>{subjects?.find((s:any) => s.id === a.subjectId)?.name}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`${statusColors[a.status]} capitalize`}>
-                        {a.status}
-                      </Badge>
+                      <Select value={a.status} onValueChange={(status) => handleStatusChange(a.id, status)}>
+                        <SelectTrigger className="w-[110px] h-8">
+                          <Badge variant="outline" className={`${statusColors[a.status]} capitalize`}>
+                            {a.status}
+                          </Badge>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hadir">Hadir</SelectItem>
+                          <SelectItem value="izin">Izin</SelectItem>
+                          <SelectItem value="sakit">Sakit</SelectItem>
+                          <SelectItem value="alpa">Alpa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteAttendance(a.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

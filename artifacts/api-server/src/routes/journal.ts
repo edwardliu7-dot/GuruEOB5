@@ -5,6 +5,9 @@ import {
   ListJournalEntriesResponse,
   CreateJournalEntryBody,
   CreateJournalEntryResponse,
+  UpdateJournalEntryParams,
+  UpdateJournalEntryBody,
+  UpdateJournalEntryResponse,
   DeleteJournalEntryParams,
   DeleteJournalEntryResponse,
 } from "@workspace/api-zod";
@@ -65,6 +68,45 @@ router.post("/journal", requireAuth, async (req, res): Promise<void> => {
     .values({ ...parsed.data, teacherId: guru.id })
     .returning();
   res.status(201).json(CreateJournalEntryResponse.parse(entry));
+});
+
+router.patch("/journal/:id", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const params = UpdateJournalEntryParams.safeParse(req.params);
+  const body = UpdateJournalEntryBody.safeParse(req.body);
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: (params.error ?? body.error)!.message });
+    return;
+  }
+
+  const [subject] = await db
+    .select({ id: subjectsTable.id })
+    .from(subjectsTable)
+    .where(and(eq(subjectsTable.id, body.data.subjectId), eq(subjectsTable.teacherId, guru.id)));
+  if (!subject) {
+    res.status(404).json({ error: "Subject not found" });
+    return;
+  }
+
+  const [entry] = await db
+    .update(journalEntriesTable)
+    .set(body.data)
+    .where(
+      and(eq(journalEntriesTable.id, params.data.id), eq(journalEntriesTable.teacherId, guru.id)),
+    )
+    .returning();
+
+  if (!entry) {
+    res.status(404).json({ error: "Journal entry not found" });
+    return;
+  }
+
+  res.json(UpdateJournalEntryResponse.parse(entry));
 });
 
 router.delete("/journal/:id", requireAuth, async (req, res): Promise<void> => {

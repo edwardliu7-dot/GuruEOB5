@@ -288,6 +288,20 @@ export interface AttendanceRecordInput {
   status: AttendanceRecordInputStatus;
 }
 
+export type AttendanceUpdateStatus = typeof AttendanceUpdateStatus[keyof typeof AttendanceUpdateStatus];
+
+
+export const AttendanceUpdateStatus = {
+  hadir: 'hadir',
+  izin: 'izin',
+  sakit: 'sakit',
+  alpa: 'alpa',
+} as const;
+
+export interface AttendanceUpdate {
+  status: AttendanceUpdateStatus;
+}
+
 export type GradeJenis = typeof GradeJenis[keyof typeof GradeJenis];
 
 
@@ -379,6 +393,21 @@ export const PointRecordInputJenis = {
 export interface PointRecordInput {
   studentId: string;
   jenis: PointRecordInputJenis;
+  poin: number;
+  keterangan: string;
+  tanggal: string;
+}
+
+export type PointUpdateJenis = typeof PointUpdateJenis[keyof typeof PointUpdateJenis];
+
+
+export const PointUpdateJenis = {
+  positif: 'positif',
+  negatif: 'negatif',
+} as const;
+
+export interface PointUpdate {
+  jenis: PointUpdateJenis;
   poin: number;
   keterangan: string;
   tanggal: string;
@@ -595,6 +624,7 @@ subjectId?: string;
 export type ListAttendanceParams = {
 subjectId?: string;
 date?: string;
+kelas?: string;
 };
 
 export type ListGradesParams = {

@@ -5,9 +5,11 @@
  * API specification for GuruEOB5 - school management app for teachers
  * OpenAPI spec version: 0.1.0
  */
+import type { PointUpdateJenis } from './pointUpdateJenis';
 
-export type ListAttendanceParams = {
-subjectId?: string;
-date?: string;
-kelas?: string;
-};
+export interface PointUpdate {
+  jenis: PointUpdateJenis;
+  poin: number;
+  keterangan: string;
+  tanggal: string;
+}

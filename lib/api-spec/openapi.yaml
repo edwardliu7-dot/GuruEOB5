@@ -513,6 +513,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/JournalEntry"
   /journal/{id}:
+    patch:
+      operationId: updateJournalEntry
+      tags: [journal]
+      summary: Update a journal entry
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JournalEntryInput"
+      responses:
+        "200":
+          description: Updated journal entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
     delete:
       operationId: deleteJournalEntry
       tags: [journal]
@@ -538,6 +557,10 @@ paths:
           schema:
             type: string
         - name: date
+          in: query
+          schema:
+            type: string
+        - name: kelas
           in: query
           schema:
             type: string
@@ -567,6 +590,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AttendanceRecord"
+
+  /attendance/{id}:
+    patch:
+      operationId: updateAttendanceRecord
+      tags: [attendance]
+      summary: Update an attendance record's status
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceUpdate"
+      responses:
+        "200":
+          description: Updated attendance record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceRecord"
+    delete:
+      operationId: deleteAttendanceRecord
+      tags: [attendance]
+      summary: Delete an attendance record
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
 
   /attendance/bulk:
     post:
@@ -702,6 +759,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PointRecord"
+
+  /points/{id}:
+    patch:
+      operationId: updatePoint
+      tags: [points]
+      summary: Update a point record
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PointUpdate"
+      responses:
+        "200":
+          description: Updated point record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PointRecord"
+    delete:
+      operationId: deletePoint
+      tags: [points]
+      summary: Delete a point record
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
 
   /points/bulk:
     post:
@@ -1380,6 +1471,14 @@ components:
           enum: [hadir, izin, sakit, alpa]
       required: [studentId, subjectId, tanggal, status]
 
+    AttendanceUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [hadir, izin, sakit, alpa]
+      required: [status]
+
     Grade:
       type: object
       properties:
@@ -1476,6 +1575,20 @@ components:
         tanggal:
           type: string
       required: [studentId, jenis, poin, keterangan, tanggal]
+
+    PointUpdate:
+      type: object
+      properties:
+        jenis:
+          type: string
+          enum: [positif, negatif]
+        poin:
+          type: number
+        keterangan:
+          type: string
+        tanggal:
+          type: string
+      required: [jenis, poin, keterangan, tanggal]
 
     DashboardSummary:
       type: object

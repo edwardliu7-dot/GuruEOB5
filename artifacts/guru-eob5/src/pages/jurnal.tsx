@@ -1,6 +1,14 @@
 import { Layout } from "@/components/layout";
-import { useListJournalEntries, useCreateJournalEntry, useDeleteJournalEntry, useListSubjects } from "@workspace/api-client-react";
-import { useState } from "react";
+import {
+  useListJournalEntries,
+  useCreateJournalEntry,
+  useUpdateJournalEntry,
+  useDeleteJournalEntry,
+  useListSubjects,
+  useListStudents,
+  useListAttendance,
+} from "@workspace/api-client-react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,30 +20,116 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 
 const journalSchema = z.object({
   subjectId: z.string().min(1, "Mata pelajaran harus dipilih"),
   tanggal: z.string().min(1, "Tanggal harus diisi"),
-  kelas: z.string().min(1, "Kelas harus diisi"),
+  kelas: z.string().min(1, "Kelas harus dipilih"),
   materi: z.string().min(1, "Materi harus diisi"),
   catatan: z.string().optional(),
 });
 
+const statusColors: Record<string, string> = {
+  hadir: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  izin: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  sakit: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  alpa: "bg-rose-500/10 text-rose-600 border-rose-500/20",
+};
+
+const statusLabels: Record<string, string> = {
+  hadir: "Hadir",
+  izin: "Izin",
+  sakit: "Sakit",
+  alpa: "Alpa",
+};
+
+/** Shows a reminder if attendance hasn't been filled yet, and a summary once it has. */
+function AttendanceContext({
+  subjectId,
+  kelas,
+  tanggal,
+}: {
+  subjectId: string;
+  kelas: string;
+  tanggal: string;
+}) {
+  const ready = !!subjectId && !!kelas && !!tanggal;
+  const { data: attendance, isLoading } = useListAttendance(
+    { subjectId: subjectId || undefined, kelas: kelas || undefined, date: tanggal || undefined },
+    {
+      query: {
+        queryKey: ["/api/attendance", "context", subjectId, kelas, tanggal],
+        enabled: ready,
+      },
+    },
+  );
+
+  if (!ready) return null;
+  if (isLoading) return <Skeleton className="h-16 w-full" />;
+
+  if (!attendance?.length) {
+    return (
+      <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-800">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <div>
+          <p className="font-medium">Absensi belum diisi untuk kelas & tanggal ini.</p>
+          <p className="text-amber-700">
+            Sebaiknya isi kehadiran siswa terlebih dahulu.{" "}
+            <Link href="/absensi" className="underline underline-offset-2">
+              Buka Absensi
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const counts: Record<string, number> = { hadir: 0, izin: 0, sakit: 0, alpa: 0 };
+  for (const a of attendance) counts[a.status] = (counts[a.status] ?? 0) + 1;
+
+  return (
+    <div className="rounded-md border bg-gray-50/50 p-3 text-sm">
+      <p className="mb-2 font-medium text-muted-foreground">
+        Absensi tercatat ({attendance.length} siswa):
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(counts)
+          .filter(([, n]) => n > 0)
+          .map(([status, n]) => (
+            <Badge key={status} variant="outline" className={`${statusColors[status]} capitalize`}>
+              {statusLabels[status]}: {n}
+            </Badge>
+          ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Jurnal() {
   const { data: subjects } = useListSubjects();
+  const { data: students } = useListStudents();
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const { data: journals, isLoading } = useListJournalEntries(
-    { subjectId: selectedSubject || undefined },
+    { subjectId: selectedSubject && selectedSubject !== "all" ? selectedSubject : undefined },
     { query: { queryKey: ["/api/journal", selectedSubject] } }
   );
 
+  const kelasList = useMemo(
+    () => [...new Set((students ?? []).map((s: any) => s.kelas))].sort(),
+    [students],
+  );
+
   const createJournal = useCreateJournalEntry();
+  const updateJournal = useUpdateJournalEntry();
   const deleteJournal = useDeleteJournalEntry();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingJournal, setEditingJournal] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -44,12 +138,40 @@ export default function Jurnal() {
     defaultValues: { subjectId: "", tanggal: new Date().toISOString().split("T")[0], kelas: "", materi: "", catatan: "" },
   });
 
+  const watchedSubjectId = form.watch("subjectId");
+  const watchedKelas = form.watch("kelas");
+  const watchedTanggal = form.watch("tanggal");
+
+  const openNew = () => {
+    setEditingJournal(null);
+    form.reset({ subjectId: "", tanggal: new Date().toISOString().split("T")[0], kelas: "", materi: "", catatan: "" });
+    setIsDialogOpen(true);
+  };
+
+  const openEdit = (j: any) => {
+    setEditingJournal(j.id);
+    form.reset({
+      subjectId: j.subjectId,
+      tanggal: j.tanggal,
+      kelas: j.kelas,
+      materi: j.materi,
+      catatan: j.catatan ?? "",
+    });
+    setIsDialogOpen(true);
+  };
+
   const onSubmit = async (data: z.infer<typeof journalSchema>) => {
     try {
-      await createJournal.mutateAsync({ data });
-      toast({ title: "Berhasil", description: "Jurnal ditambahkan" });
+      if (editingJournal) {
+        await updateJournal.mutateAsync({ id: editingJournal, data });
+        toast({ title: "Berhasil", description: "Jurnal diperbarui" });
+      } else {
+        await createJournal.mutateAsync({ data });
+        toast({ title: "Berhasil", description: "Jurnal ditambahkan" });
+      }
       setIsDialogOpen(false);
       form.reset();
+      setEditingJournal(null);
       queryClient.invalidateQueries({ queryKey: ["/api/journal"] });
     } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
@@ -76,17 +198,23 @@ export default function Jurnal() {
             <h1 className="text-3xl font-bold font-serif">Jurnal Mengajar</h1>
             <p className="text-muted-foreground mt-1">Catatan harian pelaksanaan pembelajaran.</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) setEditingJournal(null);
+            }}
+          >
             <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" /> Tambah Jurnal</Button>
+              <Button onClick={openNew}><Plus className="w-4 h-4 mr-2" /> Tambah Jurnal</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Tambah Jurnal Mengajar</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editingJournal ? "Edit Jurnal Mengajar" : "Tambah Jurnal Mengajar"}</DialogTitle></DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField control={form.control} name="subjectId" render={({ field }) => (
                     <FormItem><FormLabel>Mata Pelajaran</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Pilih Mapel" /></SelectTrigger></FormControl>
                         <SelectContent>{subjects?.map((s:any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                       </Select><FormMessage />
@@ -97,16 +225,22 @@ export default function Jurnal() {
                       <FormItem><FormLabel>Tanggal</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="kelas" render={({ field }) => (
-                      <FormItem><FormLabel>Kelas</FormLabel><FormControl><Input placeholder="X-A" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Kelas</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelas" /></SelectTrigger></FormControl>
+                          <SelectContent>{kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
+                        </Select><FormMessage />
+                      </FormItem>
                     )} />
                   </div>
+                  <AttendanceContext subjectId={watchedSubjectId} kelas={watchedKelas} tanggal={watchedTanggal} />
                   <FormField control={form.control} name="materi" render={({ field }) => (
                     <FormItem><FormLabel>Materi</FormLabel><FormControl><Input placeholder="Topik bahasan" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="catatan" render={({ field }) => (
                     <FormItem><FormLabel>Catatan (Opsional)</FormLabel><FormControl><Textarea placeholder="Keterangan tambahan" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
-                  <DialogFooter><Button type="submit" disabled={createJournal.isPending}>Simpan</Button></DialogFooter>
+                  <DialogFooter><Button type="submit" disabled={createJournal.isPending || updateJournal.isPending}>Simpan</Button></DialogFooter>
                 </form>
               </Form>
             </DialogContent>
@@ -147,7 +281,8 @@ export default function Jurnal() {
                     <TableCell>{j.kelas}</TableCell>
                     <TableCell>{j.materi}</TableCell>
                     <TableCell className="text-muted-foreground max-w-[200px] truncate">{j.catatan || "-"}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(j)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(j.id)}><Trash2 className="w-4 h-4" /></Button>
                     </TableCell>
                   </TableRow>
