@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+.git
+.local
+.agents
+attached_assets
+screenshots
+*.log
