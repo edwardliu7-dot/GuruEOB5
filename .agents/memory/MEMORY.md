@@ -5,3 +5,4 @@
 - [Prod session cookies](prod-session-cookies.md) — behind Replit's proxy, secure cookies need trust proxy + a PG session store; connect-pg-simple's createTableIfMissing breaks under esbuild bundling.
 - [Body-trusted ownership fields](body-trusted-ownership.md) — routes that accept teacherId/ownerId in the request body (not just tenant/school) let any authenticated user impersonate or edit others' rows; always override from session, never trust body.
 - [Shared DB naming collisions](shared-db-naming-collisions.md) — generic table/constraint/index names on a DB shared across apps can collide with unrelated apps' objects.
+- [Schema drift on shared production DB](schema-drift-shared-db.md) — code's Drizzle schema can be ahead of the live shared DB table, causing vague 500s; diff columns before assuming an app bug.
