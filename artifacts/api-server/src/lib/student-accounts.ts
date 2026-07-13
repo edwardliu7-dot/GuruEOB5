@@ -2,15 +2,31 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { db, neonDb, studentAccountsTable, tomatStudentsTable, type Student } from "@workspace/db";
 
-function slugify(input: string): string {
+const USERNAME_BASE_LENGTH = 5;
+const USERNAME_MAX_LENGTH = 7;
+
+function alnumLower(input: string): string {
   return input
     .toLowerCase()
     .trim()
     .normalize("NFKD")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/** Short 5-character base derived from the student's name, e.g. "Uji Siswa Alpha" -> "ujisi". */
+function usernameBase(namaLengkap: string): string {
+  const letters = alnumLower(namaLengkap) || "siswa";
+  if (letters.length >= USERNAME_BASE_LENGTH) return letters.slice(0, USERNAME_BASE_LENGTH);
+  return letters.padEnd(USERNAME_BASE_LENGTH, "x");
+}
+
+function randomAlnum(length: number): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
 }
 
 function randomPassword(): string {
@@ -28,14 +44,25 @@ async function usernameTaken(username: string): Promise<boolean> {
 }
 
 async function uniqueUsername(namaLengkap: string): Promise<string> {
-  const base = slugify(namaLengkap) || "siswa";
-  let candidate = base;
-  let suffix = 1;
-  while (await usernameTaken(candidate)) {
-    suffix += 1;
-    candidate = `${base}-${suffix}`;
+  const base = usernameBase(namaLengkap);
+
+  // 1) Try the bare 5-char base.
+  if (!(await usernameTaken(base))) return base;
+
+  // 2) Try base + 1 digit (6 chars), then base + 2 digits (7 chars).
+  for (let extraDigits = 1; extraDigits <= USERNAME_MAX_LENGTH - USERNAME_BASE_LENGTH; extraDigits++) {
+    const max = 10 ** extraDigits;
+    for (let n = extraDigits === 1 ? 2 : 10; n < max; n++) {
+      const candidate = `${base}${n}`;
+      if (!(await usernameTaken(candidate))) return candidate;
+    }
   }
-  return candidate;
+
+  // 3) Extremely unlikely fallback: fully random short alphanumeric handle.
+  while (true) {
+    const candidate = randomAlnum(USERNAME_MAX_LENGTH);
+    if (!(await usernameTaken(candidate))) return candidate;
+  }
 }
 
 async function uniqueTomatId(username: string): Promise<string> {
