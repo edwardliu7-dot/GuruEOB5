@@ -30,7 +30,11 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV BASE_PATH=/
 
-RUN pnpm run build
+# Skip the repo-wide typecheck here: it's a dev/CI concern and its extra
+# `tsc` processes roughly double the peak memory used during this step,
+# which matters on a small-RAM VPS. Run `pnpm run build` (with typecheck)
+# locally or in CI before deploying.
+RUN pnpm run build:app
 
 # esbuild bundles almost everything, but a few packages (e.g. @google/genai)
 # are deliberately left external in artifacts/api-server/build.mjs. Use
