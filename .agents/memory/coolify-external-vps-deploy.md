@@ -1,0 +1,11 @@
+---
+name: Coolify external VPS deploy (GuruEOB5)
+description: This project also deploys via Coolify to a self-hosted VPS with its own production Postgres, separate from the dev Neon DB — schema and build constraints unique to that path.
+---
+
+- Production runs on a self-hosted VPS via Coolify (Docker build from the GitHub mirror), with its own standalone Postgres — completely separate from this repl's dev `NEON_DATABASE_URL`. There is no automatic schema sync between them.
+- `drizzle-kit push` (the `push`/`push-force` scripts in `lib/db`) is the only schema-sync mechanism, and it is manual — nothing in the Dockerfile or app startup runs it. Every dev schema change must be pushed to the prod `DATABASE_URL` separately or production silently drifts (missing columns/tables → generic 500s in the app, e.g. document upload failing).
+- `drizzle-kit push` against a DB with any rename-shaped ambiguity (e.g. a new column that resembles an old one in type) drops into an interactive TTY prompt and fails non-interactively ("Interactive prompts require a TTY terminal"). For a low-risk additive change (new nullable columns), skip push and apply hand-written `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` via `psql "$DATABASE_URL"` instead — safer and avoids drizzle guessing wrong on a rename.
+- Before altering prod, always check for existing rows that would violate a `NOT NULL` you're about to add (e.g. `SELECT count(*) / SELECT ...` first). If legacy rows predate the new required columns, add the columns nullable rather than matching the Drizzle schema's `notNull()` exactly — app-level Zod validation on insert already enforces the constraint for new rows, so DB-level NOT NULL isn't required for correctness.
+- The VPS is small-RAM and low-disk: Docker builds there needed `--workspace-concurrency=1` for typecheck, esbuild `sourcemap: "external"` (not `"linked"`), and skipping typecheck entirely in the Docker build stage (separate `build:app` script) to avoid OOM; `ENOSPC` during `pnpm --prod deploy` is usually accumulated Docker build cache needing `docker system prune -af` on the VPS.
+- Legacy tables (`nilai`, `tugas`, `tomat_sessions`, `bab_locks`, etc.) exist in prod with no matching schema file in `lib/db/src/schema` — these are old quiz-feature remnants, not current drift; don't assume every unmapped prod table needs migrating.

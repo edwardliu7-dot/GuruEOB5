@@ -9,3 +9,4 @@
 - [shadcn FormItem outside FormField](shadcn-formitem-outside-formfield.md) — FormItem/FormLabel/FormControl from ui/form.tsx call useFormField and crash the whole page if used for a field not registered via react-hook-form's `<FormField>`.
 - [Object storage setup gotchas](object-storage-setup-gotchas.md) — safe additive DDL vs drizzle-kit push on DBs with connect-pg-simple session tables; pnpm override needs literal version when root has no direct dep; Uppy v5 Dashboard subpath exports break vite unless actually used.
 - [DB-only file storage (no object storage)](db-only-file-storage.md) — when a project must avoid Replit Object Storage, store uploads as base64 text on the row and stream them back directly; exclude blob columns from list queries.
+- [Coolify external VPS deploy (GuruEOB5)](coolify-external-vps-deploy.md) — prod runs on a self-hosted Postgres/VPS via Coolify, fully separate from dev Neon; schema sync is manual, VPS is RAM/disk-constrained.
