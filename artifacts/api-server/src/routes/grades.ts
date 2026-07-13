@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, inArray, isNull, type SQL } from "drizzle-orm";
-import { db, gradesTable, studentsTable } from "@workspace/db";
+import { db, gradesTable, studentsTable, subjectsTable, academicCalendarsTable } from "@workspace/db";
 import {
   ListGradesResponse,
   CreateGradeBody,
@@ -25,6 +25,24 @@ async function schoolStudentIds(req: Request): Promise<Set<string> | null> {
     .from(studentsTable)
     .where(eq(studentsTable.school, guru.school));
   return new Set(rows.map((r) => r.id));
+}
+
+/** A subjectId in the request body must belong to the caller's own subjects. */
+async function ownsSubject(subjectId: string, teacherId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: subjectsTable.id })
+    .from(subjectsTable)
+    .where(and(eq(subjectsTable.id, subjectId), eq(subjectsTable.teacherId, teacherId)));
+  return Boolean(row);
+}
+
+/** A calendarId in the request body must belong to the caller's own school. */
+async function calendarInSchool(calendarId: string, school: string): Promise<boolean> {
+  const [row] = await db
+    .select({ school: academicCalendarsTable.school })
+    .from(academicCalendarsTable)
+    .where(eq(academicCalendarsTable.id, calendarId));
+  return Boolean(row && row.school === school);
 }
 
 router.get("/grades", requireAuth, async (req, res): Promise<void> => {
@@ -66,6 +84,12 @@ router.post("/grades", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const allowed = await schoolStudentIds(req);
   if (allowed === null) {
     res.status(401).json({ error: "Unauthorized" });
@@ -73,6 +97,14 @@ router.post("/grades", requireAuth, async (req, res): Promise<void> => {
   }
   if (!allowed.has(parsed.data.studentId)) {
     res.status(404).json({ error: "Siswa tidak ditemukan" });
+    return;
+  }
+  if (!(await ownsSubject(parsed.data.subjectId, guru.id))) {
+    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
+    return;
+  }
+  if (!guru.school || !(await calendarInSchool(parsed.data.calendarId, guru.school))) {
+    res.status(404).json({ error: "Kalender tidak ditemukan" });
     return;
   }
 

@@ -649,6 +649,16 @@ export const DeleteDocumentResponse = zod.object({
 
 
 /**
+ * @summary Download/view a document's file content
+ */
+export const GetDocumentFileParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetDocumentFileResponse = zod.unknown()
+
+
+/**
  * @summary List teaching journal entries
  */
 export const ListJournalEntriesQueryParams = zod.object({

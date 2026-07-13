@@ -2651,6 +2651,83 @@ export const useDeleteDocument = <TError = ErrorType<unknown>,
       return useMutation(getDeleteDocumentMutationOptions(options));
     }
 
+export const getGetDocumentFileUrl = (id: string,) => {
+
+
+
+
+  return `/api/documents/${id}/file`
+}
+
+/**
+ * @summary Download/view a document's file content
+ */
+export const getDocumentFile = async (id: string, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getGetDocumentFileUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDocumentFileQueryKey = (id: string,) => {
+    return [
+    `/api/documents/${id}/file`
+    ] as const;
+    }
+
+
+export const getGetDocumentFileQueryOptions = <TData = Awaited<ReturnType<typeof getDocumentFile>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDocumentFile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDocumentFileQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDocumentFile>>> = ({ signal }) => getDocumentFile(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDocumentFile>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDocumentFileQueryResult = NonNullable<Awaited<ReturnType<typeof getDocumentFile>>>
+export type GetDocumentFileQueryError = ErrorType<void>
+
+
+/**
+ * @summary Download/view a document's file content
+ */
+
+export function useGetDocumentFile<TData = Awaited<ReturnType<typeof getDocumentFile>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDocumentFile>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDocumentFileQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getListJournalEntriesUrl = (params?: ListJournalEntriesParams,) => {
   const normalizedParams = new URLSearchParams();
 

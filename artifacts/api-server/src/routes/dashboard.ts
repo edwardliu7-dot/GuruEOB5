@@ -1,6 +1,14 @@
 import { Router, type IRouter } from "express";
-import { count, eq, gte } from "drizzle-orm";
-import { db, studentsTable, documentsTable, journalEntriesTable, neonDb, gurusTable } from "@workspace/db";
+import { count, eq, gte, and } from "drizzle-orm";
+import {
+  db,
+  studentsTable,
+  documentsTable,
+  subjectsTable,
+  journalEntriesTable,
+  neonDb,
+  gurusTable,
+} from "@workspace/db";
 import { GetDashboardSummaryResponse } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru, sameSchoolFilter } from "../lib/auth";
 
@@ -23,14 +31,21 @@ router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> =>
       ? db.select({ totalSiswa: count() }).from(studentsTable).where(eq(studentsTable.school, guru.school))
       : db.select({ totalSiswa: count() }).from(studentsTable),
     neonDb.select({ totalGuru: count() }).from(gurusTable).where(sameSchoolFilter(guru)),
-    db.select({ totalDokumen: count() }).from(documentsTable),
+    // Only count this teacher's own documents (documents hang off their subjects,
+    // which are always owned by a single teacher) -- otherwise every teacher sees
+    // the whole DB's document count, leaking other teachers'/schools' data.
+    db
+      .select({ totalDokumen: count() })
+      .from(documentsTable)
+      .innerJoin(subjectsTable, eq(subjectsTable.id, documentsTable.subjectId))
+      .where(eq(subjectsTable.teacherId, guru.id)),
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
   const [{ jurnalHariIni = 0 } = { jurnalHariIni: 0 }] = await db
     .select({ jurnalHariIni: count() })
     .from(journalEntriesTable)
-    .where(eq(journalEntriesTable.tanggal, today));
+    .where(and(eq(journalEntriesTable.tanggal, today), eq(journalEntriesTable.teacherId, guru.id)));
 
   const monthStart = new Date();
   monthStart.setDate(1);
@@ -39,7 +54,12 @@ router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> =>
   const entriesThisMonth = await db
     .select()
     .from(journalEntriesTable)
-    .where(gte(journalEntriesTable.tanggal, monthStartStr));
+    .where(
+      and(
+        gte(journalEntriesTable.tanggal, monthStartStr),
+        eq(journalEntriesTable.teacherId, guru.id),
+      ),
+    );
 
   const weekBuckets = new Map<number, number>();
   for (const entry of entriesThisMonth) {

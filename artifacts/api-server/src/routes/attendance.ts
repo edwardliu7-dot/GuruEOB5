@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, inArray, type SQL } from "drizzle-orm";
-import { db, attendanceTable, studentsTable } from "@workspace/db";
+import { db, attendanceTable, studentsTable, subjectsTable } from "@workspace/db";
 import {
   ListAttendanceResponse,
   CreateAttendanceRecordBody,
@@ -29,6 +29,15 @@ async function schoolStudentIds(req: Request, kelas?: string): Promise<Set<strin
     .from(studentsTable)
     .where(and(...conditions));
   return new Set(rows.map((r) => r.id));
+}
+
+/** A subjectId in the request body must belong to the caller's own subjects. */
+async function ownsSubject(subjectId: string, teacherId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: subjectsTable.id })
+    .from(subjectsTable)
+    .where(and(eq(subjectsTable.id, subjectId), eq(subjectsTable.teacherId, teacherId)));
+  return Boolean(row);
 }
 
 router.get("/attendance", requireAuth, async (req, res): Promise<void> => {
@@ -62,6 +71,12 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const allowed = await schoolStudentIds(req);
   if (allowed === null) {
     res.status(401).json({ error: "Unauthorized" });
@@ -69,6 +84,10 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
   }
   if (!allowed.has(parsed.data.studentId)) {
     res.status(404).json({ error: "Siswa tidak ditemukan" });
+    return;
+  }
+  if (!(await ownsSubject(parsed.data.subjectId, guru.id))) {
+    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
     return;
   }
 
@@ -162,6 +181,12 @@ router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => 
     return;
   }
 
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
   const allowed = await schoolStudentIds(req);
   if (allowed === null) {
     res.status(401).json({ error: "Unauthorized" });
@@ -173,6 +198,10 @@ router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => 
 
   if (targets.length === 0) {
     res.status(400).json({ error: "Tidak ada siswa valid yang dipilih" });
+    return;
+  }
+  if (!(await ownsSubject(subjectId, guru.id))) {
+    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
     return;
   }
 
