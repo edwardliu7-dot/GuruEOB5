@@ -14,10 +14,12 @@ import pointsRouter from "./points";
 import academicCalendarsRouter from "./academic-calendars";
 import prosemRouter from "./prosem";
 import infoPekananRouter from "./info-pekanan";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(storageRouter);
 router.use(authRouter);
 router.use(dashboardRouter);
 router.use(rolesRouter);

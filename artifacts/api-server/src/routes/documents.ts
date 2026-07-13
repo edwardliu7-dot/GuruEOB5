@@ -1,3 +1,4 @@
+import { Readable } from "stream";
 import { Router, type IRouter } from "express";
 import { and, eq } from "drizzle-orm";
 import { db, documentsTable, subjectsTable } from "@workspace/db";
@@ -9,8 +10,10 @@ import {
   DeleteDocumentResponse,
 } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru } from "../lib/auth";
+import { ObjectNotFoundError, ObjectStorageService } from "../lib/objectStorage";
 
 const router: IRouter = Router();
+const objectStorageService = new ObjectStorageService();
 
 async function isOwnSubject(subjectId: string, teacherId: string): Promise<boolean> {
   const [subject] = await db
@@ -50,6 +53,10 @@ router.get("/documents", requireAuth, async (req, res): Promise<void> => {
       subjectId: documentsTable.subjectId,
       name: documentsTable.name,
       description: documentsTable.description,
+      filePath: documentsTable.filePath,
+      fileName: documentsTable.fileName,
+      fileType: documentsTable.fileType,
+      fileSize: documentsTable.fileSize,
       uploadedAt: documentsTable.uploadedAt,
     })
     .from(documentsTable)
@@ -114,6 +121,61 @@ router.delete("/documents/:id", requireAuth, async (req, res): Promise<void> => 
   }
 
   res.json(DeleteDocumentResponse.parse({ success: true }));
+});
+
+router.get("/documents/:id/file", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const params = DeleteDocumentParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [existing] = await db
+    .select({
+      subjectId: documentsTable.subjectId,
+      filePath: documentsTable.filePath,
+      fileName: documentsTable.fileName,
+      fileType: documentsTable.fileType,
+    })
+    .from(documentsTable)
+    .where(eq(documentsTable.id, params.data.id));
+
+  if (!existing || !(await isOwnSubject(existing.subjectId, guru.id))) {
+    res.status(404).json({ error: "Document not found" });
+    return;
+  }
+
+  try {
+    const objectFile = await objectStorageService.getObjectEntityFile(existing.filePath);
+    const response = await objectStorageService.downloadObject(objectFile);
+
+    res.status(response.status);
+    response.headers.forEach((value, key) => res.setHeader(key, value));
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(existing.fileName)}"`,
+    );
+
+    if (response.body) {
+      const nodeStream = Readable.fromWeb(response.body as ReadableStream<Uint8Array>);
+      nodeStream.pipe(res);
+    } else {
+      res.end();
+    }
+  } catch (error) {
+    if (error instanceof ObjectNotFoundError) {
+      res.status(404).json({ error: "File not found" });
+      return;
+    }
+    req.log.error({ err: error }, "Error serving document file");
+    res.status(500).json({ error: "Failed to serve document file" });
+  }
 });
 
 export default router;

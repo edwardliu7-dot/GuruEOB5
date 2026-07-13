@@ -11,5 +11,13 @@ export interface AdminDocument {
   subjectId: string;
   name: string;
   description?: string;
+  /** Object storage path of the uploaded file (e.g. `/objects/uploads/uuid`). */
+  filePath?: string;
+  /** Original file name as uploaded. */
+  fileName?: string;
+  /** MIME type of the uploaded file. */
+  fileType?: string;
+  /** File size in bytes. */
+  fileSize?: number;
   uploadedAt: Date;
 }

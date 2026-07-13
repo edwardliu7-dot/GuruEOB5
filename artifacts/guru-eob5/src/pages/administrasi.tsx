@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +18,8 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useUpload } from "@workspace/object-storage-web";
+import { Download, Loader2 } from "lucide-react";
 
 const subjectSchema = z.object({
   name: z.string().min(1, "Nama mata pelajaran harus diisi"),
@@ -26,6 +29,13 @@ const documentSchema = z.object({
   name: z.string().min(1, "Nama dokumen harus diisi"),
   description: z.string().optional(),
 });
+
+function formatFileSize(bytes?: number | null): string {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 type SubjectFormValues = z.infer<typeof subjectSchema>;
 type DocumentFormValues = z.infer<typeof documentSchema>;
@@ -48,6 +58,9 @@ export default function Administrasi() {
   const createDocument = useCreateDocument();
   const deleteDocument = useDeleteDocument();
   const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const { uploadFile, isUploading } = useUpload();
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -83,14 +96,54 @@ export default function Administrasi() {
 
   const onDocumentSubmit = async (data: DocumentFormValues) => {
     if (!selectedSubject) return;
+    if (!selectedFile) {
+      toast({ variant: "destructive", title: "Gagal", description: "Pilih berkas untuk diunggah" });
+      return;
+    }
     try {
-      await createDocument.mutateAsync({ data: { ...data, subjectId: selectedSubject } });
+      const uploadResult = await uploadFile(selectedFile);
+      if (!uploadResult) {
+        toast({ variant: "destructive", title: "Gagal", description: "Gagal mengunggah berkas" });
+        return;
+      }
+      await createDocument.mutateAsync({
+        data: {
+          ...data,
+          subjectId: selectedSubject,
+          filePath: uploadResult.objectPath,
+          fileName: selectedFile.name,
+          fileType: selectedFile.type || undefined,
+          fileSize: selectedFile.size,
+        },
+      });
       toast({ title: "Berhasil", description: "Dokumen berhasil diunggah" });
       setIsDocumentDialogOpen(false);
       documentForm.reset();
+      setSelectedFile(null);
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
     } catch (e) {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+    }
+  };
+
+  const handleDownloadDocument = async (doc: any) => {
+    setDownloadingId(doc.id);
+    try {
+      const response = await fetch(`/api/documents/${doc.id}/file`, { credentials: "include" });
+      if (!response.ok) throw new Error("Gagal mengunduh berkas");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = doc.fileName || doc.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat mengunduh dokumen" });
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -173,7 +226,16 @@ export default function Administrasi() {
               </DialogContent>
             </Dialog>
           ) : (
-            <Dialog open={isDocumentDialogOpen} onOpenChange={setIsDocumentDialogOpen}>
+            <Dialog
+              open={isDocumentDialogOpen}
+              onOpenChange={(open) => {
+                setIsDocumentDialogOpen(open);
+                if (!open) {
+                  documentForm.reset();
+                  setSelectedFile(null);
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button><Upload className="w-4 h-4 mr-2" /> Unggah Dokumen</Button>
               </DialogTrigger>
@@ -209,8 +271,29 @@ export default function Administrasi() {
                         </FormItem>
                       )}
                     />
+                    <div className="space-y-2">
+                      <Label htmlFor="document-file">Berkas</Label>
+                      <Input
+                        id="document-file"
+                        type="file"
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+                      />
+                      {selectedFile && (
+                        <p className="text-xs text-muted-foreground">
+                          {selectedFile.name} ({formatFileSize(selectedFile.size)})
+                        </p>
+                      )}
+                    </div>
                     <DialogFooter>
-                      <Button type="submit" disabled={createDocument.isPending}>Simpan</Button>
+                      <Button type="submit" disabled={createDocument.isPending || isUploading}>
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mengunggah...
+                          </>
+                        ) : (
+                          "Simpan"
+                        )}
+                      </Button>
                     </DialogFooter>
                   </form>
                 </Form>
@@ -285,6 +368,12 @@ export default function Administrasi() {
                         <h4 className="font-medium">{doc.name}</h4>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                           <span>{format(new Date(doc.uploadedAt), "dd MMM yyyy")}</span>
+                          {doc.fileSize ? (
+                            <>
+                              <span>•</span>
+                              <span>{formatFileSize(doc.fileSize)}</span>
+                            </>
+                          ) : null}
                           {doc.description && (
                             <>
                               <span>•</span>
@@ -294,9 +383,20 @@ export default function Administrasi() {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDocument(doc.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:bg-muted"
+                        disabled={downloadingId === doc.id}
+                        onClick={() => handleDownloadDocument(doc)}
+                      >
+                        {downloadingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDocument(doc.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
