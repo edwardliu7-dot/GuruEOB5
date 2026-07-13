@@ -36,6 +36,10 @@ tags:
     description: Program semester (per-teacher lesson plan)
   - name: info-pekanan
     description: Weekly info (rencana vs realisasi)
+  - name: modul-ajar
+    description: AI-generated Kurikulum Merdeka teaching modules
+  - name: soal-otomatis
+    description: AI-generated practice questions/quizzes
 paths:
   /healthz:
     get:
@@ -1076,6 +1080,172 @@ paths:
               schema:
                 $ref: "#/components/schemas/InfoPekanan"
 
+  /modul-ajar:
+    get:
+      operationId: listModulAjar
+      tags: [modul-ajar]
+      summary: List generated modul ajar drafts for the current teacher
+      parameters:
+        - name: subjectId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of modul ajar drafts (metadata only)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModulAjarSummary"
+
+  /modul-ajar/generate:
+    post:
+      operationId: generateModulAjar
+      tags: [modul-ajar]
+      summary: Generate a new modul ajar draft with AI and save it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateModulAjarInput"
+      responses:
+        "201":
+          description: Generated modul ajar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModulAjar"
+
+  /modul-ajar/{id}:
+    get:
+      operationId: getModulAjar
+      tags: [modul-ajar]
+      summary: Get a saved modul ajar draft (with full content)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Modul ajar draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModulAjar"
+    delete:
+      operationId: deleteModulAjar
+      tags: [modul-ajar]
+      summary: Delete a saved modul ajar draft
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /modul-ajar/{id}/docx:
+    get:
+      operationId: downloadModulAjarDocx
+      tags: [modul-ajar]
+      summary: Download a modul ajar draft as a .docx file
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: DOCX file
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+
+  /soal-otomatis:
+    get:
+      operationId: listSoalOtomatis
+      tags: [soal-otomatis]
+      summary: List generated soal otomatis drafts for the current teacher
+      parameters:
+        - name: subjectId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of soal drafts (metadata only)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SoalOtomatisSummary"
+
+  /soal-otomatis/generate:
+    post:
+      operationId: generateSoalOtomatis
+      tags: [soal-otomatis]
+      summary: Generate a new set of practice questions with AI and save it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateSoalOtomatisInput"
+      responses:
+        "201":
+          description: Generated soal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoalOtomatis"
+
+  /soal-otomatis/{id}:
+    get:
+      operationId: getSoalOtomatis
+      tags: [soal-otomatis]
+      summary: Get a saved soal draft (with full content)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Soal draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoalOtomatis"
+    delete:
+      operationId: deleteSoalOtomatis
+      tags: [soal-otomatis]
+      summary: Delete a saved soal draft
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /soal-otomatis/{id}/docx:
+    get:
+      operationId: downloadSoalOtomatisDocx
+      tags: [soal-otomatis]
+      summary: Download a soal draft as a .docx file
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: DOCX file
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+
 components:
   parameters:
     IdParam:
@@ -1425,6 +1595,123 @@ components:
       properties:
         error:
           type: string
+
+    ModulAjarSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        subjectId:
+          type: string
+        materi:
+          type: string
+        alokasiWaktu:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, subjectId, materi, alokasiWaktu, createdAt]
+
+    ModulAjar:
+      type: object
+      properties:
+        id:
+          type: string
+        subjectId:
+          type: string
+        materi:
+          type: string
+        alokasiWaktu:
+          type: string
+        content:
+          type: object
+          description: Full structured Kurikulum Merdeka modul ajar draft generated by AI.
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, subjectId, materi, alokasiWaktu, content, createdAt]
+
+    GenerateModulAjarInput:
+      type: object
+      properties:
+        subjectId:
+          type: string
+        materi:
+          type: string
+        alokasiWaktu:
+          type: string
+        kelas:
+          type: string
+      required: [subjectId, materi, alokasiWaktu]
+
+    SoalOtomatisSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        subjectId:
+          type: string
+        materi:
+          type: string
+        jumlahSoal:
+          type: integer
+        jenisSoal:
+          type: string
+          enum: [pilihan_ganda, esai]
+        tingkatKesulitan:
+          type: string
+          enum: [mudah, sedang, sulit]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, subjectId, materi, jumlahSoal, jenisSoal, tingkatKesulitan, createdAt]
+
+    SoalOtomatis:
+      type: object
+      properties:
+        id:
+          type: string
+        subjectId:
+          type: string
+        materi:
+          type: string
+        jumlahSoal:
+          type: integer
+        jenisSoal:
+          type: string
+          enum: [pilihan_ganda, esai]
+        tingkatKesulitan:
+          type: string
+          enum: [mudah, sedang, sulit]
+        content:
+          type: object
+          description: Full structured soal draft (questions + answer key) generated by AI.
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        [id, subjectId, materi, jumlahSoal, jenisSoal, tingkatKesulitan, content, createdAt]
+
+    GenerateSoalOtomatisInput:
+      type: object
+      properties:
+        subjectId:
+          type: string
+        materi:
+          type: string
+        jumlahSoal:
+          type: integer
+          minimum: 1
+          maximum: 50
+        jenisSoal:
+          type: string
+          enum: [pilihan_ganda, esai]
+        tingkatKesulitan:
+          type: string
+          enum: [mudah, sedang, sulit]
+      required: [subjectId, materi, jumlahSoal, jenisSoal, tingkatKesulitan]
 
     JournalEntry:
       type: object

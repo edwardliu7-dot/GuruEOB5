@@ -7,3 +7,4 @@ export * from "./grades";
 export * from "./points";
 export * from "./academic-calendar";
 export * from "./prosem";
+export * from "./ai-content";

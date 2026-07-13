@@ -8,7 +8,7 @@ import {
   useListAcademicCalendars,
 } from "@workspace/api-client-react";
 import { useEffect, useMemo, useState } from "react";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -171,74 +171,120 @@ export default function Nilai() {
   const selectedSubjectName = subjects?.find((s: any) => s.id === subjectId)?.name ?? "";
   const selectedCalendar = calendars?.find((c: any) => c.id === calendarId);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!kelasStudents.length) return;
 
-    const groupRow: (string | { v: string; s?: unknown })[] = ["No", "NISN", "Nama Siswa"];
-    const subRow: string[] = ["", "", ""];
-    const merges: XLSX.Range[] = [];
-    let col = 3;
+    const totalCols = 3 + LM_LIST.length * TP_LIST.length + LM_LIST.length + 1;
+
+    const thinBorder = {
+      top: { style: "thin" as const },
+      bottom: { style: "thin" as const },
+      left: { style: "thin" as const },
+      right: { style: "thin" as const },
+    };
+    const centered = { horizontal: "center" as const, vertical: "middle" as const, wrapText: true };
+    const headerFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFE2E8F0" } };
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Rekap Nilai");
+
+    // Info header rows
+    ws.mergeCells(1, 1, 1, totalCols);
+    ws.getCell(1, 1).value = `Mata Pelajaran: ${selectedSubjectName}`;
+    ws.mergeCells(2, 1, 2, totalCols);
+    ws.getCell(2, 1).value = `Kelas: ${kelasFilter}`;
+    ws.mergeCells(3, 1, 3, totalCols);
+    ws.getCell(3, 1).value = `Tahun Ajaran: ${selectedCalendar?.tahunAjaran ?? "-"}  Semester: ${selectedCalendar?.semester ?? "-"}`;
+    for (let r = 1; r <= 3; r++) {
+      ws.getCell(r, 1).font = { bold: true };
+      ws.getCell(r, 1).alignment = { horizontal: "left" };
+    }
+
+    const headerRow1 = 5;
+    const headerRow2 = 6;
+    const dataStartRow = 7;
+
+    ws.mergeCells(headerRow1, 1, headerRow2, 1);
+    ws.getCell(headerRow1, 1).value = "No";
+    ws.mergeCells(headerRow1, 2, headerRow2, 2);
+    ws.getCell(headerRow1, 2).value = "NISN";
+    ws.mergeCells(headerRow1, 3, headerRow2, 3);
+    ws.getCell(headerRow1, 3).value = "Nama Siswa";
+
+    let col = 4;
     for (const lm of LM_LIST) {
-      groupRow.push(`Formatif - Lingkup Materi ${lm}`, "", "", "");
-      for (const tp of TP_LIST) subRow.push(`TP${tp}`);
-      merges.push({ s: { r: 0, c: col }, e: { r: 0, c: col + 3 } });
-      col += 4;
+      ws.mergeCells(headerRow1, col, headerRow1, col + TP_LIST.length - 1);
+      ws.getCell(headerRow1, col).value = `Formatif - Lingkup Materi ${lm}`;
+      for (const tp of TP_LIST) {
+        ws.getCell(headerRow2, col).value = `TP${tp}`;
+        col += 1;
+      }
     }
     for (const lm of LM_LIST) {
-      groupRow.push(`Sumatif LM${lm}`);
-      subRow.push("");
+      ws.mergeCells(headerRow1, col, headerRow2, col);
+      ws.getCell(headerRow1, col).value = `Sumatif LM${lm}`;
       col += 1;
     }
-    groupRow.push("Sumatif Akhir Semester");
-    subRow.push("");
+    ws.mergeCells(headerRow1, col, headerRow2, col);
+    ws.getCell(headerRow1, col).value = "Sumatif Akhir Semester";
 
-    merges.push({ s: { r: 0, c: 0 }, e: { r: 1, c: 0 } });
-    merges.push({ s: { r: 0, c: 1 }, e: { r: 1, c: 1 } });
-    merges.push({ s: { r: 0, c: 2 }, e: { r: 1, c: 2 } });
-    merges.push({ s: { r: 0, c: col }, e: { r: 1, c: col } });
+    for (let r = headerRow1; r <= headerRow2; r++) {
+      for (let c = 1; c <= totalCols; c++) {
+        const cell = ws.getCell(r, c);
+        cell.font = { bold: true };
+        cell.alignment = centered;
+        cell.border = thinBorder;
+        cell.fill = headerFill;
+      }
+    }
 
-    const dataRows = kelasStudents.map((s: any, i: number) => {
-      const row: (string | number)[] = [i + 1, s.nisn || "-", s.namaLengkap];
+    kelasStudents.forEach((s: any, i: number) => {
+      const r = dataStartRow + i;
+      ws.getCell(r, 1).value = i + 1;
+      ws.getCell(r, 2).value = s.nisn || "-";
+      ws.getCell(r, 3).value = s.namaLengkap;
+
+      let c = 4;
       for (const lm of LM_LIST) {
         for (const tp of TP_LIST) {
           const g = gradeMap.get(`${s.id}::${gradeKey("formatif", lm, tp)}`);
-          row.push(g ? g.nilai : "");
+          ws.getCell(r, c).value = g ? g.nilai : "";
+          c += 1;
         }
       }
       for (const lm of LM_LIST) {
         const g = gradeMap.get(`${s.id}::${gradeKey("sumatif_lm", lm, null)}`);
-        row.push(g ? g.nilai : "");
+        ws.getCell(r, c).value = g ? g.nilai : "";
+        c += 1;
       }
       const akhir = gradeMap.get(`${s.id}::${gradeKey("sumatif_akhir", null, null)}`);
-      row.push(akhir ? akhir.nilai : "");
-      return row;
+      ws.getCell(r, c).value = akhir ? akhir.nilai : "";
+
+      for (let cc = 1; cc <= totalCols; cc++) {
+        const cell = ws.getCell(r, cc);
+        cell.border = thinBorder;
+        cell.alignment = cc === 3 ? { horizontal: "left" as const, vertical: "middle" as const } : centered;
+      }
+      ws.getCell(r, 3).font = { bold: true };
     });
 
-    const infoRows = [
-      [`Mata Pelajaran: ${selectedSubjectName}`],
-      [`Kelas: ${kelasFilter}`],
-      [
-        `Tahun Ajaran: ${selectedCalendar?.tahunAjaran ?? "-"}  Semester: ${selectedCalendar?.semester ?? "-"}`,
-      ],
-      [],
-    ];
+    ws.getColumn(1).width = 6;
+    ws.getColumn(2).width = 14;
+    ws.getColumn(3).width = 26;
+    for (let c = 4; c <= totalCols; c++) ws.getColumn(c).width = 10;
 
-    const ws = XLSX.utils.aoa_to_sheet([...infoRows, groupRow, subRow, ...dataRows]);
-    const headerOffset = infoRows.length;
-    ws["!merges"] = merges.map((m) => ({
-      s: { r: m.s.r + headerOffset, c: m.s.c },
-      e: { r: m.e.r + headerOffset, c: m.e.c },
-    }));
-    ws["!cols"] = [
-      { wch: 5 },
-      { wch: 12 },
-      { wch: 24 },
-      ...Array(LM_LIST.length * TP_LIST.length + LM_LIST.length + 1).fill({ wch: 9 }),
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
-    XLSX.writeFile(wb, `Rekap_Nilai_${kelasFilter}_${selectedSubjectName || "mapel"}.xlsx`);
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Rekap_Nilai_${kelasFilter}_${selectedSubjectName || "mapel"}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   return (

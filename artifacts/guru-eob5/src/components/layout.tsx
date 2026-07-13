@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileDialog } from "@/components/profile-dialog";
@@ -50,18 +50,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const isAdmin = user?.isAdmin ?? false;
 
-  const navItems = [
+  const utamaNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  ];
+
+  const perangkatMengajarNavItems = [
     { href: "/administrasi", label: "Administrasi", icon: FolderOpen },
-    ...(isAdmin ? [{ href: "/siswa", label: "Data Siswa", icon: Users }] : []),
-    ...(isAdmin ? [{ href: "/kalender", label: "Kalender Akademik", icon: CalendarDays }] : []),
+    { href: "/modul-ajar", label: "Buat Modul Ajar", icon: Sparkles },
+    { href: "/soal-otomatis", label: "Buat Soal Otomatis", icon: ListChecks },
     { href: "/prosem", label: "Program Semester", icon: CalendarRange },
-    { href: "/jurnal", label: "Jurnal Mengajar", icon: BookOpen },
     { href: "/info-pekanan", label: "Info Pekanan", icon: Megaphone },
+    ...(isAdmin ? [{ href: "/kalender", label: "Kalender Akademik", icon: CalendarDays }] : []),
+    ...(isAdmin ? [{ href: "/siswa", label: "Data Siswa", icon: Users }] : []),
+    ...(isAdmin ? [{ href: "/guru", label: "Data Guru", icon: Users }] : []),
+  ];
+
+  const kegiatanBelajarMengajarNavItems = [
     { href: "/absensi", label: "Absensi", icon: ClipboardCheck },
+    { href: "/jurnal", label: "Jurnal Mengajar", icon: BookOpen },
     { href: "/nilai", label: "Nilai", icon: GraduationCap },
     { href: "/poin", label: "Poin Siswa", icon: Star },
-    ...(isAdmin ? [{ href: "/guru", label: "Data Guru", icon: Users }] : []),
   ];
 
   const jabatan = user?.jabatan ?? [];
@@ -91,10 +99,50 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <SidebarContent className="px-2 py-4">
           <SidebarGroup>
-            <SidebarGroupLabel>Menu Utama</SidebarGroupLabel>
+            <SidebarGroupLabel>Utama</SidebarGroupLabel>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {utamaNavItems.map((item) => {
                 const isActive = location === item.href || (location === "/" && item.href === "/dashboard");
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>Perangkat Mengajar</SidebarGroupLabel>
+            <SidebarMenu>
+              {perangkatMengajarNavItems.map((item) => {
+                const isActive = location === item.href;
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
+                      <Link href={item.href}>
+                        <Icon />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>Kegiatan Belajar Mengajar</SidebarGroupLabel>
+            <SidebarMenu>
+              {kegiatanBelajarMengajarNavItems.map((item) => {
+                const isActive = location === item.href;
                 const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.href}>

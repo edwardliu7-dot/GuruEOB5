@@ -36,6 +36,8 @@ import type {
   BulkCreateStudentsInput,
   BulkCreateStudentsResult,
   DashboardSummary,
+  GenerateModulAjarInput,
+  GenerateSoalOtomatisInput,
   GetInfoPekananParams,
   Grade,
   GradeInput,
@@ -52,11 +54,15 @@ import type {
   ListDocumentsParams,
   ListGradesParams,
   ListJournalEntriesParams,
+  ListModulAjarParams,
   ListPointsParams,
   ListProsemItemsParams,
   ListProsemParams,
+  ListSoalOtomatisParams,
   ListStudentsParams,
   LoginInput,
+  ModulAjar,
+  ModulAjarSummary,
   PointRecord,
   PointRecordInput,
   PointUpdate,
@@ -65,6 +71,8 @@ import type {
   ProsemItem,
   ProsemItemInput,
   RegisterInput,
+  SoalOtomatis,
+  SoalOtomatisSummary,
   Student,
   StudentImportAnalyzeInput,
   StudentImportAnalyzeResult,
@@ -4635,6 +4643,766 @@ export function useGetInfoPekanan<TData = Awaited<ReturnType<typeof getInfoPekan
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetInfoPekananQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListModulAjarUrl = (params?: ListModulAjarParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/modul-ajar?${stringifiedParams}` : `/api/modul-ajar`
+}
+
+/**
+ * @summary List generated modul ajar drafts for the current teacher
+ */
+export const listModulAjar = async (params?: ListModulAjarParams, options?: RequestInit): Promise<ModulAjarSummary[]> => {
+
+  return customFetch<ModulAjarSummary[]>(getListModulAjarUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListModulAjarQueryKey = (params?: ListModulAjarParams,) => {
+    return [
+    `/api/modul-ajar`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListModulAjarQueryOptions = <TData = Awaited<ReturnType<typeof listModulAjar>>, TError = ErrorType<unknown>>(params?: ListModulAjarParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listModulAjar>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListModulAjarQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listModulAjar>>> = ({ signal }) => listModulAjar(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listModulAjar>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListModulAjarQueryResult = NonNullable<Awaited<ReturnType<typeof listModulAjar>>>
+export type ListModulAjarQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List generated modul ajar drafts for the current teacher
+ */
+
+export function useListModulAjar<TData = Awaited<ReturnType<typeof listModulAjar>>, TError = ErrorType<unknown>>(
+ params?: ListModulAjarParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listModulAjar>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListModulAjarQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGenerateModulAjarUrl = () => {
+
+
+
+
+  return `/api/modul-ajar/generate`
+}
+
+/**
+ * @summary Generate a new modul ajar draft with AI and save it
+ */
+export const generateModulAjar = async (generateModulAjarInput: GenerateModulAjarInput, options?: RequestInit): Promise<ModulAjar> => {
+
+  return customFetch<ModulAjar>(getGenerateModulAjarUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(generateModulAjarInput)
+  }
+);}
+
+
+
+
+
+export const getGenerateModulAjarMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateModulAjar>>, TError,{data: BodyType<GenerateModulAjarInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateModulAjar>>, TError,{data: BodyType<GenerateModulAjarInput>}, TContext> => {
+
+const mutationKey = ['generateModulAjar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateModulAjar>>, {data: BodyType<GenerateModulAjarInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateModulAjar(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateModulAjarMutationResult = NonNullable<Awaited<ReturnType<typeof generateModulAjar>>>
+    export type GenerateModulAjarMutationBody = BodyType<GenerateModulAjarInput>
+    export type GenerateModulAjarMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate a new modul ajar draft with AI and save it
+ */
+export const useGenerateModulAjar = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateModulAjar>>, TError,{data: BodyType<GenerateModulAjarInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateModulAjar>>,
+        TError,
+        {data: BodyType<GenerateModulAjarInput>},
+        TContext
+      > => {
+      return useMutation(getGenerateModulAjarMutationOptions(options));
+    }
+
+export const getGetModulAjarUrl = (id: string,) => {
+
+
+
+
+  return `/api/modul-ajar/${id}`
+}
+
+/**
+ * @summary Get a saved modul ajar draft (with full content)
+ */
+export const getModulAjar = async (id: string, options?: RequestInit): Promise<ModulAjar> => {
+
+  return customFetch<ModulAjar>(getGetModulAjarUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetModulAjarQueryKey = (id: string,) => {
+    return [
+    `/api/modul-ajar/${id}`
+    ] as const;
+    }
+
+
+export const getGetModulAjarQueryOptions = <TData = Awaited<ReturnType<typeof getModulAjar>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getModulAjar>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetModulAjarQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getModulAjar>>> = ({ signal }) => getModulAjar(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getModulAjar>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetModulAjarQueryResult = NonNullable<Awaited<ReturnType<typeof getModulAjar>>>
+export type GetModulAjarQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a saved modul ajar draft (with full content)
+ */
+
+export function useGetModulAjar<TData = Awaited<ReturnType<typeof getModulAjar>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getModulAjar>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetModulAjarQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDeleteModulAjarUrl = (id: string,) => {
+
+
+
+
+  return `/api/modul-ajar/${id}`
+}
+
+/**
+ * @summary Delete a saved modul ajar draft
+ */
+export const deleteModulAjar = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteModulAjarUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteModulAjarMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteModulAjar>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteModulAjar>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteModulAjar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteModulAjar>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteModulAjar(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteModulAjarMutationResult = NonNullable<Awaited<ReturnType<typeof deleteModulAjar>>>
+
+    export type DeleteModulAjarMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a saved modul ajar draft
+ */
+export const useDeleteModulAjar = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteModulAjar>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteModulAjar>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteModulAjarMutationOptions(options));
+    }
+
+export const getDownloadModulAjarDocxUrl = (id: string,) => {
+
+
+
+
+  return `/api/modul-ajar/${id}/docx`
+}
+
+/**
+ * @summary Download a modul ajar draft as a .docx file
+ */
+export const downloadModulAjarDocx = async (id: string, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadModulAjarDocxUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadModulAjarDocxQueryKey = (id: string,) => {
+    return [
+    `/api/modul-ajar/${id}/docx`
+    ] as const;
+    }
+
+
+export const getDownloadModulAjarDocxQueryOptions = <TData = Awaited<ReturnType<typeof downloadModulAjarDocx>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadModulAjarDocx>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadModulAjarDocxQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadModulAjarDocx>>> = ({ signal }) => downloadModulAjarDocx(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadModulAjarDocx>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadModulAjarDocxQueryResult = NonNullable<Awaited<ReturnType<typeof downloadModulAjarDocx>>>
+export type DownloadModulAjarDocxQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Download a modul ajar draft as a .docx file
+ */
+
+export function useDownloadModulAjarDocx<TData = Awaited<ReturnType<typeof downloadModulAjarDocx>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadModulAjarDocx>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadModulAjarDocxQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListSoalOtomatisUrl = (params?: ListSoalOtomatisParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/soal-otomatis?${stringifiedParams}` : `/api/soal-otomatis`
+}
+
+/**
+ * @summary List generated soal otomatis drafts for the current teacher
+ */
+export const listSoalOtomatis = async (params?: ListSoalOtomatisParams, options?: RequestInit): Promise<SoalOtomatisSummary[]> => {
+
+  return customFetch<SoalOtomatisSummary[]>(getListSoalOtomatisUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSoalOtomatisQueryKey = (params?: ListSoalOtomatisParams,) => {
+    return [
+    `/api/soal-otomatis`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListSoalOtomatisQueryOptions = <TData = Awaited<ReturnType<typeof listSoalOtomatis>>, TError = ErrorType<unknown>>(params?: ListSoalOtomatisParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSoalOtomatis>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSoalOtomatisQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSoalOtomatis>>> = ({ signal }) => listSoalOtomatis(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSoalOtomatis>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSoalOtomatisQueryResult = NonNullable<Awaited<ReturnType<typeof listSoalOtomatis>>>
+export type ListSoalOtomatisQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List generated soal otomatis drafts for the current teacher
+ */
+
+export function useListSoalOtomatis<TData = Awaited<ReturnType<typeof listSoalOtomatis>>, TError = ErrorType<unknown>>(
+ params?: ListSoalOtomatisParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSoalOtomatis>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSoalOtomatisQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGenerateSoalOtomatisUrl = () => {
+
+
+
+
+  return `/api/soal-otomatis/generate`
+}
+
+/**
+ * @summary Generate a new set of practice questions with AI and save it
+ */
+export const generateSoalOtomatis = async (generateSoalOtomatisInput: GenerateSoalOtomatisInput, options?: RequestInit): Promise<SoalOtomatis> => {
+
+  return customFetch<SoalOtomatis>(getGenerateSoalOtomatisUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(generateSoalOtomatisInput)
+  }
+);}
+
+
+
+
+
+export const getGenerateSoalOtomatisMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateSoalOtomatis>>, TError,{data: BodyType<GenerateSoalOtomatisInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateSoalOtomatis>>, TError,{data: BodyType<GenerateSoalOtomatisInput>}, TContext> => {
+
+const mutationKey = ['generateSoalOtomatis'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateSoalOtomatis>>, {data: BodyType<GenerateSoalOtomatisInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateSoalOtomatis(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateSoalOtomatisMutationResult = NonNullable<Awaited<ReturnType<typeof generateSoalOtomatis>>>
+    export type GenerateSoalOtomatisMutationBody = BodyType<GenerateSoalOtomatisInput>
+    export type GenerateSoalOtomatisMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate a new set of practice questions with AI and save it
+ */
+export const useGenerateSoalOtomatis = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateSoalOtomatis>>, TError,{data: BodyType<GenerateSoalOtomatisInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateSoalOtomatis>>,
+        TError,
+        {data: BodyType<GenerateSoalOtomatisInput>},
+        TContext
+      > => {
+      return useMutation(getGenerateSoalOtomatisMutationOptions(options));
+    }
+
+export const getGetSoalOtomatisUrl = (id: string,) => {
+
+
+
+
+  return `/api/soal-otomatis/${id}`
+}
+
+/**
+ * @summary Get a saved soal draft (with full content)
+ */
+export const getSoalOtomatis = async (id: string, options?: RequestInit): Promise<SoalOtomatis> => {
+
+  return customFetch<SoalOtomatis>(getGetSoalOtomatisUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSoalOtomatisQueryKey = (id: string,) => {
+    return [
+    `/api/soal-otomatis/${id}`
+    ] as const;
+    }
+
+
+export const getGetSoalOtomatisQueryOptions = <TData = Awaited<ReturnType<typeof getSoalOtomatis>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSoalOtomatis>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSoalOtomatisQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSoalOtomatis>>> = ({ signal }) => getSoalOtomatis(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSoalOtomatis>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSoalOtomatisQueryResult = NonNullable<Awaited<ReturnType<typeof getSoalOtomatis>>>
+export type GetSoalOtomatisQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a saved soal draft (with full content)
+ */
+
+export function useGetSoalOtomatis<TData = Awaited<ReturnType<typeof getSoalOtomatis>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSoalOtomatis>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSoalOtomatisQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDeleteSoalOtomatisUrl = (id: string,) => {
+
+
+
+
+  return `/api/soal-otomatis/${id}`
+}
+
+/**
+ * @summary Delete a saved soal draft
+ */
+export const deleteSoalOtomatis = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteSoalOtomatisUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteSoalOtomatisMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSoalOtomatis>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSoalOtomatis>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteSoalOtomatis'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSoalOtomatis>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteSoalOtomatis(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSoalOtomatisMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSoalOtomatis>>>
+
+    export type DeleteSoalOtomatisMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a saved soal draft
+ */
+export const useDeleteSoalOtomatis = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSoalOtomatis>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSoalOtomatis>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteSoalOtomatisMutationOptions(options));
+    }
+
+export const getDownloadSoalOtomatisDocxUrl = (id: string,) => {
+
+
+
+
+  return `/api/soal-otomatis/${id}/docx`
+}
+
+/**
+ * @summary Download a soal draft as a .docx file
+ */
+export const downloadSoalOtomatisDocx = async (id: string, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadSoalOtomatisDocxUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadSoalOtomatisDocxQueryKey = (id: string,) => {
+    return [
+    `/api/soal-otomatis/${id}/docx`
+    ] as const;
+    }
+
+
+export const getDownloadSoalOtomatisDocxQueryOptions = <TData = Awaited<ReturnType<typeof downloadSoalOtomatisDocx>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadSoalOtomatisDocx>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadSoalOtomatisDocxQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadSoalOtomatisDocx>>> = ({ signal }) => downloadSoalOtomatisDocx(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadSoalOtomatisDocx>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadSoalOtomatisDocxQueryResult = NonNullable<Awaited<ReturnType<typeof downloadSoalOtomatisDocx>>>
+export type DownloadSoalOtomatisDocxQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Download a soal draft as a .docx file
+ */
+
+export function useDownloadSoalOtomatisDocx<TData = Awaited<ReturnType<typeof downloadSoalOtomatisDocx>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadSoalOtomatisDocx>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadSoalOtomatisDocxQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

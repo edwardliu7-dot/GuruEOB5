@@ -14,6 +14,8 @@ import pointsRouter from "./points";
 import academicCalendarsRouter from "./academic-calendars";
 import prosemRouter from "./prosem";
 import infoPekananRouter from "./info-pekanan";
+import modulAjarRouter from "./modul-ajar";
+import soalOtomatisRouter from "./soal-otomatis";
 
 const router: IRouter = Router();
 
@@ -32,5 +34,7 @@ router.use(pointsRouter);
 router.use(academicCalendarsRouter);
 router.use(prosemRouter);
 router.use(infoPekananRouter);
+router.use(modulAjarRouter);
+router.use(soalOtomatisRouter);
 
 export default router;
