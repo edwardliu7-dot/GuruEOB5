@@ -16,6 +16,7 @@ import prosemRouter from "./prosem";
 import infoPekananRouter from "./info-pekanan";
 import modulAjarRouter from "./modul-ajar";
 import soalOtomatisRouter from "./soal-otomatis";
+import studentAccountsRouter from "./student-accounts";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(prosemRouter);
 router.use(infoPekananRouter);
 router.use(modulAjarRouter);
 router.use(soalOtomatisRouter);
+router.use(studentAccountsRouter);
 
 export default router;

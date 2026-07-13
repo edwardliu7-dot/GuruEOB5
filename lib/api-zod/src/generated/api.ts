@@ -211,6 +211,84 @@ export const GetWaliKelasRekapResponse = zod.object({
 
 
 /**
+ * @summary List every student in the current wali kelas's class with their account status
+ */
+export const ListStudentAccountsResponseItem = zod.object({
+  "studentId": zod.string(),
+  "namaLengkap": zod.string(),
+  "hasAccount": zod.boolean(),
+  "username": zod.string().nullable(),
+  "password": zod.string().nullable()
+})
+export const ListStudentAccountsResponse = zod.array(ListStudentAccountsResponseItem)
+
+
+/**
+ * @summary Generate (or fetch existing) a TOMAT/BLP account for a student in the current wali kelas's class
+ */
+export const GenerateStudentAccountParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GenerateStudentAccountBody = zod.object({
+  "regenerate": zod.boolean().optional()
+})
+
+export const GenerateStudentAccountResponse = zod.object({
+  "studentId": zod.string(),
+  "username": zod.string(),
+  "password": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Generate accounts for every student in the current wali kelas's class who doesn't have one yet
+ */
+export const GenerateAllStudentAccountsResponse = zod.object({
+  "generated": zod.number(),
+  "alreadyExisted": zod.number(),
+  "accounts": zod.array(zod.object({
+  "studentId": zod.string(),
+  "username": zod.string(),
+  "password": zod.string(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Download a single PDF containing a printable account card for every generated account in the class
+ */
+export const DownloadAllStudentAccountCardsResponse = zod.unknown()
+
+
+/**
+ * @summary Get an already-generated account's credentials for a student
+ */
+export const GetStudentAccountParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetStudentAccountResponse = zod.object({
+  "studentId": zod.string(),
+  "username": zod.string(),
+  "password": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Download a single printable account card as PDF
+ */
+export const DownloadStudentAccountCardParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DownloadStudentAccountCardResponse = zod.unknown()
+
+
+/**
  * @summary List all teachers
  */
 export const ListTeachersResponseItem = zod.object({

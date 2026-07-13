@@ -36,8 +36,10 @@ import type {
   BulkCreateStudentsInput,
   BulkCreateStudentsResult,
   DashboardSummary,
+  GenerateAllStudentAccounts200,
   GenerateModulAjarInput,
   GenerateSoalOtomatisInput,
+  GenerateStudentAccountInput,
   GetInfoPekananParams,
   Grade,
   GradeInput,
@@ -59,6 +61,7 @@ import type {
   ListProsemItemsParams,
   ListProsemParams,
   ListSoalOtomatisParams,
+  ListStudentAccounts200Item,
   ListStudentsParams,
   LoginInput,
   ModulAjar,
@@ -74,6 +77,7 @@ import type {
   SoalOtomatis,
   SoalOtomatisSummary,
   Student,
+  StudentAccount,
   StudentImportAnalyzeInput,
   StudentImportAnalyzeResult,
   StudentInput,
@@ -853,6 +857,457 @@ export function useGetWaliKelasRekap<TData = Awaited<ReturnType<typeof getWaliKe
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetWaliKelasRekapQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListStudentAccountsUrl = () => {
+
+
+
+
+  return `/api/walikelas/akun-siswa`
+}
+
+/**
+ * @summary List every student in the current wali kelas's class with their account status
+ */
+export const listStudentAccounts = async ( options?: RequestInit): Promise<ListStudentAccounts200Item[]> => {
+
+  return customFetch<ListStudentAccounts200Item[]>(getListStudentAccountsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListStudentAccountsQueryKey = () => {
+    return [
+    `/api/walikelas/akun-siswa`
+    ] as const;
+    }
+
+
+export const getListStudentAccountsQueryOptions = <TData = Awaited<ReturnType<typeof listStudentAccounts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listStudentAccounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListStudentAccountsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listStudentAccounts>>> = ({ signal }) => listStudentAccounts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listStudentAccounts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListStudentAccountsQueryResult = NonNullable<Awaited<ReturnType<typeof listStudentAccounts>>>
+export type ListStudentAccountsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List every student in the current wali kelas's class with their account status
+ */
+
+export function useListStudentAccounts<TData = Awaited<ReturnType<typeof listStudentAccounts>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listStudentAccounts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListStudentAccountsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGenerateStudentAccountUrl = (id: string,) => {
+
+
+
+
+  return `/api/walikelas/akun-siswa/${id}/generate`
+}
+
+/**
+ * @summary Generate (or fetch existing) a TOMAT/BLP account for a student in the current wali kelas's class
+ */
+export const generateStudentAccount = async (id: string,
+    generateStudentAccountInput?: GenerateStudentAccountInput, options?: RequestInit): Promise<StudentAccount> => {
+
+  return customFetch<StudentAccount>(getGenerateStudentAccountUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(generateStudentAccountInput)
+  }
+);}
+
+
+
+
+
+export const getGenerateStudentAccountMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateStudentAccount>>, TError,{id: string;data?: BodyType<GenerateStudentAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateStudentAccount>>, TError,{id: string;data?: BodyType<GenerateStudentAccountInput>}, TContext> => {
+
+const mutationKey = ['generateStudentAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateStudentAccount>>, {id: string;data?: BodyType<GenerateStudentAccountInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  generateStudentAccount(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateStudentAccountMutationResult = NonNullable<Awaited<ReturnType<typeof generateStudentAccount>>>
+    export type GenerateStudentAccountMutationBody = BodyType<GenerateStudentAccountInput> | undefined
+    export type GenerateStudentAccountMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate (or fetch existing) a TOMAT/BLP account for a student in the current wali kelas's class
+ */
+export const useGenerateStudentAccount = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateStudentAccount>>, TError,{id: string;data?: BodyType<GenerateStudentAccountInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateStudentAccount>>,
+        TError,
+        {id: string;data?: BodyType<GenerateStudentAccountInput>},
+        TContext
+      > => {
+      return useMutation(getGenerateStudentAccountMutationOptions(options));
+    }
+
+export const getGenerateAllStudentAccountsUrl = () => {
+
+
+
+
+  return `/api/walikelas/akun-siswa/generate-all`
+}
+
+/**
+ * @summary Generate accounts for every student in the current wali kelas's class who doesn't have one yet
+ */
+export const generateAllStudentAccounts = async ( options?: RequestInit): Promise<GenerateAllStudentAccounts200> => {
+
+  return customFetch<GenerateAllStudentAccounts200>(getGenerateAllStudentAccountsUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getGenerateAllStudentAccountsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateAllStudentAccounts>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateAllStudentAccounts>>, TError,void, TContext> => {
+
+const mutationKey = ['generateAllStudentAccounts'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateAllStudentAccounts>>, void> = () => {
+
+
+          return  generateAllStudentAccounts(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateAllStudentAccountsMutationResult = NonNullable<Awaited<ReturnType<typeof generateAllStudentAccounts>>>
+
+    export type GenerateAllStudentAccountsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate accounts for every student in the current wali kelas's class who doesn't have one yet
+ */
+export const useGenerateAllStudentAccounts = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateAllStudentAccounts>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateAllStudentAccounts>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getGenerateAllStudentAccountsMutationOptions(options));
+    }
+
+export const getDownloadAllStudentAccountCardsUrl = () => {
+
+
+
+
+  return `/api/walikelas/akun-siswa/cards`
+}
+
+/**
+ * @summary Download a single PDF containing a printable account card for every generated account in the class
+ */
+export const downloadAllStudentAccountCards = async ( options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadAllStudentAccountCardsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadAllStudentAccountCardsQueryKey = () => {
+    return [
+    `/api/walikelas/akun-siswa/cards`
+    ] as const;
+    }
+
+
+export const getDownloadAllStudentAccountCardsQueryOptions = <TData = Awaited<ReturnType<typeof downloadAllStudentAccountCards>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadAllStudentAccountCards>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadAllStudentAccountCardsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadAllStudentAccountCards>>> = ({ signal }) => downloadAllStudentAccountCards({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadAllStudentAccountCards>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadAllStudentAccountCardsQueryResult = NonNullable<Awaited<ReturnType<typeof downloadAllStudentAccountCards>>>
+export type DownloadAllStudentAccountCardsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Download a single PDF containing a printable account card for every generated account in the class
+ */
+
+export function useDownloadAllStudentAccountCards<TData = Awaited<ReturnType<typeof downloadAllStudentAccountCards>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadAllStudentAccountCards>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadAllStudentAccountCardsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetStudentAccountUrl = (id: string,) => {
+
+
+
+
+  return `/api/walikelas/akun-siswa/${id}`
+}
+
+/**
+ * @summary Get an already-generated account's credentials for a student
+ */
+export const getStudentAccount = async (id: string, options?: RequestInit): Promise<StudentAccount> => {
+
+  return customFetch<StudentAccount>(getGetStudentAccountUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStudentAccountQueryKey = (id: string,) => {
+    return [
+    `/api/walikelas/akun-siswa/${id}`
+    ] as const;
+    }
+
+
+export const getGetStudentAccountQueryOptions = <TData = Awaited<ReturnType<typeof getStudentAccount>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentAccount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStudentAccountQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStudentAccount>>> = ({ signal }) => getStudentAccount(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStudentAccount>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStudentAccountQueryResult = NonNullable<Awaited<ReturnType<typeof getStudentAccount>>>
+export type GetStudentAccountQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get an already-generated account's credentials for a student
+ */
+
+export function useGetStudentAccount<TData = Awaited<ReturnType<typeof getStudentAccount>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentAccount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStudentAccountQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDownloadStudentAccountCardUrl = (id: string,) => {
+
+
+
+
+  return `/api/walikelas/akun-siswa/${id}/card`
+}
+
+/**
+ * @summary Download a single printable account card as PDF
+ */
+export const downloadStudentAccountCard = async (id: string, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadStudentAccountCardUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadStudentAccountCardQueryKey = (id: string,) => {
+    return [
+    `/api/walikelas/akun-siswa/${id}/card`
+    ] as const;
+    }
+
+
+export const getDownloadStudentAccountCardQueryOptions = <TData = Awaited<ReturnType<typeof downloadStudentAccountCard>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadStudentAccountCard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadStudentAccountCardQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadStudentAccountCard>>> = ({ signal }) => downloadStudentAccountCard(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadStudentAccountCard>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadStudentAccountCardQueryResult = NonNullable<Awaited<ReturnType<typeof downloadStudentAccountCard>>>
+export type DownloadStudentAccountCardQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Download a single printable account card as PDF
+ */
+
+export function useDownloadStudentAccountCard<TData = Awaited<ReturnType<typeof downloadStudentAccountCard>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadStudentAccountCard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadStudentAccountCardQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

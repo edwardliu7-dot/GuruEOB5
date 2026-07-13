@@ -8,3 +8,4 @@ export * from "./points";
 export * from "./academic-calendar";
 export * from "./prosem";
 export * from "./ai-content";
+export * from "./student-accounts";

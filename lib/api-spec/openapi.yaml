@@ -184,6 +184,124 @@ paths:
               schema:
                 $ref: "#/components/schemas/WaliKelasRekap"
 
+  /walikelas/akun-siswa:
+    get:
+      operationId: listStudentAccounts
+      tags: [dashboard]
+      summary: List every student in the current wali kelas's class with their account status
+      responses:
+        "200":
+          description: List of students with account status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    studentId:
+                      type: string
+                    namaLengkap:
+                      type: string
+                    hasAccount:
+                      type: boolean
+                    username:
+                      type: string
+                      nullable: true
+                    password:
+                      type: string
+                      nullable: true
+                  required: [studentId, namaLengkap, hasAccount, username, password]
+
+  /walikelas/akun-siswa/{id}/generate:
+    post:
+      operationId: generateStudentAccount
+      tags: [dashboard]
+      summary: Generate (or fetch existing) a TOMAT/BLP account for a student in the current wali kelas's class
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateStudentAccountInput"
+      responses:
+        "201":
+          description: Generated account credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentAccount"
+
+  /walikelas/akun-siswa/generate-all:
+    post:
+      operationId: generateAllStudentAccounts
+      tags: [dashboard]
+      summary: Generate accounts for every student in the current wali kelas's class who doesn't have one yet
+      responses:
+        "200":
+          description: Bulk generation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  generated:
+                    type: integer
+                  alreadyExisted:
+                    type: integer
+                  accounts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StudentAccount"
+                required: [generated, alreadyExisted, accounts]
+
+  /walikelas/akun-siswa/cards:
+    get:
+      operationId: downloadAllStudentAccountCards
+      tags: [dashboard]
+      summary: Download a single PDF containing a printable account card for every generated account in the class
+      responses:
+        "200":
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /walikelas/akun-siswa/{id}:
+    get:
+      operationId: getStudentAccount
+      tags: [dashboard]
+      summary: Get an already-generated account's credentials for a student
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Account credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentAccount"
+
+  /walikelas/akun-siswa/{id}/card:
+    get:
+      operationId: downloadStudentAccountCard
+      tags: [dashboard]
+      summary: Download a single printable account card as PDF
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
   /teachers:
     get:
       operationId: listTeachers
@@ -1388,6 +1506,26 @@ components:
           type: string
           maxLength: 400000
           pattern: "^$|^data:image/(jpeg|png|webp);base64,|^https?://"
+
+    GenerateStudentAccountInput:
+      type: object
+      properties:
+        regenerate:
+          type: boolean
+
+    StudentAccount:
+      type: object
+      properties:
+        studentId:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [studentId, username, password, createdAt]
 
     Student:
       type: object

@@ -102,6 +102,17 @@ export interface UpdateTeacherInput {
   photoUrl?: string;
 }
 
+export interface GenerateStudentAccountInput {
+  regenerate?: boolean;
+}
+
+export interface StudentAccount {
+  studentId: string;
+  username: string;
+  password: string;
+  createdAt: string;
+}
+
 export type StudentJenisKelamin = typeof StudentJenisKelamin[keyof typeof StudentJenisKelamin];
 
 
@@ -743,6 +754,20 @@ export interface InfoPekanan {
   totalDiDepan: number;
   items: InfoPekananItem[];
 }
+
+export type ListStudentAccounts200Item = {
+  studentId: string;
+  namaLengkap: string;
+  hasAccount: boolean;
+  username: string | null;
+  password: string | null;
+};
+
+export type GenerateAllStudentAccounts200 = {
+  generated: number;
+  alreadyExisted: number;
+  accounts: StudentAccount[];
+};
 
 export type ListStudentsParams = {
 search?: string;

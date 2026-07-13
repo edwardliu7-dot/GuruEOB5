@@ -100,6 +100,9 @@ async function buildAll() {
       "puppeteer",
       "puppeteer-core",
       "electron",
+      // pdfkit loads its standard-14 font .afm files from disk relative to its
+      // own package directory at runtime -- bundling breaks that path resolution.
+      "pdfkit",
     ],
     // "external" (not "linked") keeps the bundler from holding both the inline
     // sourcemap comment and the full separate map in memory at once — cheaper

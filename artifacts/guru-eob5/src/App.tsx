@@ -23,6 +23,7 @@ import Kepsek from "@/pages/kepsek";
 import Kurikulum from "@/pages/kurikulum";
 import Kesiswaan from "@/pages/kesiswaan";
 import WaliKelas from "@/pages/walikelas";
+import AkunSiswa from "@/pages/akun-siswa";
 import ModulAjar from "@/pages/modul-ajar";
 import SoalOtomatis from "@/pages/soal-otomatis";
 import NotFound from "@/pages/not-found";
@@ -75,6 +76,7 @@ function Router() {
       <Route path="/kurikulum" component={() => <ProtectedRoute component={Kurikulum} />} />
       <Route path="/kesiswaan" component={() => <ProtectedRoute component={Kesiswaan} />} />
       <Route path="/walikelas" component={() => <ProtectedRoute component={WaliKelas} />} />
+      <Route path="/akun-siswa" component={() => <ProtectedRoute component={AkunSiswa} />} />
       <Route path="/modul-ajar" component={() => <ProtectedRoute component={ModulAjar} />} />
       <Route path="/soal-otomatis" component={() => <ProtectedRoute component={SoalOtomatis} />} />
       <Route component={NotFound} />
