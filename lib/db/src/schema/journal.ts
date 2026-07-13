@@ -2,6 +2,7 @@ import { pgTable, text, timestamp, uuid, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { subjectsTable } from "./subjects";
+import { prosemItemsTable } from "./prosem";
 
 export const journalEntriesTable = pgTable("journal_entries", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -13,6 +14,11 @@ export const journalEntriesTable = pgTable("journal_entries", {
   kelas: text("kelas").notNull(),
   materi: text("materi").notNull(),
   catatan: text("catatan"),
+  // Optional link to the Prosem (semester plan) topic this entry realizes.
+  // Nullable: entries can still be logged free-form without a matching plan item.
+  prosemItemId: uuid("prosem_item_id").references(() => prosemItemsTable.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

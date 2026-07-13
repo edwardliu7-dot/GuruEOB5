@@ -1868,6 +1868,9 @@ components:
           type: string
         catatan:
           type: string
+        prosemItemId:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -1886,6 +1889,9 @@ components:
           type: string
         catatan:
           type: string
+        prosemItemId:
+          type: string
+          nullable: true
       required: [subjectId, tanggal, kelas, materi]
 
     AttendanceRecord:

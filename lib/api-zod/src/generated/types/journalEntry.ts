@@ -14,5 +14,6 @@ export interface JournalEntry {
   kelas: string;
   materi: string;
   catatan?: string;
+  prosemItemId?: string | null;
   createdAt: Date;
 }

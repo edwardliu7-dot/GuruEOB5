@@ -7,6 +7,9 @@ import {
   useListSubjects,
   useListStudents,
   useListAttendance,
+  useListAcademicCalendars,
+  useListProsem,
+  useListProsemItems,
 } from "@workspace/api-client-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -33,7 +36,10 @@ const journalSchema = z.object({
   kelas: z.string().min(1, "Kelas harus dipilih"),
   materi: z.string().min(1, "Materi harus diisi"),
   catatan: z.string().optional(),
+  prosemItemId: z.string().optional(),
 });
+
+const MANUAL_TOPIC_VALUE = "__manual__";
 
 const statusColors: Record<string, string> = {
   hadir: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
@@ -111,6 +117,86 @@ function AttendanceContext({
   );
 }
 
+/**
+ * Lets the teacher pick a topic straight from their Prosem (semester plan) for
+ * the selected mapel + kelas, instead of retyping "materi" free-form. Picking
+ * a topic fills `materi` and links the entry via `prosemItemId` so Info
+ * Pekanan can match it exactly instead of guessing by subject+kelas alone.
+ */
+function ProsemTopicPicker({
+  subjectId,
+  kelas,
+  value,
+  onPick,
+}: {
+  subjectId: string;
+  kelas: string;
+  value: string | undefined;
+  onPick: (prosemItemId: string | undefined, materi?: string) => void;
+}) {
+  const { data: calendars } = useListAcademicCalendars();
+  const calendarId = calendars?.[0]?.id;
+  const ready = !!subjectId && !!kelas && !!calendarId;
+
+  const { data: prosemList } = useListProsem(
+    { calendarId: calendarId || undefined, subjectId: subjectId || undefined },
+    {
+      query: {
+        queryKey: ["/api/prosem", "picker", calendarId, subjectId],
+        enabled: ready,
+      },
+    },
+  );
+  const prosem = prosemList?.find((p: any) => p.kelas === kelas);
+
+  const { data: items } = useListProsemItems(
+    { prosemId: prosem?.id || undefined },
+    { query: { queryKey: ["/api/prosem-items", "picker", prosem?.id], enabled: !!prosem?.id } },
+  );
+
+  if (!ready) return null;
+  if (!prosem || !items?.length) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Belum ada Prosem untuk mapel & kelas ini. Materi akan dicatat manual.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      <label className="text-sm font-medium leading-none">Topik dari Prosem (Opsional)</label>
+      <Select
+        value={value ?? MANUAL_TOPIC_VALUE}
+        onValueChange={(v) => {
+          if (v === MANUAL_TOPIC_VALUE) {
+            onPick(undefined);
+            return;
+          }
+          const item = items.find((it: any) => it.id === v);
+          onPick(v, item?.materi);
+        }}
+      >
+        <SelectTrigger className="mt-1">
+          <SelectValue placeholder="Pilih topik dari rencana pembelajaran" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={MANUAL_TOPIC_VALUE}>Materi manual (tidak ada di Prosem)</SelectItem>
+          {items.map((it: any) => (
+            <SelectItem key={it.id} value={it.id}>
+              {it.kd ? `${it.kd} — ` : ""}
+              {it.materi}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-xs text-muted-foreground mt-1">
+        Memilih topik akan menandai realisasi materi ini pada Info Pekanan.
+      </p>
+    </div>
+  );
+}
+
 export default function Jurnal() {
   const { data: subjects } = useListSubjects();
   const { data: students } = useListStudents();
@@ -135,16 +221,17 @@ export default function Jurnal() {
 
   const form = useForm<z.infer<typeof journalSchema>>({
     resolver: zodResolver(journalSchema),
-    defaultValues: { subjectId: "", tanggal: new Date().toISOString().split("T")[0], kelas: "", materi: "", catatan: "" },
+    defaultValues: { subjectId: "", tanggal: new Date().toISOString().split("T")[0], kelas: "", materi: "", catatan: "", prosemItemId: undefined },
   });
 
   const watchedSubjectId = form.watch("subjectId");
   const watchedKelas = form.watch("kelas");
   const watchedTanggal = form.watch("tanggal");
+  const watchedProsemItemId = form.watch("prosemItemId");
 
   const openNew = () => {
     setEditingJournal(null);
-    form.reset({ subjectId: "", tanggal: new Date().toISOString().split("T")[0], kelas: "", materi: "", catatan: "" });
+    form.reset({ subjectId: "", tanggal: new Date().toISOString().split("T")[0], kelas: "", materi: "", catatan: "", prosemItemId: undefined });
     setIsDialogOpen(true);
   };
 
@@ -156,6 +243,7 @@ export default function Jurnal() {
       kelas: j.kelas,
       materi: j.materi,
       catatan: j.catatan ?? "",
+      prosemItemId: j.prosemItemId ?? undefined,
     });
     setIsDialogOpen(true);
   };
@@ -214,7 +302,7 @@ export default function Jurnal() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField control={form.control} name="subjectId" render={({ field }) => (
                     <FormItem><FormLabel>Mata Pelajaran</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={(v) => { field.onChange(v); form.setValue("prosemItemId", undefined); }} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Pilih Mapel" /></SelectTrigger></FormControl>
                         <SelectContent>{subjects?.map((s:any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                       </Select><FormMessage />
@@ -226,13 +314,22 @@ export default function Jurnal() {
                     )} />
                     <FormField control={form.control} name="kelas" render={({ field }) => (
                       <FormItem><FormLabel>Kelas</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={(v) => { field.onChange(v); form.setValue("prosemItemId", undefined); }} value={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Pilih Kelas" /></SelectTrigger></FormControl>
                           <SelectContent>{kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
                         </Select><FormMessage />
                       </FormItem>
                     )} />
                   </div>
+                  <ProsemTopicPicker
+                    subjectId={watchedSubjectId}
+                    kelas={watchedKelas}
+                    value={watchedProsemItemId}
+                    onPick={(prosemItemId, materi) => {
+                      form.setValue("prosemItemId", prosemItemId);
+                      if (materi !== undefined) form.setValue("materi", materi);
+                    }}
+                  />
                   <AttendanceContext subjectId={watchedSubjectId} kelas={watchedKelas} tanggal={watchedTanggal} />
                   <FormField control={form.control} name="materi" render={({ field }) => (
                     <FormItem><FormLabel>Materi</FormLabel><FormControl><Input placeholder="Topik bahasan" {...field} /></FormControl><FormMessage /></FormItem>
@@ -279,7 +376,16 @@ export default function Jurnal() {
                     <TableCell>{format(new Date(j.tanggal), "dd MMM yyyy")}</TableCell>
                     <TableCell>{subjects?.find((s:any) => s.id === j.subjectId)?.name}</TableCell>
                     <TableCell>{j.kelas}</TableCell>
-                    <TableCell>{j.materi}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span>{j.materi}</span>
+                        {j.prosemItemId && (
+                          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 shrink-0">
+                            Prosem
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground max-w-[200px] truncate">{j.catatan || "-"}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(j)}><Pencil className="w-4 h-4" /></Button>

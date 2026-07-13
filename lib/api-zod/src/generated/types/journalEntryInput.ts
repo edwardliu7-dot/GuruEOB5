@@ -12,4 +12,5 @@ export interface JournalEntryInput {
   kelas: string;
   materi: string;
   catatan?: string;
+  prosemItemId?: string | null;
 }

@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { KELAS_OPTIONS } from "@/lib/options";
 
 const studentSchema = z.object({
   nisn: z.string().optional(),
@@ -252,9 +253,20 @@ export default function Siswa() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Kelas</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Misal: X-A" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Pilih kelas" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {KELAS_OPTIONS.map((k) => (
+                                  <SelectItem key={k} value={k}>
+                                    {k}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -336,7 +348,18 @@ export default function Siswa() {
                         <Input value={row.namaLengkap} onChange={(e) => updateImportRow(i, { namaLengkap: e.target.value })} className="h-8" />
                       </TableCell>
                       <TableCell>
-                        <Input value={row.kelas} onChange={(e) => updateImportRow(i, { kelas: e.target.value })} className="h-8" />
+                        <Select value={row.kelas} onValueChange={(v) => updateImportRow(i, { kelas: v })}>
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="Pilih" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {KELAS_OPTIONS.map((k) => (
+                              <SelectItem key={k} value={k}>
+                                {k}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <Select value={row.jenisKelamin} onValueChange={(v) => updateImportRow(i, { jenisKelamin: v as "L" | "P" })}>

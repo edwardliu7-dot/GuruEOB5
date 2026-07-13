@@ -115,12 +115,21 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
         and(eq(prosemItemsTable.prosemId, p.prosemId), eq(prosemItemsTable.weekId, weekId)),
       );
     for (const pi of planItems) {
-      const match = weekJournals.find(
-        (j) =>
-          j.subjectId === p.subjectId &&
-          j.kelas === p.kelas &&
-          !matchedJournalIds.has(j.id),
+      // Prefer an explicit link to this exact topic (set when the teacher picks
+      // it from the Prosem while writing the journal entry). Fall back to the
+      // old subject+kelas heuristic for entries that don't reference a topic.
+      const linked = weekJournals.find(
+        (j) => j.prosemItemId === pi.id && !matchedJournalIds.has(j.id),
       );
+      const match =
+        linked ??
+        weekJournals.find(
+          (j) =>
+            !j.prosemItemId &&
+            j.subjectId === p.subjectId &&
+            j.kelas === p.kelas &&
+            !matchedJournalIds.has(j.id),
+        );
       if (match) matchedJournalIds.add(match.id);
       items.push({
         prosemItemId: pi.id,

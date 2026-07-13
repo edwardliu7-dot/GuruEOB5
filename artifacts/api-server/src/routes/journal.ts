@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { and, eq } from "drizzle-orm";
-import { db, journalEntriesTable, subjectsTable } from "@workspace/db";
+import { db, journalEntriesTable, subjectsTable, prosemTable, prosemItemsTable } from "@workspace/db";
 import {
   ListJournalEntriesResponse,
   CreateJournalEntryBody,
@@ -14,6 +14,16 @@ import {
 import { requireAuth, getCurrentGuru } from "../lib/auth";
 
 const router: IRouter = Router();
+
+/** A prosem item can only be linked if it belongs to one of the teacher's own prosem plans. */
+async function ownsProsemItem(prosemItemId: string, teacherId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: prosemItemsTable.id })
+    .from(prosemItemsTable)
+    .innerJoin(prosemTable, eq(prosemItemsTable.prosemId, prosemTable.id))
+    .where(and(eq(prosemItemsTable.id, prosemItemId), eq(prosemTable.teacherId, teacherId)));
+  return Boolean(row);
+}
 
 router.get("/journal", requireAuth, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
@@ -63,6 +73,11 @@ router.post("/journal", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  if (parsed.data.prosemItemId && !(await ownsProsemItem(parsed.data.prosemItemId, guru.id))) {
+    res.status(404).json({ error: "Materi prosem tidak ditemukan" });
+    return;
+  }
+
   const [entry] = await db
     .insert(journalEntriesTable)
     .values({ ...parsed.data, teacherId: guru.id })
@@ -90,6 +105,11 @@ router.patch("/journal/:id", requireAuth, async (req, res): Promise<void> => {
     .where(and(eq(subjectsTable.id, body.data.subjectId), eq(subjectsTable.teacherId, guru.id)));
   if (!subject) {
     res.status(404).json({ error: "Subject not found" });
+    return;
+  }
+
+  if (body.data.prosemItemId && !(await ownsProsemItem(body.data.prosemItemId, guru.id))) {
+    res.status(404).json({ error: "Materi prosem tidak ditemukan" });
     return;
   }
 

@@ -387,6 +387,7 @@ export interface JournalEntry {
   kelas: string;
   materi: string;
   catatan?: string;
+  prosemItemId?: string | null;
   createdAt: string;
 }
 
@@ -396,6 +397,7 @@ export interface JournalEntryInput {
   kelas: string;
   materi: string;
   catatan?: string;
+  prosemItemId?: string | null;
 }
 
 export type AttendanceRecordStatus = typeof AttendanceRecordStatus[keyof typeof AttendanceRecordStatus];

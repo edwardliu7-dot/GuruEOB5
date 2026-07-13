@@ -663,6 +663,7 @@ export const ListJournalEntriesResponseItem = zod.object({
   "kelas": zod.string(),
   "materi": zod.string(),
   "catatan": zod.string().optional(),
+  "prosemItemId": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 export const ListJournalEntriesResponse = zod.array(ListJournalEntriesResponseItem)
@@ -676,7 +677,8 @@ export const CreateJournalEntryBody = zod.object({
   "tanggal": zod.string(),
   "kelas": zod.string(),
   "materi": zod.string(),
-  "catatan": zod.string().optional()
+  "catatan": zod.string().optional(),
+  "prosemItemId": zod.string().nullish()
 })
 
 export const CreateJournalEntryResponse = zod.object({
@@ -687,6 +689,7 @@ export const CreateJournalEntryResponse = zod.object({
   "kelas": zod.string(),
   "materi": zod.string(),
   "catatan": zod.string().optional(),
+  "prosemItemId": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -703,7 +706,8 @@ export const UpdateJournalEntryBody = zod.object({
   "tanggal": zod.string(),
   "kelas": zod.string(),
   "materi": zod.string(),
-  "catatan": zod.string().optional()
+  "catatan": zod.string().optional(),
+  "prosemItemId": zod.string().nullish()
 })
 
 export const UpdateJournalEntryResponse = zod.object({
@@ -714,6 +718,7 @@ export const UpdateJournalEntryResponse = zod.object({
   "kelas": zod.string(),
   "materi": zod.string(),
   "catatan": zod.string().optional(),
+  "prosemItemId": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
