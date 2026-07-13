@@ -1,0 +1,503 @@
+2026-Jul-13 07:51:50.592370 Docker 29.6.1 with BuildKit and Buildx detected on deployment server (localhost).
+2026-Jul-13 07:51:50.685908 Starting deployment of edwardliu7-dot/GuruEOB5:main to localhost.
+2026-Jul-13 07:51:51.439642 Preparing container with helper image: docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-13 07:51:51.784055 [DEBUG] [CMD]: docker stop --time=30 edf5trqjve0ue6mw80cvax6g
+2026-Jul-13 07:51:51.784055 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-13 07:51:51.792629 [DEBUG] Error response from daemon: No such container: edf5trqjve0ue6mw80cvax6g
+2026-Jul-13 07:51:55.216001 [DEBUG] [CMD]: docker run -d --network 'coolify' --name edf5trqjve0ue6mw80cvax6g  --rm -v /root/.docker/buildx:/root/.docker/buildx -v /var/run/docker.sock:/var/run/docker.sock docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-13 07:51:55.216001 [DEBUG] a14d006f1533343dcc15950c1865b76845a13fcf9fc22174b614694214b797c5
+2026-Jul-13 07:52:01.972090 [DEBUG] [CMD]: docker exec edf5trqjve0ue6mw80cvax6g bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote '\''https://x-access-token:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''refs/heads/main'\'''
+2026-Jul-13 07:52:01.972090 [DEBUG] 9a9f31705f46c68859c2751a09ba4666cdb85787	refs/heads/main
+2026-Jul-13 07:52:02.597715 ----------------------------------------
+2026-Jul-13 07:52:02.677603 Importing edwardliu7-dot/GuruEOB5:main (commit sha 9a9f31705f46c68859c2751a09ba4666cdb85787) to /artifacts/edf5trqjve0ue6mw80cvax6g.
+2026-Jul-13 07:52:03.881029 [DEBUG] [CMD]: docker exec edf5trqjve0ue6mw80cvax6g bash -c 'git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 clone --depth=1 --recurse-submodules --shallow-submodules -b '\''main'\'' '\''https:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''/artifacts/edf5trqjve0ue6mw80cvax6g'\'' && cd '\''/artifacts/edf5trqjve0ue6mw80cvax6g'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 fetch --depth=1 origin '\''9a9f31705f46c68859c2751a09ba4666cdb85787'\'' && git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 -c advice.detachedHead=false checkout '\''9a9f31705f46c68859c2751a09ba4666cdb85787'\'' >/dev/null 2>&1 && cd '\''/artifacts/edf5trqjve0ue6mw80cvax6g'\'' && if [ -f .gitmodules ]; then git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule update --init --recursive --depth=1; fi && cd '\''/artifacts/edf5trqjve0ue6mw80cvax6g'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 lfs pull'
+2026-Jul-13 07:<REDACTED>@google/genai)
+2026-Jul-13 07:52:13.932427 [DEBUG] # are deliberately left external in artifacts/api-server/build.mjs. Use
+2026-Jul-13 07:52:13.932427 [DEBUG] # `pnpm deploy` to produce a small, self-contained node_modules with just
+2026-Jul-13 07:52:13.932427 [DEBUG] # those production dependencies, so the runtime image doesn't need the
+2026-Jul-13 07:52:13.932427 [DEBUG] # full (devDependencies-heavy) workspace node_modules.
+2026-Jul-13 07:52:13.932427 [DEBUG] RUN pnpm --filter @workspace/api-server --prod deploy --legacy /app/deploy
+2026-Jul-13 07:52:13.932427 [DEBUG] 
+2026-Jul-13 07:52:13.932427 [DEBUG] # ---------- Stage 2: runtime ----------
+2026-Jul-13 07:52:13.932427 [DEBUG] FROM node:22-slim AS runtime
+2026-Jul-13 07:52:13.932427 [DEBUG] 
+2026-Jul-13 07:52:13.932427 [DEBUG] WORKDIR /app
+2026-Jul-13 07:52:13.932427 [DEBUG] 
+2026-Jul-13 07:52:13.932427 [DEBUG] # Coolify's healthcheck runs `curl`/`wget` inside the container to verify
+2026-Jul-13 07:52:13.932427 [DEBUG] # the app is up. node:22-slim has neither by default, so the check always
+2026-Jul-13 07:52:13.932427 [DEBUG] # fails and Coolify rolls back a perfectly working deployment. Install curl.
+2026-Jul-13 07:52:13.932427 [DEBUG] RUN apt-get update \
+2026-Jul-13 07:52:13.932427 [DEBUG] && apt-get install -y --no-install-recommends curl \
+2026-Jul-13 07:52:13.932427 [DEBUG] && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 07:52:13.932427 [DEBUG] 
+2026-Jul-13 07:52:13.932427 [DEBUG] ENV NODE_ENV=production
+2026-Jul-13 07:52:13.932427 [DEBUG] ENV PORT=3000
+2026-Jul-13 07:52:13.932427 [DEBUG] 
+2026-Jul-13 07:52:13.932427 [DEBUG] # Only the compiled output + the small set of external prod dependencies
+2026-Jul-13 07:52:13.932427 [DEBUG] # are needed to run the app.
+2026-Jul-13 07:52:13.932427 [DEBUG] COPY --from=build /app/deploy/node_modules ./node_modules
+2026-Jul-13 07:52:13.932427 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Jul-13 07:52:13.932427 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Jul-13 07:52:13.932427 [DEBUG] 
+2026-Jul-13 07:52:13.932427 [DEBUG] EXPOSE 3000
+2026-Jul-13 07:52:13.932427 [DEBUG] 
+2026-Jul-13 07:52:13.932427 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Jul-13 07:52:14.439416 [DEBUG] Creating build-time .env file in /artifacts (outside Docker context).
+2026-Jul-13 07:52:14.900820 ----------------------------------------
+2026-Jul-13 07:52:14.929441 ⚠️ Build-time environment variable warning: NODE_ENV=production
+2026-Jul-13 07:52:14.963182 Affects: Node.js/npm/yarn/bun/pnpm
+2026-Jul-13 07:52:14.992129 Issue: Skips devDependencies installation which are often required for building (webpack, typescript, etc.)
+2026-Jul-13 07:52:15.030773 Recommendation: Uncheck "Available at Buildtime" or use "development" during build
+2026-Jul-13 07:52:15.052728 
+2026-Jul-13 07:52:15.081328 💡 Tips to resolve build issues:
+2026-Jul-13 07:52:15.124823 1. Set these variables as "Runtime only" in the environment variables settings
+2026-Jul-13 07:52:15.168152 2. Use different values for build-time (e.g., NODE_ENV=development for build)
+2026-Jul-13 07:52:15.211326 3. Consider using multi-stage Docker builds to separate build and runtime environments
+2026-Jul-13 07:52:15.632347 [DEBUG] [CMD]: docker exec edf5trqjve0ue6mw80cvax6g bash -c 'cat /artifacts/edf5trqjve0ue6mw80cvax6g/Dockerfile'
+2026-Jul-13 07:52:15.632347 [DEBUG] # Multi-stage production build for GuruEOB5.
+2026-Jul-13 07:52:15.632347 [DEBUG] #
+2026-Jul-13 07:52:15.632347 [DEBUG] # Stage 1 ("build") has all the heavy tooling (pnpm, TypeScript, Vite,
+2026-Jul-13 07:52:15.632347 [DEBUG] # esbuild, devDependencies) needed to compile the app.
+2026-Jul-13 07:52:15.632347 [DEBUG] # Stage 2 ("runtime") is a slim image that only contains the compiled
+2026-Jul-13 07:52:15.632347 [DEBUG] # output — no source code, no node_modules, no dev tools. This keeps the
+2026-Jul-13 07:52:15.632347 [DEBUG] # final image small, which matters a lot on a small-RAM VPS: Docker can run
+2026-Jul-13 07:52:15.632347 [DEBUG] # out of memory while exporting a bloated single-stage image.
+2026-Jul-13 07:52:15.632347 [DEBUG] #
+2026-Jul-13 07:52:15.632347 [DEBUG] # The api-server bundles all its JS dependencies into one file via esbuild,
+2026-Jul-13 07:52:15.632347 [DEBUG] # and also serves the built frontend (see artifacts/api-server/src/app.ts),
+2026-Jul-13 07:52:15.632347 [DEBUG] # so the runtime stage needs nothing but the two "dist" folders to run.
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] # ---------- Stage 1: build ----------
+2026-Jul-13 07:52:15.632347 [DEBUG] FROM node:22-slim AS build
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] ENV PNPM_HOME="/pnpm"
+2026-Jul-13 07:52:15.632347 [DEBUG] ENV PATH="$PNPM_HOME:$PATH"
+2026-Jul-13 07:52:15.632347 [DEBUG] RUN corepack enable
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] WORKDIR /app
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] # Copy everything (see .dockerignore for what's excluded).
+2026-Jul-13 07:52:15.632347 [DEBUG] COPY . .
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] RUN pnpm install --frozen-lockfile
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] # Needed at build time only, so the frontend build knows its asset base path.
+2026-Jul-13 07:52:15.632347 [DEBUG] ENV NODE_ENV=production
+2026-Jul-13 07:52:15.632347 [DEBUG] ENV PORT=3000
+2026-Jul-13 07:52:15.632347 [DEBUG] ENV BASE_PATH=/
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] # Skip the repo-wide typecheck here: it's a dev/CI concern and its extra
+2026-Jul-13 07:52:15.632347 [DEBUG] # `tsc` processes roughly double the peak memory used during this step,
+2026-Jul-13 07:52:15.632347 [DEBUG] # which matters on a small-RAM VPS. Run `pnpm run build` (with typecheck)
+2026-Jul-13 07:52:15.632347 [DEBUG] # locally or in CI before deploying.
+2026-Jul-13 07:52:15.632347 [DEBUG] RUN pnpm run build:app
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] # esbuild bundles almost everything, but a few packages (e.g. @google/genai)
+2026-Jul-13 07:52:15.632347 [DEBUG] # are deliberately left external in artifacts/api-server/build.mjs. Use
+2026-Jul-13 07:52:15.632347 [DEBUG] # `pnpm deploy` to produce a small, self-contained node_modules with just
+2026-Jul-13 07:52:15.632347 [DEBUG] # those production dependencies, so the runtime image doesn't need the
+2026-Jul-13 07:52:15.632347 [DEBUG] # full (devDependencies-heavy) workspace node_modules.
+2026-Jul-13 07:52:15.632347 [DEBUG] RUN pnpm --filter @workspace/api-server --prod deploy --legacy /app/deploy
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] # ---------- Stage 2: runtime ----------
+2026-Jul-13 07:52:15.632347 [DEBUG] FROM node:22-slim AS runtime
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] WORKDIR /app
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] # Coolify's healthcheck runs `curl`/`wget` inside the container to verify
+2026-Jul-13 07:52:15.632347 [DEBUG] # the app is up. node:22-slim has neither by default, so the check always
+2026-Jul-13 07:52:15.632347 [DEBUG] # fails and Coolify rolls back a perfectly working deployment. Install curl.
+2026-Jul-13 07:52:15.632347 [DEBUG] RUN apt-get update \
+2026-Jul-13 07:52:15.632347 [DEBUG] && apt-get install -y --no-install-recommends curl \
+2026-Jul-13 07:52:15.632347 [DEBUG] && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] ENV NODE_ENV=production
+2026-Jul-13 07:52:15.632347 [DEBUG] ENV PORT=3000
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] # Only the compiled output + the small set of external prod dependencies
+2026-Jul-13 07:52:15.632347 [DEBUG] # are needed to run the app.
+2026-Jul-13 07:52:15.632347 [DEBUG] COPY --from=build /app/deploy/node_modules ./node_modules
+2026-Jul-13 07:52:15.632347 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Jul-13 07:52:15.632347 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] EXPOSE 3000
+2026-Jul-13 07:52:15.632347 [DEBUG] 
+2026-Jul-13 07:52:15.632347 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Jul-13 07:52:15.731189 [DEBUG] Final Dockerfile:
+2026-Jul-13 07:52:16.576857 [DEBUG] [CMD]: docker exec edf5trqjve0ue6mw80cvax6g bash -c 'cat /artifacts/edf5trqjve0ue6mw80cvax6g/Dockerfile'
+2026-Jul-13 07:52:16.576857 [DEBUG] # Multi-stage production build for GuruEOB5.
+2026-Jul-13 07:52:16.576857 [DEBUG] #
+2026-Jul-13 07:52:16.576857 [DEBUG] # Stage 1 ("build") has all the heavy tooling (pnpm, TypeScript, Vite,
+2026-Jul-13 07:52:16.576857 [DEBUG] # esbuild, devDependencies) needed to compile the app.
+2026-Jul-13 07:52:16.576857 [DEBUG] # Stage 2 ("runtime") is a slim image that only contains the compiled
+2026-Jul-13 07:52:16.576857 [DEBUG] # output — no source code, no node_modules, no dev tools. This keeps the
+2026-Jul-13 07:52:16.576857 [DEBUG] # final image small, which matters a lot on a small-RAM VPS: Docker can run
+2026-Jul-13 07:52:16.576857 [DEBUG] # out of memory while exporting a bloated single-stage image.
+2026-Jul-13 07:52:16.576857 [DEBUG] #
+2026-Jul-13 07:52:16.576857 [DEBUG] # The api-server bundles all its JS dependencies into one file via esbuild,
+2026-Jul-13 07:52:16.576857 [DEBUG] # and also serves the built frontend (see artifacts/api-server/src/app.ts),
+2026-Jul-13 07:52:16.576857 [DEBUG] # so the runtime stage needs nothing but the two "dist" folders to run.
+2026-Jul-13 07:52:16.576857 [DEBUG] 
+2026-Jul-13 07:52:16.576857 [DEBUG] # ---------- Stage 1: build ----------
+2026-Jul-13 07:52:16.576857 [DEBUG] FROM node:22-slim AS build
+2026-Jul-13 07:52:16.576857 [DEBUG] ARG NODE_ENV=production
+2026-Jul-13 07:52:16.576857 [DEBUG] ARG NEON_DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-13 07:52:16.576857 [DEBUG] ARG DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-13 07:52:16.576857 [DEBUG] ARG COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io
+2026-Jul-13 07:<REDACTED>@google/genai)
+2026-Jul-13 07:52:16.576857 [DEBUG] # are deliberately left external in artifacts/api-server/build.mjs. Use
+2026-Jul-13 07:52:16.576857 [DEBUG] # `pnpm deploy` to produce a small, self-contained node_modules with just
+2026-Jul-13 07:52:16.576857 [DEBUG] # those production dependencies, so the runtime image doesn't need the
+2026-Jul-13 07:52:16.576857 [DEBUG] # full (devDependencies-heavy) workspace node_modules.
+2026-Jul-13 07:52:16.576857 [DEBUG] RUN pnpm --filter @workspace/api-server --prod deploy --legacy /app/deploy
+2026-Jul-13 07:52:16.576857 [DEBUG] 
+2026-Jul-13 07:52:16.576857 [DEBUG] # ---------- Stage 2: runtime ----------
+2026-Jul-13 07:52:16.576857 [DEBUG] FROM node:22-slim AS runtime
+2026-Jul-13 07:52:16.576857 [DEBUG] ARG NODE_ENV=production
+2026-Jul-13 07:52:16.576857 [DEBUG] ARG NEON_DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-13 07:52:16.576857 [DEBUG] ARG DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-13 07:52:16.576857 [DEBUG] ARG COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io
+2026-Jul-13 07:<REDACTED>@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 07:52:27.448418 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 07:52:27.774236 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf 0.5s done
+2026-Jul-13 07:52:27.774236 [DEBUG] #5 DONE 0.6s
+2026-Jul-13 07:52:27.929904 [DEBUG] #4 [internal] load build context
+2026-Jul-13 07:52:28.758594 [DEBUG] #4 transferring context: 1.61MB 0.3s done
+2026-Jul-13 07:52:30.401644 [DEBUG] #4 DONE 2.6s
+2026-Jul-13 07:52:30.515665 [DEBUG] #5 [build 1/7] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 07:52:31.192240 [DEBUG] #5 DONE 1.3s
+2026-Jul-13 07:52:31.384841 [DEBUG] #6 [build 2/7] RUN corepack enable
+2026-Jul-13 07:52:36.251348 [DEBUG] #6 DONE 5.0s
+2026-Jul-13 07:52:36.479254 [DEBUG] #7 [build 3/7] WORKDIR /app
+2026-Jul-13 07:52:38.616715 [DEBUG] #7 DONE 2.3s
+2026-Jul-13 07:52:38.833754 [DEBUG] #8 [build 4/7] COPY . .
+2026-Jul-13 07:52:40.692074 [DEBUG] #8 DONE 2.0s
+2026-Jul-13 07:52:40.929360 [DEBUG] #9 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 07:52:42.279086 [DEBUG] #9 1.518 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.26.1.tgz
+2026-Jul-13 07:<REDACTED>@11.12.0   │
+2026-Jul-13 07:52:48.282140 [DEBUG] #9 7.520    │                                               │
+2026-Jul-13 07:52:48.282140 [DEBUG] #9 7.520    ╰───────────────────────────────────────────────╯
+2026-Jul-13 07:52:48.282140 [DEBUG] #9 7.520
+2026-Jul-13 07:52:49.055216 [DEBUG] #9 8.294 Lockfile is up to date, resolution step is skipped
+2026-Jul-13 07:52:49.675176 [DEBUG] #9 8.913 Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-Jul-13 07:52:50.091862 [DEBUG] #9 9.331 Packages: +648
+2026-Jul-13 07:52:50.091862 [DEBUG] #9 9.331 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-Jul-13 07:52:50.679296 [DEBUG] #9 9.918 Progress: resolved 648, reused 0, downloaded 0, added 0
+2026-Jul-13 07:52:51.682045 [DEBUG] #9 10.92 Progress: resolved 648, reused 0, downloaded 16, added 0
+2026-Jul-13 07:52:52.687106 [DEBUG] #9 11.92 Progress: resolved 648, reused 0, downloaded 62, added 16
+2026-Jul-13 07:52:53.707095 [DEBUG] #9 12.94 Progress: resolved 648, reused 0, downloaded 80, added 20
+2026-Jul-13 07:52:54.945196 [DEBUG] #9 14.18 Progress: resolved 648, reused 0, downloaded 81, added 20
+2026-Jul-13 07:52:56.836948 [DEBUG] #9 15.18 Progress: resolved 648, reused 0, downloaded 129, added 34
+2026-Jul-13 07:52:56.951286 [DEBUG] #9 16.19 Progress: resolved 648, reused 0, downloaded 185, added 55
+2026-Jul-13 07:52:57.980867 [DEBUG] #9 17.22 Progress: resolved 648, reused 0, downloaded 200, added 60
+2026-Jul-13 07:52:58.982871 [DEBUG] #9 18.22 Progress: resolved 648, reused 0, downloaded 233, added 72
+2026-Jul-13 07:52:59.987030 [DEBUG] #9 19.22 Progress: resolved 648, reused 0, downloaded 271, added 84
+2026-Jul-13 07:53:01.005108 [DEBUG] #9 20.23 Progress: resolved 648, reused 0, downloaded 284, added 88
+2026-Jul-13 07:53:02.913987 [DEBUG] #9 21.24 Progress: resolved 648, reused 0, downloaded 329, added 100
+2026-Jul-13 07:53:03.678749 [DEBUG] #9 22.24 Progress: resolved 648, reused 0, downloaded 376, added 116
+2026-Jul-13 07:53:04.464764 [DEBUG] #9 23.25 Progress: resolved 648, reused 0, downloaded 396, added 123
+2026-Jul-13 07:53:05.460278 [DEBUG] #9 24.27 Progress: resolved 648, reused 0, downloaded 405, added 124
+2026-Jul-13 07:53:06.044116 [DEBUG] #9 25.27 Progress: resolved 648, reused 0, downloaded 426, added 131
+2026-Jul-13 07:53:07.040272 [DEBUG] #9 26.28 Progress: resolved 648, reused 0, downloaded 431, added 132
+2026-Jul-13 07:53:08.780692 [DEBUG] #9 28.01 Progress: resolved 648, reused 0, downloaded 432, added 132
+2026-Jul-13 07:53:09.795372 [DEBUG] #9 29.03 Progress: resolved 648, reused 0, downloaded 438, added 135
+2026-Jul-13 07:53:10.808913 [DEBUG] #9 30.04 Progress: resolved 648, reused 0, downloaded 441, added 135
+2026-Jul-13 07:53:12.421873 [DEBUG] #9 31.66 Progress: resolved 648, reused 0, downloaded 442, added 135
+2026-Jul-13 07:53:13.459023 [DEBUG] #9 32.66 Progress: resolved 648, reused 0, downloaded 445, added 136
+2026-Jul-13 07:53:18.777264 [DEBUG] #9 38.01 Progress: resolved 648, reused 0, downloaded 446, added 136
+2026-Jul-13 07:53:22.791259 [DEBUG] #9 42.03 Progress: resolved 648, reused 0, downloaded 447, added 136
+2026-Jul-13 07:53:23.791035 [DEBUG] #9 43.03 Progress: resolved 648, reused 0, downloaded 486, added 148
+2026-Jul-13 07:53:24.801629 [DEBUG] #9 44.04 Progress: resolved 648, reused 0, downloaded 515, added 157
+2026-Jul-13 07:53:25.807515 [DEBUG] #9 45.04 Progress: resolved 648, reused 0, downloaded 538, added 164
+2026-Jul-13 07:53:26.801403 [DEBUG] #9 46.04 Progress: resolved 648, reused 0, downloaded 544, added 168
+2026-Jul-13 07:53:27.804952 [DEBUG] #9 47.04 Progress: resolved 648, reused 0, downloaded 570, added 175
+2026-Jul-13 07:53:28.808793 [DEBUG] #9 48.05 Progress: resolved 648, reused 0, downloaded 596, added 180
+2026-Jul-13 07:53:29.810650 [DEBUG] #9 49.05 Progress: resolved 648, reused 0, downloaded 616, added 188
+2026-Jul-13 07:53:30.827678 [DEBUG] #9 50.06 Progress: resolved 648, reused 0, downloaded 646, added 202
+2026-Jul-13 07:53:31.821191 [DEBUG] #9 51.06 Progress: resolved 648, reused 0, downloaded 648, added 387
+2026-Jul-13 07:53:32.830224 [DEBUG] #9 52.07 Progress: resolved 648, reused 0, downloaded 648, added 431
+2026-Jul-13 07:53:33.835311 [DEBUG] #9 53.06 Progress: resolved 648, reused 0, downloaded 648, added 441
+2026-Jul-13 07:53:34.829007 [DEBUG] #9 54.07 Progress: resolved 648, reused 0, downloaded 648, added 515
+2026-Jul-13 07:53:35.830543 [DEBUG] #9 55.07 Progress: resolved 648, reused 0, downloaded 648, added 544
+2026-Jul-13 07:53:36.255811 [DEBUG] #9 55.49 Progress: resolved 648, reused 0, downloaded 648, added 648, done
+2026-Jul-13 07:53:37.462198 [DEBUG] #9 56.69 .../esbuild@0.28.1/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 07:53:37.637247 [DEBUG] #9 56.70 .../esbuild@0.18.20/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 07:53:37.637247 [DEBUG] #9 56.71 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 07:53:37.637247 [DEBUG] #9 56.72 .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 07:53:38.458949 [DEBUG] #9 57.70 .../esbuild@0.18.20/node_modules/esbuild postinstall: Done
+2026-Jul-13 07:53:38.622203 [DEBUG] #9 57.71 .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-Jul-13 07:53:38.665802 [DEBUG] #9 57.90 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-13 07:53:38.784167 [DEBUG] #9 58.02 .../esbuild@0.28.1/node_modules/esbuild postinstall: Done
+2026-Jul-13 07:53:40.080286 [DEBUG] #9 59.32
+2026-Jul-13 07:53:40.080286 [DEBUG] #9 59.32 dependencies:
+2026-Jul-13 07:53:40.080286 [DEBUG] #9 59.32 + @replit/connectors-sdk 0.4.1
+2026-Jul-13 07:53:40.080286 [DEBUG] #9 59.32
+2026-Jul-13 07:53:40.080286 [DEBUG] #9 59.32 devDependencies:
+2026-Jul-13 07:53:40.080286 [DEBUG] #9 59.32 + prettier 3.9.4
+2026-Jul-13 07:53:40.080286 [DEBUG] #9 59.32 + typescript 5.9.3
+2026-Jul-13 07:53:40.080286 [DEBUG] #9 59.32
+2026-Jul-13 07:53:40.282437 [DEBUG] #9 59.52 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-13 07:53:40.483194 [DEBUG] #9 59.57 . preinstall: Done
+2026-Jul-13 07:53:40.731136 [DEBUG] #9 59.96 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2026-Jul-13 07:53:40.731136 [DEBUG] #9 59.96 │                                                                              │
+2026-Jul-13 07:53:40.731136 [DEBUG] #9 59.96 │   Ignored build scripts: @google/genai@2.10.0, protobufjs@7.6.5.             │
+2026-Jul-13 07:53:40.731136 [DEBUG] #9 59.96 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2026-Jul-13 07:53:40.731136 [DEBUG] #9 59.96 │   to run scripts.                                                            │
+2026-Jul-13 07:53:40.731136 [DEBUG] #9 59.96 │                                                                              │
+2026-Jul-13 07:53:40.731136 [DEBUG] #9 59.96 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-Jul-13 07:53:40.975073 [DEBUG] #9 60.04 Done in 54.3s using pnpm v10.26.1
+2026-Jul-13 07:53:44.091613 [DEBUG] #9 DONE 63.3s
+2026-Jul-13 07:53:44.321653 [DEBUG] 
+2026-Jul-13 07:53:44.344196 [DEBUG] #10 [build 6/7] RUN pnpm run build:app
+2026-Jul-13 07:53:49.277054 [DEBUG] #10 4.959
+2026-Jul-13 07:53:49.297652 [DEBUG] #10 4.959 > workspace@0.0.0 build:app /app
+2026-Jul-13 07:53:49.297652 [DEBUG] #10 4.959 > pnpm -r --workspace-concurrency=1 --if-present --filter '!@workspace/mockup-sandbox' run build
+2026-Jul-13 07:53:49.297652 [DEBUG] #10 4.959
+2026-Jul-13 07:53:50.560734 [DEBUG] #10 6.243 Scope: 7 of 9 workspace projects
+2026-Jul-13 07:53:50.737996 [DEBUG] #10 6.266
+2026-Jul-13 07:53:50.737996 [DEBUG] #10 6.266 > @workspace/api-server@0.0.0 build /app/artifacts/api-server
+2026-Jul-13 07:53:50.737996 [DEBUG] #10 6.266 > node ./build.mjs
+2026-Jul-13 07:53:50.737996 [DEBUG] #10 6.266
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/index.mjs                       3.0mb ⚠️
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/pino-worker.mjs               153.4kb
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/pino-file.mjs                 142.0kb
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/pino-pretty.mjs               114.6kb
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/thread-stream-worker.mjs        7.3kb
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/index.mjs.map                   5.7mb
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/pino-worker.mjs.map           256.9kb
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/pino-file.mjs.map             229.0kb
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/pino-pretty.mjs.map           204.0kb
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07   dist/thread-stream-worker.mjs.map   12.0kb
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07
+2026-Jul-13 07:53:54.401118 [DEBUG] #10 10.07 ⚡ Done in 3570ms
+2026-Jul-13 07:53:54.598093 [DEBUG] #10 10.13
+2026-Jul-13 07:53:54.598093 [DEBUG] #10 10.13 > @workspace/guru-eob5@0.0.0 build /app/artifacts/guru-eob5
+2026-Jul-13 07:53:54.598093 [DEBUG] #10 10.13 > vite build --config vite.config.ts
+2026-Jul-13 07:53:54.598093 [DEBUG] #10 10.13
+2026-Jul-13 07:53:57.663142 [DEBUG] #10 13.35 vite v7.3.6 building client environment for production...
+2026-Jul-13 07:53:57.948341 [DEBUG] #10 13.63 transforming...
+2026-Jul-13 07:54:02.194256 [DEBUG] #10 17.88 src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:54:04.925429 [DEBUG] #10 20.60 src/components/ui/select.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:54:06.277323 [DEBUG] #10 21.96 src/components/ui/progress.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:54:13.650919 [DEBUG] #10 29.32 src/components/ui/label.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:54:24.765624 [DEBUG] #10 40.45 src/components/ui/dropdown-menu.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:54:25.291654 [DEBUG] #10 40.48 src/components/ui/avatar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:54:25.291654 [DEBUG] #10 40.52 src/components/ui/sidebar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:54:29.734268 [DEBUG] #10 45.42 src/components/ui/sheet.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:55:13.128636 [DEBUG] #10 88.79 ✓ 3330 modules transformed.
+2026-Jul-13 07:55:21.240503 [DEBUG] #10 96.92 rendering chunks...
+2026-Jul-13 07:55:21.475820 [DEBUG] #10 97.12 computing gzip size...
+2026-Jul-13 07:55:21.873994 [DEBUG] #10 97.54 dist/public/index.html                     1.36 kB │ gzip:   0.54 kB
+2026-Jul-13 07:55:22.108139 [DEBUG] #10 97.55
+2026-Jul-13 07:55:22.108139 [DEBUG] #10 97.55 (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-Jul-13 07:55:22.108139 [DEBUG] #10 97.55 - Using dynamic import() to code-split the application
+2026-Jul-13 07:55:22.108139 [DEBUG] #10 97.55 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-Jul-13 07:<REDACTED>@workspace/api-server --prod deploy --legacy /app/deploy
+2026-Jul-13 07:55:31.235829 [DEBUG] #11 4.887  WARN  Shared workspace lockfile detected but configuration forces legacy deploy implementation.
+2026-Jul-13 07:55:32.112560 [DEBUG] #11 5.728 Packages are copied from the content-addressable store to the virtual store.
+2026-Jul-13 07:55:32.112560 [DEBUG] #11 5.728   Content-addressable store is at: /pnpm/store/v10
+2026-Jul-13 07:55:32.112560 [DEBUG] #11 5.728   Virtual store is at:             deploy/node_modules/.pnpm
+2026-Jul-13 07:55:33.033950 [DEBUG] #11 6.676 Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:34.042730 [DEBUG] #11 7.690 Progress: resolved 3, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:35.043008 [DEBUG] #11 8.691 Progress: resolved 22, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:36.040980 [DEBUG] #11 9.693 Progress: resolved 33, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:37.044429 [DEBUG] #11 10.69 Progress: resolved 48, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:38.075118 [DEBUG] #11 11.70 Progress: resolved 64, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:39.111737 [DEBUG] #11 12.77 Progress: resolved 75, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:39.141737 [DEBUG] 
+2026-Jul-13 07:55:39.246891 [DEBUG] #11 12.89 artifacts/mockup-sandbox                 |  WARN  deprecated recharts@2.15.4
+2026-Jul-13 07:55:40.159547 [DEBUG] #11 13.81 Progress: resolved 81, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:41.681874 [DEBUG] #11 15.33 Progress: resolved 86, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:43.836728 [DEBUG] #11 17.49 Progress: resolved 98, reused 0, downloaded 0, added 0
+2026-Jul-13 07:55:45.741742 [DEBUG] #11 18.49  WARN  Request took 10399ms: https://registry.npmjs.org/typescript
+2026-Jul-13 07:<REDACTED>@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 07:56:18.438290 #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 07:56:18.438290 #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf 0.5s done
+2026-Jul-13 07:56:18.438290 #5 DONE 0.6s
+2026-Jul-13 07:56:18.438290 
+2026-Jul-13 07:56:18.438290 #4 [internal] load build context
+2026-Jul-13 07:56:18.438290 #4 transferring context: 1.61MB 0.3s done
+2026-Jul-13 07:56:18.438290 #4 DONE 2.6s
+2026-Jul-13 07:56:18.438290 
+2026-Jul-13 07:56:18.438290 #5 [build 1/7] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 07:56:18.438290 #5 DONE 1.3s
+2026-Jul-13 07:56:18.438290 
+2026-Jul-13 07:56:18.438290 #6 [build 2/7] RUN corepack enable
+2026-Jul-13 07:56:18.438290 #6 DONE 5.0s
+2026-Jul-13 07:56:18.438290 
+2026-Jul-13 07:56:18.438290 #7 [build 3/7] WORKDIR /app
+2026-Jul-13 07:56:18.438290 #7 DONE 2.3s
+2026-Jul-13 07:56:18.438290 
+2026-Jul-13 07:56:18.438290 #8 [build 4/7] COPY . .
+2026-Jul-13 07:56:18.438290 #8 DONE 2.0s
+2026-Jul-13 07:56:18.438290 
+2026-Jul-13 07:56:18.438290 #9 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 07:56:18.438290 #9 1.518 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.26.1.tgz
+2026-Jul-13 07:<REDACTED>@11.12.0   │
+2026-Jul-13 07:56:18.438290 #9 7.520    │                                               │
+2026-Jul-13 07:56:18.438290 #9 7.520    ╰───────────────────────────────────────────────╯
+2026-Jul-13 07:56:18.438290 #9 7.520
+2026-Jul-13 07:56:18.438290 #9 8.294 Lockfile is up to date, resolution step is skipped
+2026-Jul-13 07:56:18.438290 #9 8.913 Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #9 9.331 Packages: +648
+2026-Jul-13 07:56:18.438290 #9 9.331 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-Jul-13 07:56:18.438290 #9 9.918 Progress: resolved 648, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #9 10.92 Progress: resolved 648, reused 0, downloaded 16, added 0
+2026-Jul-13 07:56:18.438290 #9 11.92 Progress: resolved 648, reused 0, downloaded 62, added 16
+2026-Jul-13 07:56:18.438290 #9 12.94 Progress: resolved 648, reused 0, downloaded 80, added 20
+2026-Jul-13 07:56:18.438290 #9 14.18 Progress: resolved 648, reused 0, downloaded 81, added 20
+2026-Jul-13 07:56:18.438290 #9 15.18 Progress: resolved 648, reused 0, downloaded 129, added 34
+2026-Jul-13 07:56:18.438290 #9 16.19 Progress: resolved 648, reused 0, downloaded 185, added 55
+2026-Jul-13 07:56:18.438290 #9 17.22 Progress: resolved 648, reused 0, downloaded 200, added 60
+2026-Jul-13 07:56:18.438290 #9 18.22 Progress: resolved 648, reused 0, downloaded 233, added 72
+2026-Jul-13 07:56:18.438290 #9 19.22 Progress: resolved 648, reused 0, downloaded 271, added 84
+2026-Jul-13 07:56:18.438290 #9 20.23 Progress: resolved 648, reused 0, downloaded 284, added 88
+2026-Jul-13 07:56:18.438290 #9 21.24 Progress: resolved 648, reused 0, downloaded 329, added 100
+2026-Jul-13 07:56:18.438290 #9 22.24 Progress: resolved 648, reused 0, downloaded 376, added 116
+2026-Jul-13 07:56:18.438290 #9 23.25 Progress: resolved 648, reused 0, downloaded 396, added 123
+2026-Jul-13 07:56:18.438290 #9 24.27 Progress: resolved 648, reused 0, downloaded 405, added 124
+2026-Jul-13 07:56:18.438290 #9 25.27 Progress: resolved 648, reused 0, downloaded 426, added 131
+2026-Jul-13 07:56:18.438290 #9 26.28 Progress: resolved 648, reused 0, downloaded 431, added 132
+2026-Jul-13 07:56:18.438290 #9 28.01 Progress: resolved 648, reused 0, downloaded 432, added 132
+2026-Jul-13 07:56:18.438290 #9 29.03 Progress: resolved 648, reused 0, downloaded 438, added 135
+2026-Jul-13 07:56:18.438290 #9 30.04 Progress: resolved 648, reused 0, downloaded 441, added 135
+2026-Jul-13 07:56:18.438290 #9 31.66 Progress: resolved 648, reused 0, downloaded 442, added 135
+2026-Jul-13 07:56:18.438290 #9 32.66 Progress: resolved 648, reused 0, downloaded 445, added 136
+2026-Jul-13 07:56:18.438290 #9 38.01 Progress: resolved 648, reused 0, downloaded 446, added 136
+2026-Jul-13 07:56:18.438290 #9 42.03 Progress: resolved 648, reused 0, downloaded 447, added 136
+2026-Jul-13 07:56:18.438290 #9 43.03 Progress: resolved 648, reused 0, downloaded 486, added 148
+2026-Jul-13 07:56:18.438290 #9 44.04 Progress: resolved 648, reused 0, downloaded 515, added 157
+2026-Jul-13 07:56:18.438290 #9 45.04 Progress: resolved 648, reused 0, downloaded 538, added 164
+2026-Jul-13 07:56:18.438290 #9 46.04 Progress: resolved 648, reused 0, downloaded 544, added 168
+2026-Jul-13 07:56:18.438290 #9 47.04 Progress: resolved 648, reused 0, downloaded 570, added 175
+2026-Jul-13 07:56:18.438290 #9 48.05 Progress: resolved 648, reused 0, downloaded 596, added 180
+2026-Jul-13 07:56:18.438290 #9 49.05 Progress: resolved 648, reused 0, downloaded 616, added 188
+2026-Jul-13 07:56:18.438290 #9 50.06 Progress: resolved 648, reused 0, downloaded 646, added 202
+2026-Jul-13 07:56:18.438290 #9 51.06 Progress: resolved 648, reused 0, downloaded 648, added 387
+2026-Jul-13 07:56:18.438290 #9 52.07 Progress: resolved 648, reused 0, downloaded 648, added 431
+2026-Jul-13 07:56:18.438290 #9 53.06 Progress: resolved 648, reused 0, downloaded 648, added 441
+2026-Jul-13 07:56:18.438290 #9 54.07 Progress: resolved 648, reused 0, downloaded 648, added 515
+2026-Jul-13 07:56:18.438290 #9 55.07 Progress: resolved 648, reused 0, downloaded 648, added 544
+2026-Jul-13 07:56:18.438290 #9 55.49 Progress: resolved 648, reused 0, downloaded 648, added 648, done
+2026-Jul-13 07:56:18.438290 #9 56.69 .../esbuild@0.28.1/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 07:56:18.438290 #9 56.70 .../esbuild@0.18.20/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 07:56:18.438290 #9 56.71 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 07:56:18.438290 #9 56.72 .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 07:56:18.438290 #9 57.70 .../esbuild@0.18.20/node_modules/esbuild postinstall: Done
+2026-Jul-13 07:56:18.438290 #9 57.71 .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-Jul-13 07:56:18.438290 #9 57.90 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-13 07:56:18.438290 #9 58.02 .../esbuild@0.28.1/node_modules/esbuild postinstall: Done
+2026-Jul-13 07:56:18.438290 #9 59.32
+2026-Jul-13 07:56:18.438290 #9 59.32 dependencies:
+2026-Jul-13 07:56:18.438290 #9 59.32 + @replit/connectors-sdk 0.4.1
+2026-Jul-13 07:56:18.438290 #9 59.32
+2026-Jul-13 07:56:18.438290 #9 59.32 devDependencies:
+2026-Jul-13 07:56:18.438290 #9 59.32 + prettier 3.9.4
+2026-Jul-13 07:56:18.438290 #9 59.32 + typescript 5.9.3
+2026-Jul-13 07:56:18.438290 #9 59.32
+2026-Jul-13 07:56:18.438290 #9 59.52 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-13 07:56:18.438290 #9 59.57 . preinstall: Done
+2026-Jul-13 07:56:18.438290 #9 59.96 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2026-Jul-13 07:56:18.438290 #9 59.96 │                                                                              │
+2026-Jul-13 07:56:18.438290 #9 59.96 │   Ignored build scripts: @google/genai@2.10.0, protobufjs@7.6.5.             │
+2026-Jul-13 07:56:18.438290 #9 59.96 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2026-Jul-13 07:56:18.438290 #9 59.96 │   to run scripts.                                                            │
+2026-Jul-13 07:56:18.438290 #9 59.96 │                                                                              │
+2026-Jul-13 07:56:18.438290 #9 59.96 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-Jul-13 07:56:18.438290 #9 60.04 Done in 54.3s using pnpm v10.26.1
+2026-Jul-13 07:56:18.438290 #9 DONE 63.3s
+2026-Jul-13 07:56:18.438290 
+2026-Jul-13 07:56:18.438290 #10 [build 6/7] RUN pnpm run build:app
+2026-Jul-13 07:56:18.438290 #10 4.959
+2026-Jul-13 07:56:18.438290 #10 4.959 > workspace@0.0.0 build:app /app
+2026-Jul-13 07:56:18.438290 #10 4.959 > pnpm -r --workspace-concurrency=1 --if-present --filter '!@workspace/mockup-sandbox' run build
+2026-Jul-13 07:56:18.438290 #10 4.959
+2026-Jul-13 07:56:18.438290 #10 6.243 Scope: 7 of 9 workspace projects
+2026-Jul-13 07:56:18.438290 #10 6.266
+2026-Jul-13 07:56:18.438290 #10 6.266 > @workspace/api-server@0.0.0 build /app/artifacts/api-server
+2026-Jul-13 07:56:18.438290 #10 6.266 > node ./build.mjs
+2026-Jul-13 07:56:18.438290 #10 6.266
+2026-Jul-13 07:56:18.438290 #10 10.07
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/index.mjs                       3.0mb ⚠️
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/pino-worker.mjs               153.4kb
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/pino-file.mjs                 142.0kb
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/pino-pretty.mjs               114.6kb
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/thread-stream-worker.mjs        7.3kb
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/index.mjs.map                   5.7mb
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/pino-worker.mjs.map           256.9kb
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/pino-file.mjs.map             229.0kb
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/pino-pretty.mjs.map           204.0kb
+2026-Jul-13 07:56:18.438290 #10 10.07   dist/thread-stream-worker.mjs.map   12.0kb
+2026-Jul-13 07:56:18.438290 #10 10.07
+2026-Jul-13 07:56:18.438290 #10 10.07 ⚡ Done in 3570ms
+2026-Jul-13 07:56:18.438290 #10 10.13
+2026-Jul-13 07:56:18.438290 #10 10.13 > @workspace/guru-eob5@0.0.0 build /app/artifacts/guru-eob5
+2026-Jul-13 07:56:18.438290 #10 10.13 > vite build --config vite.config.ts
+2026-Jul-13 07:56:18.438290 #10 10.13
+2026-Jul-13 07:56:18.438290 #10 13.35 vite v7.3.6 building client environment for production...
+2026-Jul-13 07:56:18.438290 #10 13.63 transforming...
+2026-Jul-13 07:56:18.438290 #10 17.88 src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:56:18.438290 #10 20.60 src/components/ui/select.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:56:18.438290 #10 21.96 src/components/ui/progress.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:56:18.438290 #10 29.32 src/components/ui/label.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:56:18.438290 #10 40.45 src/components/ui/dropdown-menu.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:56:18.438290 #10 40.48 src/components/ui/avatar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:56:18.438290 #10 40.52 src/components/ui/sidebar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:56:18.438290 #10 45.42 src/components/ui/sheet.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-13 07:56:18.438290 #10 88.79 ✓ 3330 modules transformed.
+2026-Jul-13 07:56:18.438290 #10 96.92 rendering chunks...
+2026-Jul-13 07:56:18.438290 #10 97.12 computing gzip size...
+2026-Jul-13 07:56:18.438290 #10 97.54 dist/public/index.html                     1.36 kB │ gzip:   0.54 kB
+2026-Jul-13 07:56:18.438290 #10 97.55
+2026-Jul-13 07:56:18.438290 #10 97.55 (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-Jul-13 07:56:18.438290 #10 97.55 - Using dynamic import() to code-split the application
+2026-Jul-13 07:56:18.438290 #10 97.55 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-Jul-13 07:<REDACTED>@workspace/api-server --prod deploy --legacy /app/deploy
+2026-Jul-13 07:56:18.438290 #11 4.887  WARN  Shared workspace lockfile detected but configuration forces legacy deploy implementation.
+2026-Jul-13 07:56:18.438290 #11 5.728 Packages are copied from the content-addressable store to the virtual store.
+2026-Jul-13 07:56:18.438290 #11 5.728   Content-addressable store is at: /pnpm/store/v10
+2026-Jul-13 07:56:18.438290 #11 5.728   Virtual store is at:             deploy/node_modules/.pnpm
+2026-Jul-13 07:56:18.438290 #11 6.676 Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 7.690 Progress: resolved 3, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 8.691 Progress: resolved 22, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 9.693 Progress: resolved 33, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 10.69 Progress: resolved 48, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 11.70 Progress: resolved 64, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 12.77 Progress: resolved 75, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 12.89 artifacts/mockup-sandbox                 |  WARN  deprecated recharts@2.15.4
+2026-Jul-13 07:56:18.438290 #11 13.81 Progress: resolved 81, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 15.33 Progress: resolved 86, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 17.49 Progress: resolved 98, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 18.49  WARN  Request took 10399ms: https://registry.npmjs.org/typescript
+2026-Jul-13 07:56:18.438290 #11 18.69 Progress: resolved 101, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 19.70 Progress: resolved 102, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 21.53 Progress: resolved 103, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 25.99  WARN  Request took 19143ms: https://registry.npmjs.org/drizzle-orm
+2026-Jul-13 07:56:18.438290 #11 26.34 Progress: resolved 104, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 27.38 Progress: resolved 122, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 28.44 Progress: resolved 166, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 29.44 Progress: resolved 199, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 30.49 Progress: resolved 228, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 31.48 Progress: resolved 236, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 32.50 Progress: resolved 275, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 33.58 Progress: resolved 281, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 34.58 Progress: resolved 302, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 35.68 Progress: resolved 316, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 36.76 Progress: resolved 358, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.438290 #11 37.87 Progress: resolved 374, reused 0, downloaded 0, added 0
+2026-Jul-13 07:56:18.530824 [DEBUG] Error type: App\Exceptions\DeploymentException
+2026-Jul-13 07:56:18.628507 [DEBUG] Error code: 0
+2026-Jul-13 07:56:18.688838 [DEBUG] Location: /var/www/html/app/Traits/ExecuteRemoteCommand.php:242
+2026-Jul-13 07:56:18.751260 [DEBUG] Stack trace (first 5 lines):
+2026-Jul-13 07:56:18.812666 [DEBUG] #0 /var/www/html/app/Traits/ExecuteRemoteCommand.php(106): App\Jobs\ApplicationDeploymentJob->executeCommandWithProcess()
+2026-Jul-13 07:56:18.887644 [DEBUG] #1 /var/www/html/vendor/laravel/framework/src/Illuminate/Collections/Traits/EnumeratesValues.php(275): App\Jobs\ApplicationDeploymentJob->{closure:App\Traits\ExecuteRemoteCommand::execute_remote_command():72}()
+2026-Jul-13 07:56:19.024738 [DEBUG] #2 /var/www/html/app/Traits/ExecuteRemoteCommand.php(72): Illuminate\Support\Collection->each()
+2026-Jul-13 07:56:19.318739 [DEBUG] #3 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(3821): App\Jobs\ApplicationDeploymentJob->execute_remote_command()
+2026-Jul-13 07:56:19.379262 [DEBUG] #4 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(912): App\Jobs\ApplicationDeploymentJob->build_image()
+2026-Jul-13 07:56:19.432519 ========================================
+2026-Jul-13 07:56:19.495762 Deployment failed. Removing the new version of your application.
+2026-Jul-13 07:56:22.389246 Gracefully shutting down build container: edf5trqjve0ue6mw80cvax6g
+2026-Jul-13 07:56:22.774546 [DEBUG] [CMD]: docker stop --time=30 edf5trqjve0ue6mw80cvax6g
+2026-Jul-13 07:56:22.774546 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-13 07:56:27.598938 [DEBUG] edf5trqjve0ue6mw80cvax6g
