@@ -1,4 +1,3 @@
-import { Readable } from "stream";
 import { Router, type IRouter } from "express";
 import { and, eq } from "drizzle-orm";
 import { db, documentsTable, subjectsTable } from "@workspace/db";
@@ -10,10 +9,21 @@ import {
   DeleteDocumentResponse,
 } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru } from "../lib/auth";
-import { ObjectNotFoundError, ObjectStorageService } from "../lib/objectStorage";
 
 const router: IRouter = Router();
-const objectStorageService = new ObjectStorageService();
+
+// Metadata-only column set -- excludes fileData so list/detail responses
+// don't ship the full (base64) file content over the wire.
+const documentMetadataColumns = {
+  id: documentsTable.id,
+  subjectId: documentsTable.subjectId,
+  name: documentsTable.name,
+  description: documentsTable.description,
+  fileName: documentsTable.fileName,
+  fileType: documentsTable.fileType,
+  fileSize: documentsTable.fileSize,
+  uploadedAt: documentsTable.uploadedAt,
+};
 
 async function isOwnSubject(subjectId: string, teacherId: string): Promise<boolean> {
   const [subject] = await db
@@ -39,7 +49,7 @@ router.get("/documents", requireAuth, async (req, res): Promise<void> => {
       return;
     }
     const documents = await db
-      .select()
+      .select(documentMetadataColumns)
       .from(documentsTable)
       .where(eq(documentsTable.subjectId, subjectId));
     res.json(ListDocumentsResponse.parse(documents));
@@ -48,17 +58,7 @@ router.get("/documents", requireAuth, async (req, res): Promise<void> => {
 
   // No subjectId filter -- only return documents under subjects the caller owns.
   const documents = await db
-    .select({
-      id: documentsTable.id,
-      subjectId: documentsTable.subjectId,
-      name: documentsTable.name,
-      description: documentsTable.description,
-      filePath: documentsTable.filePath,
-      fileName: documentsTable.fileName,
-      fileType: documentsTable.fileType,
-      fileSize: documentsTable.fileSize,
-      uploadedAt: documentsTable.uploadedAt,
-    })
+    .select(documentMetadataColumns)
     .from(documentsTable)
     .innerJoin(subjectsTable, eq(subjectsTable.id, documentsTable.subjectId))
     .where(eq(subjectsTable.teacherId, guru.id));
@@ -83,7 +83,10 @@ router.post("/documents", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const [document] = await db.insert(documentsTable).values(parsed.data).returning();
+  const [document] = await db
+    .insert(documentsTable)
+    .values(parsed.data)
+    .returning(documentMetadataColumns);
   res.status(201).json(CreateDocumentResponse.parse(document));
 });
 
@@ -139,7 +142,7 @@ router.get("/documents/:id/file", requireAuth, async (req, res): Promise<void> =
   const [existing] = await db
     .select({
       subjectId: documentsTable.subjectId,
-      filePath: documentsTable.filePath,
+      fileData: documentsTable.fileData,
       fileName: documentsTable.fileName,
       fileType: documentsTable.fileType,
     })
@@ -151,31 +154,14 @@ router.get("/documents/:id/file", requireAuth, async (req, res): Promise<void> =
     return;
   }
 
-  try {
-    const objectFile = await objectStorageService.getObjectEntityFile(existing.filePath);
-    const response = await objectStorageService.downloadObject(objectFile);
-
-    res.status(response.status);
-    response.headers.forEach((value, key) => res.setHeader(key, value));
-    res.setHeader(
-      "Content-Disposition",
-      `inline; filename="${encodeURIComponent(existing.fileName)}"`,
-    );
-
-    if (response.body) {
-      const nodeStream = Readable.fromWeb(response.body as ReadableStream<Uint8Array>);
-      nodeStream.pipe(res);
-    } else {
-      res.end();
-    }
-  } catch (error) {
-    if (error instanceof ObjectNotFoundError) {
-      res.status(404).json({ error: "File not found" });
-      return;
-    }
-    req.log.error({ err: error }, "Error serving document file");
-    res.status(500).json({ error: "Failed to serve document file" });
-  }
+  const buffer = Buffer.from(existing.fileData, "base64");
+  res.setHeader("Content-Type", existing.fileType || "application/octet-stream");
+  res.setHeader("Content-Length", String(buffer.length));
+  res.setHeader(
+    "Content-Disposition",
+    `inline; filename="${encodeURIComponent(existing.fileName)}"`,
+  );
+  res.send(buffer);
 });
 
 export default router;

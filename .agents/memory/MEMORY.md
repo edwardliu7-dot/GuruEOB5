@@ -8,3 +8,4 @@
 - [Schema drift on shared production DB](schema-drift-shared-db.md) — code's Drizzle schema can be ahead of the live shared DB table, causing vague 500s; diff columns before assuming an app bug.
 - [shadcn FormItem outside FormField](shadcn-formitem-outside-formfield.md) — FormItem/FormLabel/FormControl from ui/form.tsx call useFormField and crash the whole page if used for a field not registered via react-hook-form's `<FormField>`.
 - [Object storage setup gotchas](object-storage-setup-gotchas.md) — safe additive DDL vs drizzle-kit push on DBs with connect-pg-simple session tables; pnpm override needs literal version when root has no direct dep; Uppy v5 Dashboard subpath exports break vite unless actually used.
+- [DB-only file storage (no object storage)](db-only-file-storage.md) — when a project must avoid Replit Object Storage, store uploads as base64 text on the row and stream them back directly; exclude blob columns from list queries.

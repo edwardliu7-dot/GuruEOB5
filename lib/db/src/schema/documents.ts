@@ -10,7 +10,7 @@ export const documentsTable = pgTable("documents", {
     .references(() => subjectsTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
-  filePath: text("file_path").notNull(),
+  fileData: text("file_data").notNull(),
   fileName: text("file_name").notNull(),
   fileType: text("file_type"),
   fileSize: integer("file_size"),

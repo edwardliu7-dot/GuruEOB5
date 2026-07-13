@@ -84,7 +84,5 @@ export * from './teacher';
 export * from './teacherJabatanItem';
 export * from './updateTeacherInput';
 export * from './updateTeacherInputJabatanItem';
-export * from './uploadUrlRequest';
-export * from './uploadUrlResponse';
 export * from './waliKelasRekap';
 export * from './waliKelasSiswaRekap';

@@ -1,0 +1,608 @@
+2026-Jul-13 05:02:29.326176 Docker 29.6.1 with BuildKit and Buildx detected on deployment server (localhost).
+2026-Jul-13 05:02:29.389940 Starting deployment of edwardliu7-dot/GuruEOB5:main to localhost.
+2026-Jul-13 05:02:30.043953 Preparing container with helper image: docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-13 05:02:31.288853 [DEBUG] [CMD]: docker stop --time=30 jbv3imnuon9m5v6k1yh3xsqw
+2026-Jul-13 05:02:31.288853 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-13 05:02:31.327306 [DEBUG] Error response from daemon: No such container: jbv3imnuon9m5v6k1yh3xsqw
+2026-Jul-13 05:02:33.115126 [DEBUG] [CMD]: docker run -d --network 'coolify' --name jbv3imnuon9m5v6k1yh3xsqw  --rm -v /root/.docker/buildx:/root/.docker/buildx -v /var/run/docker.sock:/var/run/docker.sock docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-13 05:02:33.115126 [DEBUG] 15daddb8714260b86fd53af2aa3c74ab5dfd01f2d1aae8d65acc12b0096e06e4
+2026-Jul-13 05:02:38.216942 [DEBUG] [CMD]: docker exec jbv3imnuon9m5v6k1yh3xsqw bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote '\''https://x-access-token:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''refs/heads/main'\'''
+2026-Jul-13 05:02:38.216942 [DEBUG] 9a6df887714c56e1040cffb33cb9c3270c9e4c79	refs/heads/main
+2026-Jul-13 05:02:38.947867 ----------------------------------------
+2026-Jul-13 05:02:39.011145 Importing edwardliu7-dot/GuruEOB5:main (commit sha 9a6df887714c56e1040cffb33cb9c3270c9e4c79) to /artifacts/jbv3imnuon9m5v6k1yh3xsqw.
+2026-Jul-13 05:02:39.407656 [DEBUG] [CMD]: docker exec jbv3imnuon9m5v6k1yh3xsqw bash -c 'git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 clone --depth=1 --recurse-submodules --shallow-submodules -b '\''main'\'' '\''https:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''/artifacts/jbv3imnuon9m5v6k1yh3xsqw'\'' && cd '\''/artifacts/jbv3imnuon9m5v6k1yh3xsqw'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 fetch --depth=1 origin '\''9a6df887714c56e1040cffb33cb9c3270c9e4c79'\'' && git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 -c advice.detachedHead=false checkout '\''9a6df887714c56e1040cffb33cb9c3270c9e4c79'\'' >/dev/null 2>&1 && cd '\''/artifacts/jbv3imnuon9m5v6k1yh3xsqw'\'' && if [ -f .gitmodules ]; then git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule update --init --recursive --depth=1; fi && cd '\''/artifacts/jbv3imnuon9m5v6k1yh3xsqw'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 lfs pull'
+2026-Jul-13 05:<REDACTED>@google/genai)
+2026-Jul-13 05:02:45.961086 [DEBUG] # are deliberately left external in artifacts/api-server/build.mjs. Use
+2026-Jul-13 05:02:45.961086 [DEBUG] # `pnpm deploy` to produce a small, self-contained node_modules with just
+2026-Jul-13 05:02:45.961086 [DEBUG] # those production dependencies, so the runtime image doesn't need the
+2026-Jul-13 05:02:45.961086 [DEBUG] # full (devDependencies-heavy) workspace node_modules.
+2026-Jul-13 05:02:45.961086 [DEBUG] RUN pnpm --filter @workspace/api-server --prod deploy --legacy /app/deploy
+2026-Jul-13 05:02:45.961086 [DEBUG] 
+2026-Jul-13 05:02:45.961086 [DEBUG] # ---------- Stage 2: runtime ----------
+2026-Jul-13 05:02:45.961086 [DEBUG] FROM node:22-slim AS runtime
+2026-Jul-13 05:02:45.961086 [DEBUG] 
+2026-Jul-13 05:02:45.961086 [DEBUG] WORKDIR /app
+2026-Jul-13 05:02:45.961086 [DEBUG] 
+2026-Jul-13 05:02:45.961086 [DEBUG] # Coolify's healthcheck runs `curl`/`wget` inside the container to verify
+2026-Jul-13 05:02:45.961086 [DEBUG] # the app is up. node:22-slim has neither by default, so the check always
+2026-Jul-13 05:02:45.961086 [DEBUG] # fails and Coolify rolls back a perfectly working deployment. Install curl.
+2026-Jul-13 05:02:45.961086 [DEBUG] RUN apt-get update \
+2026-Jul-13 05:02:45.961086 [DEBUG] && apt-get install -y --no-install-recommends curl \
+2026-Jul-13 05:02:45.961086 [DEBUG] && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:02:45.961086 [DEBUG] 
+2026-Jul-13 05:02:45.961086 [DEBUG] ENV NODE_ENV=production
+2026-Jul-13 05:02:45.961086 [DEBUG] ENV PORT=3000
+2026-Jul-13 05:02:45.961086 [DEBUG] 
+2026-Jul-13 05:02:45.961086 [DEBUG] # Only the compiled output + the small set of external prod dependencies
+2026-Jul-13 05:02:45.961086 [DEBUG] # are needed to run the app.
+2026-Jul-13 05:02:45.961086 [DEBUG] COPY --from=build /app/deploy/node_modules ./node_modules
+2026-Jul-13 05:02:45.961086 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Jul-13 05:02:45.961086 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Jul-13 05:02:45.961086 [DEBUG] 
+2026-Jul-13 05:02:45.961086 [DEBUG] EXPOSE 3000
+2026-Jul-13 05:02:45.961086 [DEBUG] 
+2026-Jul-13 05:02:45.961086 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Jul-13 05:02:46.476040 [DEBUG] Creating build-time .env file in /artifacts (outside Docker context).
+2026-Jul-13 05:02:46.953451 ----------------------------------------
+2026-Jul-13 05:02:46.985455 ⚠️ Build-time environment variable warning: NODE_ENV=production
+2026-Jul-13 05:02:47.055255 Affects: Node.js/npm/yarn/bun/pnpm
+2026-Jul-13 05:02:47.149684 Issue: Skips devDependencies installation which are often required for building (webpack, typescript, etc.)
+2026-Jul-13 05:02:47.223658 Recommendation: Uncheck "Available at Buildtime" or use "development" during build
+2026-Jul-13 05:02:47.257966 
+2026-Jul-13 05:02:47.330162 💡 Tips to resolve build issues:
+2026-Jul-13 05:02:47.376563 1. Set these variables as "Runtime only" in the environment variables settings
+2026-Jul-13 05:02:47.424793 2. Use different values for build-time (e.g., NODE_ENV=development for build)
+2026-Jul-13 05:02:47.462260 3. Consider using multi-stage Docker builds to separate build and runtime environments
+2026-Jul-13 05:02:47.925678 [DEBUG] [CMD]: docker exec jbv3imnuon9m5v6k1yh3xsqw bash -c 'cat /artifacts/jbv3imnuon9m5v6k1yh3xsqw/Dockerfile'
+2026-Jul-13 05:02:47.925678 [DEBUG] # Multi-stage production build for GuruEOB5.
+2026-Jul-13 05:02:47.925678 [DEBUG] #
+2026-Jul-13 05:02:47.925678 [DEBUG] # Stage 1 ("build") has all the heavy tooling (pnpm, TypeScript, Vite,
+2026-Jul-13 05:02:47.925678 [DEBUG] # esbuild, devDependencies) needed to compile the app.
+2026-Jul-13 05:02:47.925678 [DEBUG] # Stage 2 ("runtime") is a slim image that only contains the compiled
+2026-Jul-13 05:02:47.925678 [DEBUG] # output — no source code, no node_modules, no dev tools. This keeps the
+2026-Jul-13 05:02:47.925678 [DEBUG] # final image small, which matters a lot on a small-RAM VPS: Docker can run
+2026-Jul-13 05:02:47.925678 [DEBUG] # out of memory while exporting a bloated single-stage image.
+2026-Jul-13 05:02:47.925678 [DEBUG] #
+2026-Jul-13 05:02:47.925678 [DEBUG] # The api-server bundles all its JS dependencies into one file via esbuild,
+2026-Jul-13 05:02:47.925678 [DEBUG] # and also serves the built frontend (see artifacts/api-server/src/app.ts),
+2026-Jul-13 05:02:47.925678 [DEBUG] # so the runtime stage needs nothing but the two "dist" folders to run.
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] # ---------- Stage 1: build ----------
+2026-Jul-13 05:02:47.925678 [DEBUG] FROM node:22-slim AS build
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] ENV PNPM_HOME="/pnpm"
+2026-Jul-13 05:02:47.925678 [DEBUG] ENV PATH="$PNPM_HOME:$PATH"
+2026-Jul-13 05:02:47.925678 [DEBUG] RUN corepack enable
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] WORKDIR /app
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] # Copy everything (see .dockerignore for what's excluded).
+2026-Jul-13 05:02:47.925678 [DEBUG] COPY . .
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] # Needed at build time only, so the frontend build knows its asset base path.
+2026-Jul-13 05:02:47.925678 [DEBUG] ENV NODE_ENV=production
+2026-Jul-13 05:02:47.925678 [DEBUG] ENV PORT=3000
+2026-Jul-13 05:02:47.925678 [DEBUG] ENV BASE_PATH=/
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] RUN pnpm run build
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] # esbuild bundles almost everything, but a few packages (e.g. @google/genai)
+2026-Jul-13 05:02:47.925678 [DEBUG] # are deliberately left external in artifacts/api-server/build.mjs. Use
+2026-Jul-13 05:02:47.925678 [DEBUG] # `pnpm deploy` to produce a small, self-contained node_modules with just
+2026-Jul-13 05:02:47.925678 [DEBUG] # those production dependencies, so the runtime image doesn't need the
+2026-Jul-13 05:02:47.925678 [DEBUG] # full (devDependencies-heavy) workspace node_modules.
+2026-Jul-13 05:02:47.925678 [DEBUG] RUN pnpm --filter @workspace/api-server --prod deploy --legacy /app/deploy
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] # ---------- Stage 2: runtime ----------
+2026-Jul-13 05:02:47.925678 [DEBUG] FROM node:22-slim AS runtime
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] WORKDIR /app
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] # Coolify's healthcheck runs `curl`/`wget` inside the container to verify
+2026-Jul-13 05:02:47.925678 [DEBUG] # the app is up. node:22-slim has neither by default, so the check always
+2026-Jul-13 05:02:47.925678 [DEBUG] # fails and Coolify rolls back a perfectly working deployment. Install curl.
+2026-Jul-13 05:02:47.925678 [DEBUG] RUN apt-get update \
+2026-Jul-13 05:02:47.925678 [DEBUG] && apt-get install -y --no-install-recommends curl \
+2026-Jul-13 05:02:47.925678 [DEBUG] && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] ENV NODE_ENV=production
+2026-Jul-13 05:02:47.925678 [DEBUG] ENV PORT=3000
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] # Only the compiled output + the small set of external prod dependencies
+2026-Jul-13 05:02:47.925678 [DEBUG] # are needed to run the app.
+2026-Jul-13 05:02:47.925678 [DEBUG] COPY --from=build /app/deploy/node_modules ./node_modules
+2026-Jul-13 05:02:47.925678 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Jul-13 05:02:47.925678 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] EXPOSE 3000
+2026-Jul-13 05:02:47.925678 [DEBUG] 
+2026-Jul-13 05:02:47.925678 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Jul-13 05:02:48.058650 [DEBUG] Final Dockerfile:
+2026-Jul-13 05:02:48.974398 [DEBUG] [CMD]: docker exec jbv3imnuon9m5v6k1yh3xsqw bash -c 'cat /artifacts/jbv3imnuon9m5v6k1yh3xsqw/Dockerfile'
+2026-Jul-13 05:02:48.974398 [DEBUG] # Multi-stage production build for GuruEOB5.
+2026-Jul-13 05:02:48.974398 [DEBUG] #
+2026-Jul-13 05:02:48.974398 [DEBUG] # Stage 1 ("build") has all the heavy tooling (pnpm, TypeScript, Vite,
+2026-Jul-13 05:02:48.974398 [DEBUG] # esbuild, devDependencies) needed to compile the app.
+2026-Jul-13 05:02:48.974398 [DEBUG] # Stage 2 ("runtime") is a slim image that only contains the compiled
+2026-Jul-13 05:02:48.974398 [DEBUG] # output — no source code, no node_modules, no dev tools. This keeps the
+2026-Jul-13 05:02:48.974398 [DEBUG] # final image small, which matters a lot on a small-RAM VPS: Docker can run
+2026-Jul-13 05:02:48.974398 [DEBUG] # out of memory while exporting a bloated single-stage image.
+2026-Jul-13 05:02:48.974398 [DEBUG] #
+2026-Jul-13 05:02:48.974398 [DEBUG] # The api-server bundles all its JS dependencies into one file via esbuild,
+2026-Jul-13 05:02:48.974398 [DEBUG] # and also serves the built frontend (see artifacts/api-server/src/app.ts),
+2026-Jul-13 05:02:48.974398 [DEBUG] # so the runtime stage needs nothing but the two "dist" folders to run.
+2026-Jul-13 05:02:48.974398 [DEBUG] 
+2026-Jul-13 05:02:48.974398 [DEBUG] # ---------- Stage 1: build ----------
+2026-Jul-13 05:02:48.974398 [DEBUG] FROM node:22-slim AS build
+2026-Jul-13 05:02:48.974398 [DEBUG] ARG NODE_ENV=production
+2026-Jul-13 05:02:48.974398 [DEBUG] ARG NEON_DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-13 05:02:48.974398 [DEBUG] ARG DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-13 05:02:48.974398 [DEBUG] ARG COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io
+2026-Jul-13 05:<REDACTED>@google/genai)
+2026-Jul-13 05:02:48.974398 [DEBUG] # are deliberately left external in artifacts/api-server/build.mjs. Use
+2026-Jul-13 05:02:48.974398 [DEBUG] # `pnpm deploy` to produce a small, self-contained node_modules with just
+2026-Jul-13 05:02:48.974398 [DEBUG] # those production dependencies, so the runtime image doesn't need the
+2026-Jul-13 05:02:48.974398 [DEBUG] # full (devDependencies-heavy) workspace node_modules.
+2026-Jul-13 05:02:48.974398 [DEBUG] RUN pnpm --filter @workspace/api-server --prod deploy --legacy /app/deploy
+2026-Jul-13 05:02:48.974398 [DEBUG] 
+2026-Jul-13 05:02:48.974398 [DEBUG] # ---------- Stage 2: runtime ----------
+2026-Jul-13 05:02:48.974398 [DEBUG] FROM node:22-slim AS runtime
+2026-Jul-13 05:02:48.974398 [DEBUG] ARG NODE_ENV=production
+2026-Jul-13 05:02:48.974398 [DEBUG] ARG NEON_DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-13 05:02:48.974398 [DEBUG] ARG DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-13 05:02:48.974398 [DEBUG] ARG COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io
+2026-Jul-13 05:<REDACTED>@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 05:03:03.409375 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 05:03:06.142957 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf 2.7s done
+2026-Jul-13 05:03:06.142957 [DEBUG] #5 DONE 2.8s
+2026-Jul-13 05:03:06.292065 [DEBUG] #5 [build 1/7] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 05:03:09.009070 [DEBUG] #5 ...
+2026-Jul-13 05:03:09.009070 [DEBUG] 
+2026-Jul-13 05:03:09.009070 [DEBUG] #4 [internal] load build context
+2026-Jul-13 05:03:09.009070 [DEBUG] #4 transferring context: 1.53MB 0.5s done
+2026-Jul-13 05:03:09.009070 [DEBUG] #4 DONE 2.9s
+2026-Jul-13 05:03:09.949227 [DEBUG] #5 [build 1/7] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 05:03:13.888575 [DEBUG] #5 DONE 10.6s
+2026-Jul-13 05:03:14.137629 [DEBUG] #6 [runtime 2/6] WORKDIR /app
+2026-Jul-13 05:03:16.328903 [DEBUG] #6 DONE 2.3s
+2026-Jul-13 05:03:16.328903 [DEBUG] 
+2026-Jul-13 05:03:16.328903 [DEBUG] #7 [build 2/7] RUN corepack enable
+2026-Jul-13 05:03:19.065510 [DEBUG] #7 DONE 5.1s
+2026-Jul-13 05:03:19.065510 [DEBUG] 
+2026-Jul-13 05:03:19.065510 [DEBUG] #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:03:19.065510 [DEBUG] #8 2.020 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+2026-Jul-13 05:<REDACTED>@11.12.0   │
+2026-Jul-13 05:03:35.577290 [DEBUG] #11 9.528    │                                               │
+2026-Jul-13 05:03:35.577290 [DEBUG] #11 9.528    ╰───────────────────────────────────────────────╯
+2026-Jul-13 05:03:35.577290 [DEBUG] #11 9.528
+2026-Jul-13 05:03:35.577290 [DEBUG] #11 9.543 Progress: resolved 622, reused 0, downloaded 0, added 0
+2026-Jul-13 05:03:35.577290 [DEBUG] #11 10.54 Progress: resolved 622, reused 0, downloaded 16, added 0
+2026-Jul-13 05:03:36.179035 [DEBUG] #11 11.55 Progress: resolved 622, reused 0, downloaded 79, added 20
+2026-Jul-13 05:03:37.181956 [DEBUG] #11 12.55 Progress: resolved 622, reused 0, downloaded 97, added 25
+2026-Jul-13 05:03:39.172749 [DEBUG] #11 13.55 Progress: resolved 622, reused 0, downloaded 129, added 36
+2026-Jul-13 05:03:39.285795 [DEBUG] #11 14.55 Progress: resolved 622, reused 0, downloaded 186, added 52
+2026-Jul-13 05:03:40.191684 [DEBUG] #11 15.56 Progress: resolved 622, reused 0, downloaded 219, added 64
+2026-Jul-13 05:03:41.600936 [DEBUG] #11 16.56 Progress: resolved 622, reused 0, downloaded 247, added 74
+2026-Jul-13 05:03:41.801138 [DEBUG] #11 ...
+2026-Jul-13 05:03:41.801138 [DEBUG] 
+2026-Jul-13 05:03:41.801138 [DEBUG] #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:03:41.801138 [DEBUG] #8 25.40 Selecting previously unselected package libgssapi-krb5-2:amd64.
+2026-Jul-13 05:03:41.957997 [DEBUG] #8 25.41 Preparing to unpack .../06-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
+2026-Jul-13 05:03:41.989137 [DEBUG] #8 25.59 Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:03:43.899567 [DEBUG] #8 27.50 Selecting previously unselected package libsasl2-modules-db:amd64.
+2026-Jul-13 05:03:43.899567 [DEBUG] #8 27.50 Preparing to unpack .../07-libsasl2-modules-db_2.1.28+dfsg-10_amd64.deb ...
+2026-Jul-13 05:03:44.135668 [DEBUG] #8 27.59 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-13 05:03:44.739105 [DEBUG] #8 28.35 Selecting previously unselected package libsasl2-2:amd64.
+2026-Jul-13 05:03:44.949093 [DEBUG] #8 28.35 Preparing to unpack .../08-libsasl2-2_2.1.28+dfsg-10_amd64.deb ...
+2026-Jul-13 05:03:49.197651 [DEBUG] #8 28.41 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-13 05:03:51.633415 [DEBUG] #8 ...
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 17.56 Progress: resolved 622, reused 0, downloaded 282, added 84
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 18.56 Progress: resolved 622, reused 0, downloaded 315, added 95
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 19.56 Progress: resolved 622, reused 0, downloaded 338, added 102
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 20.56 Progress: resolved 622, reused 0, downloaded 356, added 106
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 21.57 Progress: resolved 622, reused 0, downloaded 371, added 110
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 22.66 Progress: resolved 622, reused 0, downloaded 398, added 118
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 24.38 Progress: resolved 622, reused 0, downloaded 399, added 118
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 25.38 Progress: resolved 622, reused 0, downloaded 405, added 122
+2026-Jul-13 05:03:51.892560 [DEBUG] #11 26.38 Progress: resolved 622, reused 0, downloaded 407, added 122
+2026-Jul-13 05:03:52.879448 [DEBUG] #11 28.25 Progress: resolved 622, reused 0, downloaded 408, added 122
+2026-Jul-13 05:03:55.403302 [DEBUG] #11 30.77 Progress: resolved 622, reused 0, downloaded 409, added 122
+2026-Jul-13 05:03:56.399542 [DEBUG] #11 31.77 Progress: resolved 622, reused 0, downloaded 413, added 122
+2026-Jul-13 05:03:56.644033 [DEBUG] #11 ...
+2026-Jul-13 05:03:56.644033 [DEBUG] 
+2026-Jul-13 05:03:56.644033 [DEBUG] #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:03:56.644033 [DEBUG] #8 40.10 Selecting previously unselected package libldap-2.5-0:amd64.
+2026-Jul-13 05:03:56.644033 [DEBUG] #8 40.10 Preparing to unpack .../09-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+2026-Jul-13 05:03:56.803649 [DEBUG] #8 40.41 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+2026-Jul-13 05:04:01.582948 [DEBUG] #8 ...
+2026-Jul-13 05:04:01.582948 [DEBUG] 
+2026-Jul-13 05:04:01.582948 [DEBUG] #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:04:01.582948 [DEBUG] #11 36.95 Progress: resolved 622, reused 0, downloaded 414, added 122
+2026-Jul-13 05:04:03.059516 [DEBUG] #11 37.95 Progress: resolved 622, reused 0, downloaded 421, added 126
+2026-Jul-13 05:04:03.599902 [DEBUG] #11 38.97 Progress: resolved 622, reused 0, downloaded 426, added 126
+2026-Jul-13 05:04:04.614274 [DEBUG] #11 39.97 Progress: resolved 622, reused 0, downloaded 438, added 130
+2026-Jul-13 05:04:06.415506 [DEBUG] #11 40.97 Progress: resolved 622, reused 0, downloaded 454, added 134
+2026-Jul-13 05:04:06.614685 [DEBUG] #11 41.98 Progress: resolved 622, reused 0, downloaded 464, added 138
+2026-Jul-13 05:04:07.621417 [DEBUG] #11 42.98 Progress: resolved 622, reused 0, downloaded 484, added 145
+2026-Jul-13 05:04:08.631088 [DEBUG] #11 43.99 Progress: resolved 622, reused 0, downloaded 491, added 146
+2026-Jul-13 05:04:11.635207 [DEBUG] #11 44.99 Progress: resolved 622, reused 0, downloaded 498, added 149
+2026-Jul-13 05:04:11.635207 [DEBUG] #11 46.57 Progress: resolved 622, reused 0, downloaded 499, added 149
+2026-Jul-13 05:04:12.213743 [DEBUG] #11 47.58 Progress: resolved 622, reused 0, downloaded 506, added 150
+2026-Jul-13 05:04:15.555533 [DEBUG] #11 ...
+2026-Jul-13 05:04:15.555533 [DEBUG] 
+2026-Jul-13 05:04:15.555533 [DEBUG] #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:04:15.555533 [DEBUG] #8 47.57 Selecting previously unselected package libnghttp2-14:amd64.
+2026-Jul-13 05:04:15.555533 [DEBUG] #8 47.58 Preparing to unpack .../10-libnghttp2-14_1.52.0-1+deb12u3_amd64.deb ...
+2026-Jul-13 05:04:15.555533 [DEBUG] #8 50.82 Unpacking libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+2026-Jul-13 05:04:15.555533 [DEBUG] #8 ...
+2026-Jul-13 05:04:15.555533 [DEBUG] 
+2026-Jul-13 05:04:15.555533 [DEBUG] #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:04:15.555533 [DEBUG] #11 49.82 Progress: resolved 622, reused 0, downloaded 507, added 150
+2026-Jul-13 05:04:15.555533 [DEBUG] #11 50.81 Progress: resolved 622, reused 0, downloaded 513, added 153
+2026-Jul-13 05:04:16.724439 [DEBUG] #11 52.09 Progress: resolved 622, reused 0, downloaded 514, added 153
+2026-Jul-13 05:04:18.415244 [DEBUG] #11 53.09 Progress: resolved 622, reused 0, downloaded 529, added 158
+2026-Jul-13 05:04:19.128156 [DEBUG] #11 54.09 Progress: resolved 622, reused 0, downloaded 572, added 170
+2026-Jul-13 05:04:19.731532 [DEBUG] #11 55.10 Progress: resolved 622, reused 0, downloaded 598, added 178
+2026-Jul-13 05:04:20.731921 [DEBUG] #11 56.10 Progress: resolved 622, reused 0, downloaded 622, added 239
+2026-Jul-13 05:04:21.734525 [DEBUG] #11 57.10 Progress: resolved 622, reused 0, downloaded 622, added 398
+2026-Jul-13 05:04:22.834931 [DEBUG] #11 58.19 Progress: resolved 622, reused 0, downloaded 622, added 408
+2026-Jul-13 05:04:24.366335 [DEBUG] #11 59.73 Progress: resolved 622, reused 0, downloaded 622, added 409
+2026-Jul-13 05:04:24.666470 [DEBUG] #11 ...
+2026-Jul-13 05:04:24.666470 [DEBUG] 
+2026-Jul-13 05:04:24.666470 [DEBUG] #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:04:24.666470 [DEBUG] #8 58.18 Selecting previously unselected package libpsl5:amd64.
+2026-Jul-13 05:04:24.666470 [DEBUG] #8 58.19 Preparing to unpack .../11-libpsl5_0.21.2-1_amd64.deb ...
+2026-Jul-13 05:04:24.666470 [DEBUG] #8 62.76 Unpacking libpsl5:amd64 (0.21.2-1) ...
+2026-Jul-13 05:04:24.666470 [DEBUG] #8 65.36 Selecting previously unselected package librtmp1:amd64.
+2026-Jul-13 05:04:24.666470 [DEBUG] #8 65.37 Preparing to unpack .../12-librtmp1_2.4+20151223.gitfa8646d.1-2+b2_amd64.deb ...
+2026-Jul-13 05:04:24.666470 [DEBUG] #8 67.80 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+2026-Jul-13 05:04:25.363935 [DEBUG] #8 ...
+2026-Jul-13 05:04:25.363935 [DEBUG] 
+2026-Jul-13 05:04:25.363935 [DEBUG] #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:04:25.363935 [DEBUG] #11 60.73 Progress: resolved 622, reused 0, downloaded 622, added 491
+2026-Jul-13 05:04:26.258370 [DEBUG] #11 61.62 Progress: resolved 622, reused 0, downloaded 622, added 622, done
+2026-Jul-13 05:04:33.015176 [DEBUG] #11 ...
+2026-Jul-13 05:04:33.015176 [DEBUG] 
+2026-Jul-13 05:04:33.015176 [DEBUG] #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:04:33.015176 [DEBUG] #8 70.55 Selecting previously unselected package libssh2-1:amd64.
+2026-Jul-13 05:04:33.015176 [DEBUG] #8 70.55 Preparing to unpack .../13-libssh2-1_1.10.0-3+b1_amd64.deb ...
+2026-Jul-13 05:04:33.015176 [DEBUG] #8 71.37 Unpacking libssh2-1:amd64 (1.10.0-3+b1) ...
+2026-Jul-13 05:04:33.971211 [DEBUG] #8 ...
+2026-Jul-13 05:04:33.971211 [DEBUG] 
+2026-Jul-13 05:04:33.971211 [DEBUG] #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:04:33.971211 [DEBUG] #11 69.34 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 05:04:34.133130 [DEBUG] #11 69.34 .../esbuild@0.28.1/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 05:04:34.133130 [DEBUG] #11 69.35 .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 05:04:34.133130 [DEBUG] #11 69.35 .../esbuild@0.18.20/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 05:04:35.609356 [DEBUG] #11 70.98 .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-Jul-13 05:04:35.964445 [DEBUG] #11 71.00 .../esbuild@0.18.20/node_modules/esbuild postinstall: Done
+2026-Jul-13 05:04:35.964445 [DEBUG] #11 71.25 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-13 05:04:36.051407 [DEBUG] #11 71.35 .../esbuild@0.28.1/node_modules/esbuild postinstall: Done
+2026-Jul-13 05:04:37.791022 [DEBUG] #11 73.15
+2026-Jul-13 05:04:37.791022 [DEBUG] #11 73.15 dependencies:
+2026-Jul-13 05:04:37.791022 [DEBUG] #11 73.15 + @replit/connectors-sdk 0.4.1
+2026-Jul-13 05:04:37.791022 [DEBUG] #11 73.15
+2026-Jul-13 05:04:37.791022 [DEBUG] #11 73.15 devDependencies:
+2026-Jul-13 05:04:37.791022 [DEBUG] #11 73.15 + prettier 3.9.4
+2026-Jul-13 05:04:37.791022 [DEBUG] #11 73.15 + typescript 5.9.3
+2026-Jul-13 05:04:37.791022 [DEBUG] #11 73.15
+2026-Jul-13 05:04:38.001722 [DEBUG] #11 73.37 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-13 05:04:38.175038 [DEBUG] #11 73.43 . preinstall: Done
+2026-Jul-13 05:04:38.647251 [DEBUG] #11 73.99 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2026-Jul-13 05:04:38.647251 [DEBUG] #11 73.99 │                                                                              │
+2026-Jul-13 05:04:38.647251 [DEBUG] #11 73.99 │   Ignored build scripts: @google/genai@2.10.0, protobufjs@7.6.5.             │
+2026-Jul-13 05:04:38.647251 [DEBUG] #11 73.99 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2026-Jul-13 05:04:38.647251 [DEBUG] #11 73.99 │   to run scripts.                                                            │
+2026-Jul-13 05:04:38.647251 [DEBUG] #11 73.99 │                                                                              │
+2026-Jul-13 05:04:38.647251 [DEBUG] #11 73.99 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-Jul-13 05:04:38.851266 [DEBUG] #11 74.13 Done in 1m 7.9s using pnpm v10.26.1
+2026-Jul-13 05:04:42.814501 [DEBUG] #11 DONE 78.1s
+2026-Jul-13 05:04:42.814501 [DEBUG] 
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 77.78 Selecting previously unselected package libcurl4:amd64.
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 77.78 Preparing to unpack .../14-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 77.90 Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) ...
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 79.00 Selecting previously unselected package curl.
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 79.01 Preparing to unpack .../15-curl_7.88.1-10+deb12u15_amd64.deb ...
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 79.66 Unpacking curl (7.88.1-10+deb12u15) ...
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 80.76 Setting up libkeyutils1:amd64 (1.6.3-2) ...
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 81.13 Setting up libpsl5:amd64 (0.21.2-1) ...
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 81.46 Setting up libbrotli1:amd64 (1.0.9-2+b6) ...
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 81.78 Setting up libssl3:amd64 (3.0.20-1~deb12u2) ...
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 81.98 Setting up libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+2026-Jul-13 05:04:42.814501 [DEBUG] #8 86.26 Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:04:43.043674 [DEBUG] #8 86.64 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-13 05:04:43.227258 [DEBUG] #8 ...
+2026-Jul-13 05:04:43.227258 [DEBUG] 
+2026-Jul-13 05:04:43.227258 [DEBUG] #12 [build 6/7] RUN pnpm run build
+2026-Jul-13 05:04:48.221564 [DEBUG] #12 ...
+2026-Jul-13 05:04:48.221564 [DEBUG] 
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 86.90 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 87.15 Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 87.89 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 88.15 Setting up libssh2-1:amd64 (1.10.0-3+b1) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 88.44 Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 88.77 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 89.13 Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 89.38 Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 89.63 Setting up curl (7.88.1-10+deb12u15) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 90.06 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+2026-Jul-13 05:04:48.221564 [DEBUG] #8 DONE 91.8s
+2026-Jul-13 05:04:48.395129 [DEBUG] #12 [build 6/7] RUN pnpm run build
+2026-Jul-13 05:04:52.454321 [DEBUG] #12 9.381
+2026-Jul-13 05:04:52.543808 [DEBUG] #12 9.381 > workspace@0.0.0 build /app
+2026-Jul-13 05:04:52.543808 [DEBUG] #12 9.381 > pnpm run typecheck && pnpm -r --workspace-concurrency=1 --if-present --filter '!@workspace/mockup-sandbox' run build
+2026-Jul-13 05:04:52.543808 [DEBUG] #12 9.381
+2026-Jul-13 05:04:53.877525 [DEBUG] #12 10.80
+2026-Jul-13 05:04:53.877525 [DEBUG] #12 10.80 > workspace@0.0.0 typecheck /app
+2026-Jul-13 05:04:53.877525 [DEBUG] #12 10.80 > pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+2026-Jul-13 05:04:53.877525 [DEBUG] #12 10.80
+2026-Jul-13 05:04:54.932035 [DEBUG] #12 11.86
+2026-Jul-13 05:04:54.996096 [DEBUG] #12 11.86 > workspace@0.0.0 typecheck:libs /app
+2026-Jul-13 05:04:54.996096 [DEBUG] #12 11.86 > tsc --build
+2026-Jul-13 05:04:54.996096 [DEBUG] #12 11.86
+2026-Jul-13 05:05:41.431693 [DEBUG] #12 58.36 Scope: 4 of 10 workspace projects
+2026-Jul-13 05:05:41.481668 [DEBUG] 
+2026-Jul-13 05:05:41.615445 [DEBUG] #12 58.38 artifacts/api-server typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-13 05:05:41.615445 [DEBUG] #12 58.39 artifacts/guru-eob5 typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-13 05:06:17.473409 [DEBUG] #12 94.08 artifacts/api-server typecheck: Done
+2026-Jul-13 05:06:17.616888 [DEBUG] #12 94.14 artifacts/mockup-sandbox typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-13 05:07:17.374795 [DEBUG] #12 152.8 artifacts/guru-eob5 typecheck: Done
+2026-Jul-13 05:07:17.374795 [DEBUG] #12 152.9 scripts typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-13 05:07:18.931467 [DEBUG] #12 153.0 artifacts/mockup-sandbox typecheck: Done
+2026-Jul-13 05:07:22.325779 [DEBUG] #12 159.2 scripts typecheck: Done
+2026-Jul-13 05:07:28.813562 [DEBUG] #12 165.7 Scope: 8 of 10 workspace projects
+2026-Jul-13 05:07:29.028217 [DEBUG] #12 165.8
+2026-Jul-13 05:07:29.028217 [DEBUG] #12 165.8 > @workspace/api-server@0.0.0 build /app/artifacts/api-server
+2026-Jul-13 05:07:29.028217 [DEBUG] #12 165.8 > node ./build.mjs
+2026-Jul-13 05:07:29.028217 [DEBUG] #12 165.8
+2026-Jul-13 05:07:44.260936 ========================================
+2026-Jul-13 05:07:46.686103 Deployment failed: Command execution failed (exit code 255): docker exec jbv3imnuon9m5v6k1yh3xsqw bash -c 'bash /artifacts/build.sh'
+2026-Jul-13 05:07:46.686103 Error: #0 building with "default" instance using docker driver
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #1 [internal] load build definition from Dockerfile
+2026-Jul-13 05:07:46.686103 #1 transferring dockerfile:
+2026-Jul-13 05:07:46.686103 #1 transferring dockerfile: 3.43kB 0.1s done
+2026-Jul-13 05:07:46.686103 #1 DONE 1.5s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #2 [internal] load metadata for docker.io/library/node:22-slim
+2026-Jul-13 05:07:46.686103 #2 DONE 4.0s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #3 [internal] load .dockerignore
+2026-Jul-13 05:07:46.686103 #3 transferring context:
+2026-Jul-13 05:07:46.686103 #3 transferring context: 148B 0.0s done
+2026-Jul-13 05:07:46.686103 #3 DONE 1.5s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #4 [internal] load build context
+2026-Jul-13 05:07:46.686103 #4 DONE 0.0s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #5 [build 1/7] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 05:07:46.686103 #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 05:07:46.686103 #5 resolve docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf 2.7s done
+2026-Jul-13 05:07:46.686103 #5 DONE 2.8s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #5 [build 1/7] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 05:07:46.686103 #5 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #4 [internal] load build context
+2026-Jul-13 05:07:46.686103 #4 transferring context: 1.53MB 0.5s done
+2026-Jul-13 05:07:46.686103 #4 DONE 2.9s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #5 [build 1/7] FROM docker.io/library/node:22-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+2026-Jul-13 05:07:46.686103 #5 DONE 10.6s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #6 [runtime 2/6] WORKDIR /app
+2026-Jul-13 05:07:46.686103 #6 DONE 2.3s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #7 [build 2/7] RUN corepack enable
+2026-Jul-13 05:07:46.686103 #7 DONE 5.1s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:07:46.686103 #8 2.020 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+2026-Jul-13 05:<REDACTED>@11.12.0   │
+2026-Jul-13 05:07:46.686103 #11 9.528    │                                               │
+2026-Jul-13 05:07:46.686103 #11 9.528    ╰───────────────────────────────────────────────╯
+2026-Jul-13 05:07:46.686103 #11 9.528
+2026-Jul-13 05:07:46.686103 #11 9.543 Progress: resolved 622, reused 0, downloaded 0, added 0
+2026-Jul-13 05:07:46.686103 #11 10.54 Progress: resolved 622, reused 0, downloaded 16, added 0
+2026-Jul-13 05:07:46.686103 #11 11.55 Progress: resolved 622, reused 0, downloaded 79, added 20
+2026-Jul-13 05:07:46.686103 #11 12.55 Progress: resolved 622, reused 0, downloaded 97, added 25
+2026-Jul-13 05:07:46.686103 #11 13.55 Progress: resolved 622, reused 0, downloaded 129, added 36
+2026-Jul-13 05:07:46.686103 #11 14.55 Progress: resolved 622, reused 0, downloaded 186, added 52
+2026-Jul-13 05:07:46.686103 #11 15.56 Progress: resolved 622, reused 0, downloaded 219, added 64
+2026-Jul-13 05:07:46.686103 #11 16.56 Progress: resolved 622, reused 0, downloaded 247, added 74
+2026-Jul-13 05:07:46.686103 #11 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:07:46.686103 #8 25.40 Selecting previously unselected package libgssapi-krb5-2:amd64.
+2026-Jul-13 05:07:46.686103 #8 25.41 Preparing to unpack .../06-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 25.59 Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:07:46.686103 #8 27.50 Selecting previously unselected package libsasl2-modules-db:amd64.
+2026-Jul-13 05:07:46.686103 #8 27.50 Preparing to unpack .../07-libsasl2-modules-db_2.1.28+dfsg-10_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 27.59 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-13 05:07:46.686103 #8 28.35 Selecting previously unselected package libsasl2-2:amd64.
+2026-Jul-13 05:07:46.686103 #8 28.35 Preparing to unpack .../08-libsasl2-2_2.1.28+dfsg-10_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 28.41 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-13 05:07:46.686103 #8 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:07:46.686103 #11 17.56 Progress: resolved 622, reused 0, downloaded 282, added 84
+2026-Jul-13 05:07:46.686103 #11 18.56 Progress: resolved 622, reused 0, downloaded 315, added 95
+2026-Jul-13 05:07:46.686103 #11 19.56 Progress: resolved 622, reused 0, downloaded 338, added 102
+2026-Jul-13 05:07:46.686103 #11 20.56 Progress: resolved 622, reused 0, downloaded 356, added 106
+2026-Jul-13 05:07:46.686103 #11 21.57 Progress: resolved 622, reused 0, downloaded 371, added 110
+2026-Jul-13 05:07:46.686103 #11 22.66 Progress: resolved 622, reused 0, downloaded 398, added 118
+2026-Jul-13 05:07:46.686103 #11 24.38 Progress: resolved 622, reused 0, downloaded 399, added 118
+2026-Jul-13 05:07:46.686103 #11 25.38 Progress: resolved 622, reused 0, downloaded 405, added 122
+2026-Jul-13 05:07:46.686103 #11 26.38 Progress: resolved 622, reused 0, downloaded 407, added 122
+2026-Jul-13 05:07:46.686103 #11 28.25 Progress: resolved 622, reused 0, downloaded 408, added 122
+2026-Jul-13 05:07:46.686103 #11 30.77 Progress: resolved 622, reused 0, downloaded 409, added 122
+2026-Jul-13 05:07:46.686103 #11 31.77 Progress: resolved 622, reused 0, downloaded 413, added 122
+2026-Jul-13 05:07:46.686103 #11 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:07:46.686103 #8 40.10 Selecting previously unselected package libldap-2.5-0:amd64.
+2026-Jul-13 05:07:46.686103 #8 40.10 Preparing to unpack .../09-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 40.41 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+2026-Jul-13 05:07:46.686103 #8 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:07:46.686103 #11 36.95 Progress: resolved 622, reused 0, downloaded 414, added 122
+2026-Jul-13 05:07:46.686103 #11 37.95 Progress: resolved 622, reused 0, downloaded 421, added 126
+2026-Jul-13 05:07:46.686103 #11 38.97 Progress: resolved 622, reused 0, downloaded 426, added 126
+2026-Jul-13 05:07:46.686103 #11 39.97 Progress: resolved 622, reused 0, downloaded 438, added 130
+2026-Jul-13 05:07:46.686103 #11 40.97 Progress: resolved 622, reused 0, downloaded 454, added 134
+2026-Jul-13 05:07:46.686103 #11 41.98 Progress: resolved 622, reused 0, downloaded 464, added 138
+2026-Jul-13 05:07:46.686103 #11 42.98 Progress: resolved 622, reused 0, downloaded 484, added 145
+2026-Jul-13 05:07:46.686103 #11 43.99 Progress: resolved 622, reused 0, downloaded 491, added 146
+2026-Jul-13 05:07:46.686103 #11 44.99 Progress: resolved 622, reused 0, downloaded 498, added 149
+2026-Jul-13 05:07:46.686103 #11 46.57 Progress: resolved 622, reused 0, downloaded 499, added 149
+2026-Jul-13 05:07:46.686103 #11 47.58 Progress: resolved 622, reused 0, downloaded 506, added 150
+2026-Jul-13 05:07:46.686103 #11 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:07:46.686103 #8 47.57 Selecting previously unselected package libnghttp2-14:amd64.
+2026-Jul-13 05:07:46.686103 #8 47.58 Preparing to unpack .../10-libnghttp2-14_1.52.0-1+deb12u3_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 50.82 Unpacking libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+2026-Jul-13 05:07:46.686103 #8 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:07:46.686103 #11 49.82 Progress: resolved 622, reused 0, downloaded 507, added 150
+2026-Jul-13 05:07:46.686103 #11 50.81 Progress: resolved 622, reused 0, downloaded 513, added 153
+2026-Jul-13 05:07:46.686103 #11 52.09 Progress: resolved 622, reused 0, downloaded 514, added 153
+2026-Jul-13 05:07:46.686103 #11 53.09 Progress: resolved 622, reused 0, downloaded 529, added 158
+2026-Jul-13 05:07:46.686103 #11 54.09 Progress: resolved 622, reused 0, downloaded 572, added 170
+2026-Jul-13 05:07:46.686103 #11 55.10 Progress: resolved 622, reused 0, downloaded 598, added 178
+2026-Jul-13 05:07:46.686103 #11 56.10 Progress: resolved 622, reused 0, downloaded 622, added 239
+2026-Jul-13 05:07:46.686103 #11 57.10 Progress: resolved 622, reused 0, downloaded 622, added 398
+2026-Jul-13 05:07:46.686103 #11 58.19 Progress: resolved 622, reused 0, downloaded 622, added 408
+2026-Jul-13 05:07:46.686103 #11 59.73 Progress: resolved 622, reused 0, downloaded 622, added 409
+2026-Jul-13 05:07:46.686103 #11 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:07:46.686103 #8 58.18 Selecting previously unselected package libpsl5:amd64.
+2026-Jul-13 05:07:46.686103 #8 58.19 Preparing to unpack .../11-libpsl5_0.21.2-1_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 62.76 Unpacking libpsl5:amd64 (0.21.2-1) ...
+2026-Jul-13 05:07:46.686103 #8 65.36 Selecting previously unselected package librtmp1:amd64.
+2026-Jul-13 05:07:46.686103 #8 65.37 Preparing to unpack .../12-librtmp1_2.4+20151223.gitfa8646d.1-2+b2_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 67.80 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+2026-Jul-13 05:07:46.686103 #8 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:07:46.686103 #11 60.73 Progress: resolved 622, reused 0, downloaded 622, added 491
+2026-Jul-13 05:07:46.686103 #11 61.62 Progress: resolved 622, reused 0, downloaded 622, added 622, done
+2026-Jul-13 05:07:46.686103 #11 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:07:46.686103 #8 70.55 Selecting previously unselected package libssh2-1:amd64.
+2026-Jul-13 05:07:46.686103 #8 70.55 Preparing to unpack .../13-libssh2-1_1.10.0-3+b1_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 71.37 Unpacking libssh2-1:amd64 (1.10.0-3+b1) ...
+2026-Jul-13 05:07:46.686103 #8 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #11 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Jul-13 05:07:46.686103 #11 69.34 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 05:07:46.686103 #11 69.34 .../esbuild@0.28.1/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 05:07:46.686103 #11 69.35 .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 05:07:46.686103 #11 69.35 .../esbuild@0.18.20/node_modules/esbuild postinstall$ node install.js
+2026-Jul-13 05:07:46.686103 #11 70.98 .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-Jul-13 05:07:46.686103 #11 71.00 .../esbuild@0.18.20/node_modules/esbuild postinstall: Done
+2026-Jul-13 05:07:46.686103 #11 71.25 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-13 05:07:46.686103 #11 71.35 .../esbuild@0.28.1/node_modules/esbuild postinstall: Done
+2026-Jul-13 05:07:46.686103 #11 73.15
+2026-Jul-13 05:07:46.686103 #11 73.15 dependencies:
+2026-Jul-13 05:07:46.686103 #11 73.15 + @replit/connectors-sdk 0.4.1
+2026-Jul-13 05:07:46.686103 #11 73.15
+2026-Jul-13 05:07:46.686103 #11 73.15 devDependencies:
+2026-Jul-13 05:07:46.686103 #11 73.15 + prettier 3.9.4
+2026-Jul-13 05:07:46.686103 #11 73.15 + typescript 5.9.3
+2026-Jul-13 05:07:46.686103 #11 73.15
+2026-Jul-13 05:07:46.686103 #11 73.37 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-13 05:07:46.686103 #11 73.43 . preinstall: Done
+2026-Jul-13 05:07:46.686103 #11 73.99 ╭ Warning ─────────────────────────────────────────────────────────────────────╮
+2026-Jul-13 05:07:46.686103 #11 73.99 │                                                                              │
+2026-Jul-13 05:07:46.686103 #11 73.99 │   Ignored build scripts: @google/genai@2.10.0, protobufjs@7.6.5.             │
+2026-Jul-13 05:07:46.686103 #11 73.99 │   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+2026-Jul-13 05:07:46.686103 #11 73.99 │   to run scripts.                                                            │
+2026-Jul-13 05:07:46.686103 #11 73.99 │                                                                              │
+2026-Jul-13 05:07:46.686103 #11 73.99 ╰──────────────────────────────────────────────────────────────────────────────╯
+2026-Jul-13 05:07:46.686103 #11 74.13 Done in 1m 7.9s using pnpm v10.26.1
+2026-Jul-13 05:07:46.686103 #11 DONE 78.1s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:07:46.686103 #8 77.78 Selecting previously unselected package libcurl4:amd64.
+2026-Jul-13 05:07:46.686103 #8 77.78 Preparing to unpack .../14-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 77.90 Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) ...
+2026-Jul-13 05:07:46.686103 #8 79.00 Selecting previously unselected package curl.
+2026-Jul-13 05:07:46.686103 #8 79.01 Preparing to unpack .../15-curl_7.88.1-10+deb12u15_amd64.deb ...
+2026-Jul-13 05:07:46.686103 #8 79.66 Unpacking curl (7.88.1-10+deb12u15) ...
+2026-Jul-13 05:07:46.686103 #8 80.76 Setting up libkeyutils1:amd64 (1.6.3-2) ...
+2026-Jul-13 05:07:46.686103 #8 81.13 Setting up libpsl5:amd64 (0.21.2-1) ...
+2026-Jul-13 05:07:46.686103 #8 81.46 Setting up libbrotli1:amd64 (1.0.9-2+b6) ...
+2026-Jul-13 05:07:46.686103 #8 81.78 Setting up libssl3:amd64 (3.0.20-1~deb12u2) ...
+2026-Jul-13 05:07:46.686103 #8 81.98 Setting up libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+2026-Jul-13 05:07:46.686103 #8 86.26 Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:07:46.686103 #8 86.64 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-13 05:07:46.686103 #8 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #12 [build 6/7] RUN pnpm run build
+2026-Jul-13 05:07:46.686103 #12 ...
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #8 [runtime 3/6] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*
+2026-Jul-13 05:07:46.686103 #8 86.90 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+2026-Jul-13 05:07:46.686103 #8 87.15 Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:07:46.686103 #8 87.89 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-13 05:07:46.686103 #8 88.15 Setting up libssh2-1:amd64 (1.10.0-3+b1) ...
+2026-Jul-13 05:07:46.686103 #8 88.44 Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:07:46.686103 #8 88.77 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+2026-Jul-13 05:07:46.686103 #8 89.13 Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-13 05:07:46.686103 #8 89.38 Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
+2026-Jul-13 05:07:46.686103 #8 89.63 Setting up curl (7.88.1-10+deb12u15) ...
+2026-Jul-13 05:07:46.686103 #8 90.06 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+2026-Jul-13 05:07:46.686103 #8 DONE 91.8s
+2026-Jul-13 05:07:46.686103 
+2026-Jul-13 05:07:46.686103 #12 [build 6/7] RUN pnpm run build
+2026-Jul-13 05:07:46.686103 #12 9.381
+2026-Jul-13 05:07:46.686103 #12 9.381 > workspace@0.0.0 build /app
+2026-Jul-13 05:07:46.686103 #12 9.381 > pnpm run typecheck && pnpm -r --workspace-concurrency=1 --if-present --filter '!@workspace/mockup-sandbox' run build
+2026-Jul-13 05:07:46.686103 #12 9.381
+2026-Jul-13 05:07:46.686103 #12 10.80
+2026-Jul-13 05:07:46.686103 #12 10.80 > workspace@0.0.0 typecheck /app
+2026-Jul-13 05:07:46.686103 #12 10.80 > pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+2026-Jul-13 05:07:46.686103 #12 10.80
+2026-Jul-13 05:07:46.686103 #12 11.86
+2026-Jul-13 05:07:46.686103 #12 11.86 > workspace@0.0.0 typecheck:libs /app
+2026-Jul-13 05:07:46.686103 #12 11.86 > tsc --build
+2026-Jul-13 05:07:46.686103 #12 11.86
+2026-Jul-13 05:07:46.686103 #12 58.36 Scope: 4 of 10 workspace projects
+2026-Jul-13 05:07:46.686103 #12 58.38 artifacts/api-server typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-13 05:07:46.686103 #12 58.39 artifacts/guru-eob5 typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-13 05:07:46.686103 #12 94.08 artifacts/api-server typecheck: Done
+2026-Jul-13 05:07:46.686103 #12 94.14 artifacts/mockup-sandbox typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-13 05:07:46.686103 #12 152.8 artifacts/guru-eob5 typecheck: Done
+2026-Jul-13 05:07:46.686103 #12 152.9 scripts typecheck$ tsc -p tsconfig.json --noEmit
+2026-Jul-13 05:07:46.686103 #12 153.0 artifacts/mockup-sandbox typecheck: Done
+2026-Jul-13 05:07:46.686103 #12 159.2 scripts typecheck: Done
+2026-Jul-13 05:07:46.686103 #12 165.7 Scope: 8 of 10 workspace projects
+2026-Jul-13 05:07:46.686103 #12 165.8
+2026-Jul-13 05:07:46.686103 #12 165.8 > @workspace/api-server@0.0.0 build /app/artifacts/api-server
+2026-Jul-13 05:07:46.686103 #12 165.8 > node ./build.mjs
+2026-Jul-13 05:07:46.686103 #12 165.8
+2026-Jul-13 05:07:47.630750 [DEBUG] Error type: App\Exceptions\DeploymentException
+2026-Jul-13 05:07:47.875000 [DEBUG] Error code: 0
+2026-Jul-13 05:07:48.035955 [DEBUG] Location: /var/www/html/app/Traits/ExecuteRemoteCommand.php:242
+2026-Jul-13 05:07:48.906377 [DEBUG] Stack trace (first 5 lines):
+2026-Jul-13 05:07:49.228522 [DEBUG] #0 /var/www/html/app/Traits/ExecuteRemoteCommand.php(106): App\Jobs\ApplicationDeploymentJob->executeCommandWithProcess()
+2026-Jul-13 05:07:49.371249 [DEBUG] #1 /var/www/html/vendor/laravel/framework/src/Illuminate/Collections/Traits/EnumeratesValues.php(275): App\Jobs\ApplicationDeploymentJob->{closure:App\Traits\ExecuteRemoteCommand::execute_remote_command():72}()
+2026-Jul-13 05:07:49.466526 [DEBUG] #2 /var/www/html/app/Traits/ExecuteRemoteCommand.php(72): Illuminate\Support\Collection->each()
+2026-Jul-13 05:07:49.591140 [DEBUG] #3 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(3821): App\Jobs\ApplicationDeploymentJob->execute_remote_command()
+2026-Jul-13 05:07:49.682666 [DEBUG] #4 /var/www/html/app/Jobs/ApplicationDeploymentJob.php(912): App\Jobs\ApplicationDeploymentJob->build_image()
+2026-Jul-13 05:07:49.753386 ========================================
+2026-Jul-13 05:07:49.837672 Deployment failed. Removing the new version of your application.
+2026-Jul-13 05:07:55.284519 Gracefully shutting down build container: jbv3imnuon9m5v6k1yh3xsqw
+2026-Jul-13 05:07:56.030658 [DEBUG] [CMD]: docker stop --time=30 jbv3imnuon9m5v6k1yh3xsqw
+2026-Jul-13 05:07:56.030658 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-13 05:08:05.790405 [DEBUG] jbv3imnuon9m5v6k1yh3xsqw

@@ -157,7 +157,6 @@ export const GetKurikulumOverviewResponse = zod.object({
   "subjectId": zod.string(),
   "name": zod.string(),
   "description": zod.string().optional(),
-  "filePath": zod.string().optional().describe('Object storage path of the uploaded file (e.g. `\/objects\/uploads\/uuid`).'),
   "fileName": zod.string().optional().describe('Original file name as uploaded.'),
   "fileType": zod.string().optional().describe('MIME type of the uploaded file.'),
   "fileSize": zod.number().optional().describe('File size in bytes.'),
@@ -526,7 +525,6 @@ export const ListDocumentsResponseItem = zod.object({
   "subjectId": zod.string(),
   "name": zod.string(),
   "description": zod.string().optional(),
-  "filePath": zod.string().optional().describe('Object storage path of the uploaded file (e.g. `\/objects\/uploads\/uuid`).'),
   "fileName": zod.string().optional().describe('Original file name as uploaded.'),
   "fileType": zod.string().optional().describe('MIME type of the uploaded file.'),
   "fileSize": zod.number().optional().describe('File size in bytes.'),
@@ -542,7 +540,7 @@ export const CreateDocumentBody = zod.object({
   "subjectId": zod.string(),
   "name": zod.string(),
   "description": zod.string().optional(),
-  "filePath": zod.string().describe('Object storage path of the uploaded file (e.g. `\/objects\/uploads\/uuid`).'),
+  "fileData": zod.string().describe('Base64-encoded file content, stored directly in the database.'),
   "fileName": zod.string(),
   "fileType": zod.string().optional(),
   "fileSize": zod.number().optional()
@@ -553,7 +551,6 @@ export const CreateDocumentResponse = zod.object({
   "subjectId": zod.string(),
   "name": zod.string(),
   "description": zod.string().optional(),
-  "filePath": zod.string().optional().describe('Object storage path of the uploaded file (e.g. `\/objects\/uploads\/uuid`).'),
   "fileName": zod.string().optional().describe('Original file name as uploaded.'),
   "fileType": zod.string().optional().describe('MIME type of the uploaded file.'),
   "fileSize": zod.number().optional().describe('File size in bytes.'),
@@ -571,62 +568,6 @@ export const DeleteDocumentParams = zod.object({
 export const DeleteDocumentResponse = zod.object({
   "success": zod.boolean()
 })
-
-
-/**
- * Returns a presigned GCS URL for direct upload. The client sends JSON
- * metadata here, then uploads the file directly to the returned URL.
- * @summary Request a presigned URL for file upload
- */
-
-
-
-
-
-export const RequestUploadUrlBody = zod.object({
-  "name": zod.string().min(1).describe('Original file name.'),
-  "size": zod.number().min(1).describe('File size in bytes.'),
-  "contentType": zod.string().min(1).describe('MIME type of the file (e.g. `image\/jpeg`).')
-})
-
-
-
-
-
-
-export const RequestUploadUrlResponse = zod.object({
-  "uploadURL": zod.string().describe('Presigned GCS URL for PUT upload.'),
-  "objectPath": zod.string().describe('Normalized object path (e.g. `\/objects\/uploads\/uuid`). Store this in your database.'),
-  "metadata": zod.object({
-  "name": zod.string().min(1).describe('Original file name.'),
-  "size": zod.number().min(1).describe('File size in bytes.'),
-  "contentType": zod.string().min(1).describe('MIME type of the file (e.g. `image\/jpeg`).')
-}).optional()
-})
-
-
-/**
- * Unconditionally public — no authentication or ACL checks.
- * Searches PUBLIC_OBJECT_SEARCH_PATHS for the given file path.
- * @summary Serve a public asset from PUBLIC_OBJECT_SEARCH_PATHS
- */
-export const GetPublicObjectParams = zod.object({
-  "filePath": zod.coerce.string().describe('Relative file path within the public search paths.')
-})
-
-export const GetPublicObjectResponse = zod.unknown()
-
-
-/**
- * Serves object entities uploaded via presigned URLs. These can optionally
- * be protected with authentication or ACL checks based on the use case.
- * @summary Serve an object entity from PRIVATE_OBJECT_DIR
- */
-export const GetStorageObjectParams = zod.object({
-  "objectPath": zod.coerce.string().describe('Object path within the private object dir (e.g. `uploads\/some-uuid`).')
-})
-
-export const GetStorageObjectResponse = zod.unknown()
 
 
 /**

@@ -10,8 +10,8 @@ export interface AdminDocumentInput {
   subjectId: string;
   name: string;
   description?: string;
-  /** Object storage path of the uploaded file (e.g. `/objects/uploads/uuid`). */
-  filePath: string;
+  /** Base64-encoded file content, stored directly in the database. */
+  fileData: string;
   fileName: string;
   fileType?: string;
   fileSize?: number;

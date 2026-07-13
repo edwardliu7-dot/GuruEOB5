@@ -224,8 +224,6 @@ export interface AdminDocument {
   subjectId: string;
   name: string;
   description?: string;
-  /** Object storage path of the uploaded file (e.g. `/objects/uploads/uuid`). */
-  filePath?: string;
   /** Original file name as uploaded. */
   fileName?: string;
   /** MIME type of the uploaded file. */
@@ -239,37 +237,11 @@ export interface AdminDocumentInput {
   subjectId: string;
   name: string;
   description?: string;
-  /** Object storage path of the uploaded file (e.g. `/objects/uploads/uuid`). */
-  filePath: string;
+  /** Base64-encoded file content, stored directly in the database. */
+  fileData: string;
   fileName: string;
   fileType?: string;
   fileSize?: number;
-}
-
-export interface UploadUrlRequest {
-  /**
-     * Original file name.
-     * @minLength 1
-     */
-  name: string;
-  /**
-     * File size in bytes.
-     * @minimum 1
-     */
-  size: number;
-  /**
-     * MIME type of the file (e.g. `image/jpeg`).
-     * @minLength 1
-     */
-  contentType: string;
-}
-
-export interface UploadUrlResponse {
-  /** Presigned GCS URL for PUT upload. */
-  uploadURL: string;
-  /** Normalized object path (e.g. `/objects/uploads/uuid`). Store this in your database. */
-  objectPath: string;
-  metadata?: UploadUrlRequest;
 }
 
 export interface ErrorEnvelope {

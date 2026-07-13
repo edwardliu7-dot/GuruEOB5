@@ -18,8 +18,21 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useUpload } from "@workspace/object-storage-web";
 import { Download, Loader2 } from "lucide-react";
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Strip the "data:<mime>;base64," prefix -- we only want the raw payload.
+      const commaIndex = result.indexOf(",");
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
 
 const subjectSchema = z.object({
   name: z.string().min(1, "Nama mata pelajaran harus diisi"),
@@ -60,7 +73,7 @@ export default function Administrasi() {
   const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const { uploadFile, isUploading } = useUpload();
+  const [isUploading, setIsUploading] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -100,17 +113,14 @@ export default function Administrasi() {
       toast({ variant: "destructive", title: "Gagal", description: "Pilih berkas untuk diunggah" });
       return;
     }
+    setIsUploading(true);
     try {
-      const uploadResult = await uploadFile(selectedFile);
-      if (!uploadResult) {
-        toast({ variant: "destructive", title: "Gagal", description: "Gagal mengunggah berkas" });
-        return;
-      }
+      const fileData = await readFileAsBase64(selectedFile);
       await createDocument.mutateAsync({
         data: {
           ...data,
           subjectId: selectedSubject,
-          filePath: uploadResult.objectPath,
+          fileData,
           fileName: selectedFile.name,
           fileType: selectedFile.type || undefined,
           fileSize: selectedFile.size,
@@ -123,6 +133,8 @@ export default function Administrasi() {
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
     } catch (e) {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+    } finally {
+      setIsUploading(false);
     }
   };
 

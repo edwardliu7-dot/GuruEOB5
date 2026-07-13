@@ -101,7 +101,10 @@ async function buildAll() {
       "puppeteer-core",
       "electron",
     ],
-    sourcemap: "linked",
+    // "external" (not "linked") keeps the bundler from holding both the inline
+    // sourcemap comment and the full separate map in memory at once — cheaper
+    // on memory-constrained build hosts, at the cost of one extra static file.
+    sourcemap: "external",
     plugins: [
       // pino relies on workers to handle logging, instead of externalizing it we use a plugin to handle it
       esbuildPluginPino({ transports: ["pino-pretty"] })
