@@ -100,7 +100,7 @@ function LessonCard({ item }: { item: any }) {
               <span className="rounded bg-muted px-1.5 py-0.5 font-medium text-foreground">
                 Kelas {item.kelas}
               </span>
-              {item.kd && <span>KD {item.kd}</span>}
+              {item.kd && <span>CP {item.kd}</span>}
               {item.jp != null && <span>· {item.jp} JP</span>}
             </div>
           </div>

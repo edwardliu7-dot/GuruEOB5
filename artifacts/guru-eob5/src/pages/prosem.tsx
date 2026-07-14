@@ -384,7 +384,7 @@ export default function Prosem() {
               <TableHeader>
                 <TableRow className="bg-gray-50/50">
                   <TableHead className="w-24">Pekan</TableHead>
-                  <TableHead>KD</TableHead>
+                  <TableHead>CP</TableHead>
                   <TableHead>Materi</TableHead>
                   <TableHead className="w-16">JP</TableHead>
                   <TableHead>Catatan</TableHead>
@@ -484,7 +484,7 @@ export default function Prosem() {
                   name="kd"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>KD (Opsional)</FormLabel>
+                      <FormLabel>CP (Opsional)</FormLabel>
                       <FormControl>
                         <Input placeholder="3.1" {...field} />
                       </FormControl>
