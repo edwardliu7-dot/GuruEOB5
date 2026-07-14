@@ -18,6 +18,7 @@ import infoPekananRouter from "./info-pekanan";
 import modulAjarRouter from "./modul-ajar";
 import soalOtomatisRouter from "./soal-otomatis";
 import studentAccountsRouter from "./student-accounts";
+import feedbackRouter from "./feedback";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use(infoPekananRouter);
 router.use(modulAjarRouter);
 router.use(soalOtomatisRouter);
 router.use(studentAccountsRouter);
+router.use(feedbackRouter);
 
 export default router;

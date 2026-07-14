@@ -26,6 +26,7 @@ import WaliKelas from "@/pages/walikelas";
 import AkunSiswa from "@/pages/akun-siswa";
 import ModulAjar from "@/pages/modul-ajar";
 import SoalOtomatis from "@/pages/soal-otomatis";
+import FeedbackAdmin from "@/pages/feedback";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,7 @@ function Router() {
       <Route path="/akun-siswa" component={() => <ProtectedRoute component={AkunSiswa} />} />
       <Route path="/modul-ajar" component={() => <ProtectedRoute component={ModulAjar} />} />
       <Route path="/soal-otomatis" component={() => <ProtectedRoute component={SoalOtomatis} />} />
+      <Route path="/feedback" component={() => <ProtectedRoute component={FeedbackAdmin} adminOnly />} />
       <Route component={NotFound} />
     </Switch>
   );

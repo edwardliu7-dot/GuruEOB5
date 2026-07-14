@@ -1,12 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileDialog } from "@/components/profile-dialog";
+import { FeedbackWidget } from "@/components/feedback-widget";
 import { formatJabatan } from "@/lib/options";
 import logoUrl from "@/assets/logo.png";
+import { useQuery } from "@tanstack/react-query";
 import {
   SidebarProvider,
   Sidebar,
@@ -50,6 +52,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const isAdmin = user?.isAdmin ?? false;
 
+  // Fetch unread feedback count for admin badge
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/feedback/unread-count"],
+    queryFn: () =>
+      fetch("/api/feedback/unread-count", { credentials: "include" }).then((r) => r.json()),
+    enabled: isAdmin,
+    refetchInterval: 60_000, // refresh every minute
+    staleTime: 30_000,
+  });
+  const unreadCount = unreadData?.count ?? 0;
+
   const utamaNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   ];
@@ -63,6 +76,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     ...(isAdmin ? [{ href: "/kalender", label: "Kalender Akademik", icon: CalendarDays }] : []),
     ...(isAdmin ? [{ href: "/siswa", label: "Data Siswa", icon: Users }] : []),
     ...(isAdmin ? [{ href: "/guru", label: "Data Guru", icon: Users }] : []),
+    ...(isAdmin ? [{ href: "/feedback", label: "Kotak Masuk", icon: Inbox, badge: unreadCount }] : []),
   ];
 
   const kegiatanBelajarMengajarNavItems = [
@@ -127,12 +141,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {perangkatMengajarNavItems.map((item) => {
                 const isActive = location === item.href;
                 const Icon = item.icon;
+                const badge = (item as any).badge ?? 0;
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
                       <Link href={item.href}>
                         <Icon />
-                        <span>{item.label}</span>
+                        <span className="flex-1">{item.label}</span>
+                        {badge > 0 && (
+                          <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
+                            {badge > 99 ? "99+" : badge}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -211,6 +231,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </Sidebar>
 
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
+      <FeedbackWidget />
 
       <SidebarInset className="h-svh min-w-0 overflow-hidden bg-[#F8FAFC]">
         <div className="h-14 flex items-center gap-2 px-4 border-b border-border shrink-0 md:h-16 md:px-6 bg-white">
