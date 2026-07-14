@@ -13,3 +13,4 @@
 - [GuruEOB5 dedicated DB vs shared Neon](guru-eob5-dedicated-db-vs-shared-neon.md) — only `gurus` lives on shared Neon; all other tables use this app's own `DATABASE_URL`; drizzle-kit push can fail non-interactively even for new tables (no TTY).
 - [pnpm add scoping in monorepo](pnpm-add-monorepo-scoping.md) — installing a package from the workspace root can fail (`ERR_PNPM_ADDING_TO_ROOT`); `cd` into the target `artifacts/<app>` dir and run `pnpm add` there.
 - [AI "recognize any format" import pattern](ai-any-format-import-pattern.md) — dispatch by file type: spreadsheets → parsed rows to Gemini, PDF/image → inlineData passthrough, docx → mammoth-extracted text, else → plain text fallback.
+- [Re-imported project artifact registration gap](reimported-artifact-registration.md) — GitHub-imported project's artifact.toml files can be unregistered (empty listArtifacts, 502 on dev domain); creating any throwaway artifact forces re-registration.

@@ -4,12 +4,12 @@ An Indonesian school/teacher administration app: teachers log in, see a dashboar
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- Two Replit-managed artifact workflows run the app: `artifacts/api-server: API Server` (Express API) and `artifacts/guru-eob5: web` (Vite frontend). Restart them with the `WorkflowsRestart` tool — do not hand-configure plain workflows for these; the artifact workflow injects `PORT`/`BASE_PATH` and the shared reverse-proxy routing that makes `/api` reachable from the frontend.
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only, Replit Postgres app data only)
-- Required env: `DATABASE_URL`, `SESSION_SECRET`, `NEON_DATABASE_URL`
+- Required env: `DATABASE_URL`, `SESSION_SECRET`, `NEON_DATABASE_URL`, `GEMINI_API_KEY`
 
 ## Stack
 
