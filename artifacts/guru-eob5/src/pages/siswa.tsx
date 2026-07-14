@@ -164,6 +164,15 @@ export default function Siswa() {
       toast({ variant: "destructive", title: "Data belum lengkap", description: "Nama, kelas, dan sekolah wajib diisi pada setiap baris" });
       return;
     }
+    const invalidKelas = importRows.filter((r) => !(KELAS_OPTIONS as readonly string[]).includes(r.kelas));
+    if (invalidKelas.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Kelas tidak valid",
+        description: `${invalidKelas.length} siswa memiliki kelas yang belum dipilih. Pilih kelas yang benar dari dropdown sebelum menyimpan.`,
+      });
+      return;
+    }
     try {
       const result = await bulkCreate.mutateAsync({
         data: { students: importRows.map((r) => ({ ...r, nisn: r.nisn?.trim() || undefined })) },

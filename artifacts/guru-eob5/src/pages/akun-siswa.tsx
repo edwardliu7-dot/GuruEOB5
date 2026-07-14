@@ -5,6 +5,7 @@ import {
   useGenerateAllStudentAccounts,
   useGenerateStudentAccount,
 } from "@workspace/api-client-react";
+import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { KeyRound, Download, Loader2, RotateCw } from "lucide-react";
+import { KeyRound, Download, Loader2, RotateCw, AlertCircle } from "lucide-react";
 
 export default function AkunSiswa() {
-  const { data, isLoading, refetch } = useListStudentAccounts();
+  const { user } = useAuth();
+  const { data, isLoading, isError, refetch } = useListStudentAccounts();
   const { toast } = useToast();
+  const waliKelasKelas = user?.waliKelasKelas ?? null;
   const generateOne = useGenerateStudentAccount();
   const generateAll = useGenerateAllStudentAccounts();
   const [accounts, setAccounts] = useState<Record<string, { username: string; password: string }>>({});
@@ -113,6 +116,27 @@ export default function AkunSiswa() {
     }
   };
 
+  // Not configured as wali_kelas
+  if (!isLoading && !waliKelasKelas) {
+    return (
+      <Layout>
+        <div className="space-y-4 animate-in fade-in duration-500">
+          <h1 className="text-3xl font-bold tracking-tight font-serif text-foreground">Akun Siswa</h1>
+          <Card className="border-none shadow-sm ring-1 ring-black/5">
+            <CardContent className="py-10 flex flex-col items-center gap-3 text-center">
+              <AlertCircle className="w-10 h-10 text-amber-500" />
+              <p className="font-medium text-foreground">Akun Anda belum dikonfigurasi sebagai Wali Kelas</p>
+              <p className="text-sm text-muted-foreground max-w-sm">
+                Fitur ini hanya tersedia untuk guru yang memiliki jabatan Wali Kelas dengan kelas yang sudah ditentukan.
+                Hubungi admin untuk memperbarui profil Anda.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -125,7 +149,7 @@ export default function AkunSiswa() {
               <Skeleton className="h-5 w-64 mt-1" />
             ) : (
               <p className="text-muted-foreground mt-1">
-                Buat akun BLP & TOMAT untuk siswa Anda tanpa perlu mereka daftar sendiri
+                Buat akun BLP & TOMAT untuk siswa kelas <span className="font-semibold text-foreground">{waliKelasKelas}</span>
               </p>
             )}
           </div>
@@ -160,10 +184,23 @@ export default function AkunSiswa() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
+            ) : isError ? (
+              <div className="flex flex-col items-center gap-2 py-10 text-center">
+                <AlertCircle className="w-8 h-8 text-destructive" />
+                <p className="font-medium text-foreground">Gagal memuat data siswa</p>
+                <p className="text-sm text-muted-foreground">
+                  Pastikan akun Anda terdaftar sebagai Wali Kelas dengan kelas yang sudah dikonfigurasi.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">Coba lagi</Button>
+              </div>
             ) : !data || data.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Belum ada siswa terdaftar di kelas ini.
-              </p>
+              <div className="flex flex-col items-center gap-2 py-10 text-center">
+                <p className="font-medium text-foreground">Belum ada siswa di kelas {waliKelasKelas}</p>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Minta admin untuk menambahkan data siswa kelas <span className="font-semibold">{waliKelasKelas}</span> melalui menu Data Siswa.
+                  Pastikan kolom <span className="font-semibold">kelas</span> diisi dengan tepat.
+                </p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -233,13 +270,15 @@ export default function AkunSiswa() {
           </CardContent>
         </Card>
 
-        <Button
-          variant="link"
-          className="text-muted-foreground text-sm px-0"
-          onClick={() => refetch()}
-        >
-          Muat ulang daftar siswa
-        </Button>
+        {data && data.length > 0 && (
+          <Button
+            variant="link"
+            className="text-muted-foreground text-sm px-0"
+            onClick={() => refetch()}
+          >
+            Muat ulang daftar siswa
+          </Button>
+        )}
       </div>
     </Layout>
   );
