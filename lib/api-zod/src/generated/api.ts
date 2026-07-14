@@ -659,6 +659,132 @@ export const GetDocumentFileResponse = zod.unknown()
 
 
 /**
+ * @summary List Tujuan Pembelajaran for a subject + semester
+ */
+export const ListTujuanPembelajaranQueryParams = zod.object({
+  "subjectId": zod.coerce.string().optional(),
+  "calendarId": zod.coerce.string().optional()
+})
+
+export const ListTujuanPembelajaranResponseItem = zod.object({
+  "id": zod.string(),
+  "subjectId": zod.string(),
+  "calendarId": zod.string(),
+  "lingkupMateri": zod.number(),
+  "tpNumber": zod.number(),
+  "description": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListTujuanPembelajaranResponse = zod.array(ListTujuanPembelajaranResponseItem)
+
+
+/**
+ * @summary Manually add a Tujuan Pembelajaran entry
+ */
+export const CreateTujuanPembelajaranBody = zod.object({
+  "subjectId": zod.string(),
+  "calendarId": zod.string(),
+  "lingkupMateri": zod.number(),
+  "tpNumber": zod.number(),
+  "description": zod.string()
+})
+
+export const CreateTujuanPembelajaranResponse = zod.object({
+  "id": zod.string(),
+  "subjectId": zod.string(),
+  "calendarId": zod.string(),
+  "lingkupMateri": zod.number(),
+  "tpNumber": zod.number(),
+  "description": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Analyze an uploaded file or pasted text with AI and map it to Tujuan Pembelajaran entries, regardless of its format
+ */
+export const analyzeTPImportBodyRowsMax = 2000;
+
+
+
+export const AnalyzeTPImportBody = zod.object({
+  "rows": zod.array(zod.array(zod.string())).max(analyzeTPImportBodyRowsMax).optional(),
+  "fileData": zod.string().optional().describe('Base64-encoded raw file content.'),
+  "fileName": zod.string().optional(),
+  "fileType": zod.string().optional().describe('MIME type of the uploaded file.')
+}).describe('Provide either `rows` (pre-parsed spreadsheet rows) or `fileData` (base64 raw file bytes) with `fileName`\/`fileType`. The AI recognizes the content regardless of layout or file format (spreadsheet, PDF, Word document, image, or plain text).\n')
+
+export const AnalyzeTPImportResponse = zod.object({
+  "items": zod.array(zod.object({
+  "lingkupMateri": zod.number(),
+  "tpNumber": zod.number(),
+  "description": zod.string()
+}))
+})
+
+
+/**
+ * @summary Create many Tujuan Pembelajaran entries at once
+ */
+export const bulkCreateTujuanPembelajaranBodyItemsMax = 2000;
+
+
+
+export const BulkCreateTujuanPembelajaranBody = zod.object({
+  "subjectId": zod.string(),
+  "calendarId": zod.string(),
+  "items": zod.array(zod.object({
+  "lingkupMateri": zod.number(),
+  "tpNumber": zod.number(),
+  "description": zod.string()
+})).min(1).max(bulkCreateTujuanPembelajaranBodyItemsMax)
+})
+
+export const BulkCreateTujuanPembelajaranResponse = zod.object({
+  "count": zod.number(),
+  "skipped": zod.number()
+})
+
+
+/**
+ * @summary Update a Tujuan Pembelajaran entry
+ */
+export const UpdateTujuanPembelajaranParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateTujuanPembelajaranBody = zod.object({
+  "subjectId": zod.string(),
+  "calendarId": zod.string(),
+  "lingkupMateri": zod.number(),
+  "tpNumber": zod.number(),
+  "description": zod.string()
+})
+
+export const UpdateTujuanPembelajaranResponse = zod.object({
+  "id": zod.string(),
+  "subjectId": zod.string(),
+  "calendarId": zod.string(),
+  "lingkupMateri": zod.number(),
+  "tpNumber": zod.number(),
+  "description": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a Tujuan Pembelajaran entry
+ */
+export const DeleteTujuanPembelajaranParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteTujuanPembelajaranResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary List teaching journal entries
  */
 export const ListJournalEntriesQueryParams = zod.object({

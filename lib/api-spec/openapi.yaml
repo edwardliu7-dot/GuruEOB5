@@ -28,6 +28,8 @@ tags:
     description: Student points/behavior
   - name: documents
     description: Administrative documents
+  - name: tujuan-pembelajaran
+    description: Tujuan Pembelajaran (learning objectives), manual entry or AI-assisted import from any file format
   - name: dashboard
     description: Dashboard aggregates
   - name: academic-calendar
@@ -610,6 +612,116 @@ paths:
           description: Raw file content, streamed with the document's original content type
         "404":
           description: Document not found
+
+  /tp:
+    get:
+      operationId: listTujuanPembelajaran
+      tags: [tujuan-pembelajaran]
+      summary: List Tujuan Pembelajaran for a subject + semester
+      parameters:
+        - name: subjectId
+          in: query
+          schema:
+            type: string
+        - name: calendarId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of Tujuan Pembelajaran
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TujuanPembelajaran"
+    post:
+      operationId: createTujuanPembelajaran
+      tags: [tujuan-pembelajaran]
+      summary: Manually add a Tujuan Pembelajaran entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TujuanPembelajaranInput"
+      responses:
+        "200":
+          description: Created TP entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TujuanPembelajaran"
+  /tp/import/analyze:
+    post:
+      operationId: analyzeTPImport
+      tags: [tujuan-pembelajaran]
+      summary: Analyze an uploaded file or pasted text with AI and map it to Tujuan Pembelajaran entries, regardless of its format
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TPImportAnalyzeInput"
+      responses:
+        "200":
+          description: AI-mapped Tujuan Pembelajaran entries for verification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TPImportAnalyzeResult"
+  /tp/bulk:
+    post:
+      operationId: bulkCreateTujuanPembelajaran
+      tags: [tujuan-pembelajaran]
+      summary: Create many Tujuan Pembelajaran entries at once
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkCreateTPInput"
+      responses:
+        "200":
+          description: Number of TP entries created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkCreateTPResult"
+  /tp/{id}:
+    put:
+      operationId: updateTujuanPembelajaran
+      tags: [tujuan-pembelajaran]
+      summary: Update a Tujuan Pembelajaran entry
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TujuanPembelajaranInput"
+      responses:
+        "200":
+          description: Updated TP entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TujuanPembelajaran"
+    delete:
+      operationId: deleteTujuanPembelajaran
+      tags: [tujuan-pembelajaran]
+      summary: Delete a Tujuan Pembelajaran entry
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
 
   /journal:
     get:
@@ -1599,6 +1711,114 @@ components:
           items:
             $ref: "#/components/schemas/StudentInput"
       required: [students]
+
+    TujuanPembelajaran:
+      type: object
+      properties:
+        id:
+          type: string
+        subjectId:
+          type: string
+        calendarId:
+          type: string
+        lingkupMateri:
+          type: integer
+        tpNumber:
+          type: integer
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, subjectId, calendarId, lingkupMateri, tpNumber, description, createdAt]
+
+    TujuanPembelajaranInput:
+      type: object
+      properties:
+        subjectId:
+          type: string
+        calendarId:
+          type: string
+        lingkupMateri:
+          type: integer
+        tpNumber:
+          type: integer
+        description:
+          type: string
+      required: [subjectId, calendarId, lingkupMateri, tpNumber, description]
+
+    TPImportAnalyzeInput:
+      type: object
+      description: >
+        Provide either `rows` (pre-parsed spreadsheet rows) or `fileData` (base64 raw
+        file bytes) with `fileName`/`fileType`. The AI recognizes the content regardless
+        of layout or file format (spreadsheet, PDF, Word document, image, or plain text).
+      properties:
+        rows:
+          type: array
+          maxItems: 2000
+          items:
+            type: array
+            items:
+              type: string
+        fileData:
+          type: string
+          description: Base64-encoded raw file content.
+        fileName:
+          type: string
+        fileType:
+          type: string
+          description: MIME type of the uploaded file.
+      required: []
+
+    TPImportAnalyzeResult:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              lingkupMateri:
+                type: integer
+              tpNumber:
+                type: integer
+              description:
+                type: string
+            required: [lingkupMateri, tpNumber, description]
+      required: [items]
+
+    BulkCreateTPInput:
+      type: object
+      properties:
+        subjectId:
+          type: string
+        calendarId:
+          type: string
+        items:
+          type: array
+          minItems: 1
+          maxItems: 2000
+          items:
+            type: object
+            properties:
+              lingkupMateri:
+                type: integer
+              tpNumber:
+                type: integer
+              description:
+                type: string
+            required: [lingkupMateri, tpNumber, description]
+      required: [subjectId, calendarId, items]
+
+    BulkCreateTPResult:
+      type: object
+      properties:
+        count:
+          type: integer
+        skipped:
+          type: integer
+      required: [count, skipped]
 
     BulkCreateStudentsInput:
       type: object

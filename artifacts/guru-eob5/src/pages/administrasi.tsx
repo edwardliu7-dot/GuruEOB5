@@ -19,6 +19,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Download, Loader2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TujuanPembelajaranTab } from "@/components/tujuan-pembelajaran-tab";
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -63,6 +65,7 @@ export default function Administrasi() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<any | null>(null);
+  const [activeTab, setActiveTab] = useState<"dokumen" | "tp">("dokumen");
   
   const { data: documents, isLoading: isLoadingDocuments } = useListDocuments(
     { subjectId: selectedSubject || undefined },
@@ -237,7 +240,7 @@ export default function Administrasi() {
                 </Form>
               </DialogContent>
             </Dialog>
-          ) : (
+          ) : activeTab === "dokumen" ? (
             <Dialog
               open={isDocumentDialogOpen}
               onOpenChange={(open) => {
@@ -311,7 +314,7 @@ export default function Administrasi() {
                 </Form>
               </DialogContent>
             </Dialog>
-          )}
+          ) : null}
         </div>
 
         {/* View: Subject Folders */}
@@ -355,65 +358,76 @@ export default function Administrasi() {
           </div>
         )}
 
-        {/* View: Documents */}
+        {/* View: Documents & Tujuan Pembelajaran */}
         {selectedSubject && (
-          <div className="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
-            {isLoadingDocuments ? (
-              <div className="p-4 space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            ) : documents?.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-                <p>Belum ada dokumen untuk mata pelajaran ini.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {documents?.map((doc: any) => (
-                  <div key={doc.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-500">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{doc.name}</h4>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          <span>{format(new Date(doc.uploadedAt), "dd MMM yyyy")}</span>
-                          {doc.fileSize ? (
-                            <>
-                              <span>•</span>
-                              <span>{formatFileSize(doc.fileSize)}</span>
-                            </>
-                          ) : null}
-                          {doc.description && (
-                            <>
-                              <span>•</span>
-                              <span className="line-clamp-1">{doc.description}</span>
-                            </>
-                          )}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "dokumen" | "tp")}>
+            <TabsList>
+              <TabsTrigger value="dokumen">Dokumen</TabsTrigger>
+              <TabsTrigger value="tp">Tujuan Pembelajaran</TabsTrigger>
+            </TabsList>
+            <TabsContent value="dokumen">
+              <div className="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
+                {isLoadingDocuments ? (
+                  <div className="p-4 space-y-4">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : documents?.length === 0 ? (
+                  <div className="py-16 text-center text-muted-foreground">
+                    <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+                    <p>Belum ada dokumen untuk mata pelajaran ini.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {documents?.map((doc: any) => (
+                      <div key={doc.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-500">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">{doc.name}</h4>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                              <span>{format(new Date(doc.uploadedAt), "dd MMM yyyy")}</span>
+                              {doc.fileSize ? (
+                                <>
+                                  <span>•</span>
+                                  <span>{formatFileSize(doc.fileSize)}</span>
+                                </>
+                              ) : null}
+                              {doc.description && (
+                                <>
+                                  <span>•</span>
+                                  <span className="line-clamp-1">{doc.description}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:bg-muted"
+                            disabled={downloadingId === doc.id}
+                            onClick={() => handleDownloadDocument(doc)}
+                          >
+                            {downloadingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDocument(doc.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:bg-muted"
-                        disabled={downloadingId === doc.id}
-                        onClick={() => handleDownloadDocument(doc)}
-                      >
-                        {downloadingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDocument(doc.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
+            </TabsContent>
+            <TabsContent value="tp">
+              <TujuanPembelajaranTab subjectId={selectedSubject} />
+            </TabsContent>
+          </Tabs>
         )}
 
       </div>

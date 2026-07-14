@@ -35,6 +35,8 @@ import type {
   BulkCreateResult,
   BulkCreateStudentsInput,
   BulkCreateStudentsResult,
+  BulkCreateTPInput,
+  BulkCreateTPResult,
   DashboardSummary,
   GenerateAllStudentAccounts200,
   GenerateModulAjarInput,
@@ -63,6 +65,7 @@ import type {
   ListSoalOtomatisParams,
   ListStudentAccounts200Item,
   ListStudentsParams,
+  ListTujuanPembelajaranParams,
   LoginInput,
   ModulAjar,
   ModulAjarSummary,
@@ -84,7 +87,11 @@ import type {
   Subject,
   SubjectInput,
   SuccessResponse,
+  TPImportAnalyzeInput,
+  TPImportAnalyzeResult,
   Teacher,
+  TujuanPembelajaran,
+  TujuanPembelajaranInput,
   UpdateTeacherInput,
   WaliKelasRekap
 } from './api.schemas';
@@ -2727,6 +2734,446 @@ export function useGetDocumentFile<TData = Awaited<ReturnType<typeof getDocument
 
 
 
+
+export const getListTujuanPembelajaranUrl = (params?: ListTujuanPembelajaranParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tp?${stringifiedParams}` : `/api/tp`
+}
+
+/**
+ * @summary List Tujuan Pembelajaran for a subject + semester
+ */
+export const listTujuanPembelajaran = async (params?: ListTujuanPembelajaranParams, options?: RequestInit): Promise<TujuanPembelajaran[]> => {
+
+  return customFetch<TujuanPembelajaran[]>(getListTujuanPembelajaranUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTujuanPembelajaranQueryKey = (params?: ListTujuanPembelajaranParams,) => {
+    return [
+    `/api/tp`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListTujuanPembelajaranQueryOptions = <TData = Awaited<ReturnType<typeof listTujuanPembelajaran>>, TError = ErrorType<unknown>>(params?: ListTujuanPembelajaranParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTujuanPembelajaran>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTujuanPembelajaranQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTujuanPembelajaran>>> = ({ signal }) => listTujuanPembelajaran(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTujuanPembelajaran>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTujuanPembelajaranQueryResult = NonNullable<Awaited<ReturnType<typeof listTujuanPembelajaran>>>
+export type ListTujuanPembelajaranQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List Tujuan Pembelajaran for a subject + semester
+ */
+
+export function useListTujuanPembelajaran<TData = Awaited<ReturnType<typeof listTujuanPembelajaran>>, TError = ErrorType<unknown>>(
+ params?: ListTujuanPembelajaranParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTujuanPembelajaran>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTujuanPembelajaranQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateTujuanPembelajaranUrl = () => {
+
+
+
+
+  return `/api/tp`
+}
+
+/**
+ * @summary Manually add a Tujuan Pembelajaran entry
+ */
+export const createTujuanPembelajaran = async (tujuanPembelajaranInput: TujuanPembelajaranInput, options?: RequestInit): Promise<TujuanPembelajaran> => {
+
+  return customFetch<TujuanPembelajaran>(getCreateTujuanPembelajaranUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(tujuanPembelajaranInput)
+  }
+);}
+
+
+
+
+
+export const getCreateTujuanPembelajaranMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTujuanPembelajaran>>, TError,{data: BodyType<TujuanPembelajaranInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTujuanPembelajaran>>, TError,{data: BodyType<TujuanPembelajaranInput>}, TContext> => {
+
+const mutationKey = ['createTujuanPembelajaran'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTujuanPembelajaran>>, {data: BodyType<TujuanPembelajaranInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createTujuanPembelajaran(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTujuanPembelajaranMutationResult = NonNullable<Awaited<ReturnType<typeof createTujuanPembelajaran>>>
+    export type CreateTujuanPembelajaranMutationBody = BodyType<TujuanPembelajaranInput>
+    export type CreateTujuanPembelajaranMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Manually add a Tujuan Pembelajaran entry
+ */
+export const useCreateTujuanPembelajaran = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTujuanPembelajaran>>, TError,{data: BodyType<TujuanPembelajaranInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTujuanPembelajaran>>,
+        TError,
+        {data: BodyType<TujuanPembelajaranInput>},
+        TContext
+      > => {
+      return useMutation(getCreateTujuanPembelajaranMutationOptions(options));
+    }
+
+export const getAnalyzeTPImportUrl = () => {
+
+
+
+
+  return `/api/tp/import/analyze`
+}
+
+/**
+ * @summary Analyze an uploaded file or pasted text with AI and map it to Tujuan Pembelajaran entries, regardless of its format
+ */
+export const analyzeTPImport = async (tPImportAnalyzeInput: TPImportAnalyzeInput, options?: RequestInit): Promise<TPImportAnalyzeResult> => {
+
+  return customFetch<TPImportAnalyzeResult>(getAnalyzeTPImportUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(tPImportAnalyzeInput)
+  }
+);}
+
+
+
+
+
+export const getAnalyzeTPImportMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeTPImport>>, TError,{data: BodyType<TPImportAnalyzeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof analyzeTPImport>>, TError,{data: BodyType<TPImportAnalyzeInput>}, TContext> => {
+
+const mutationKey = ['analyzeTPImport'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof analyzeTPImport>>, {data: BodyType<TPImportAnalyzeInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  analyzeTPImport(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AnalyzeTPImportMutationResult = NonNullable<Awaited<ReturnType<typeof analyzeTPImport>>>
+    export type AnalyzeTPImportMutationBody = BodyType<TPImportAnalyzeInput>
+    export type AnalyzeTPImportMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Analyze an uploaded file or pasted text with AI and map it to Tujuan Pembelajaran entries, regardless of its format
+ */
+export const useAnalyzeTPImport = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeTPImport>>, TError,{data: BodyType<TPImportAnalyzeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof analyzeTPImport>>,
+        TError,
+        {data: BodyType<TPImportAnalyzeInput>},
+        TContext
+      > => {
+      return useMutation(getAnalyzeTPImportMutationOptions(options));
+    }
+
+export const getBulkCreateTujuanPembelajaranUrl = () => {
+
+
+
+
+  return `/api/tp/bulk`
+}
+
+/**
+ * @summary Create many Tujuan Pembelajaran entries at once
+ */
+export const bulkCreateTujuanPembelajaran = async (bulkCreateTPInput: BulkCreateTPInput, options?: RequestInit): Promise<BulkCreateTPResult> => {
+
+  return customFetch<BulkCreateTPResult>(getBulkCreateTujuanPembelajaranUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bulkCreateTPInput)
+  }
+);}
+
+
+
+
+
+export const getBulkCreateTujuanPembelajaranMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateTujuanPembelajaran>>, TError,{data: BodyType<BulkCreateTPInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkCreateTujuanPembelajaran>>, TError,{data: BodyType<BulkCreateTPInput>}, TContext> => {
+
+const mutationKey = ['bulkCreateTujuanPembelajaran'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkCreateTujuanPembelajaran>>, {data: BodyType<BulkCreateTPInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkCreateTujuanPembelajaran(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkCreateTujuanPembelajaranMutationResult = NonNullable<Awaited<ReturnType<typeof bulkCreateTujuanPembelajaran>>>
+    export type BulkCreateTujuanPembelajaranMutationBody = BodyType<BulkCreateTPInput>
+    export type BulkCreateTujuanPembelajaranMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create many Tujuan Pembelajaran entries at once
+ */
+export const useBulkCreateTujuanPembelajaran = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateTujuanPembelajaran>>, TError,{data: BodyType<BulkCreateTPInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof bulkCreateTujuanPembelajaran>>,
+        TError,
+        {data: BodyType<BulkCreateTPInput>},
+        TContext
+      > => {
+      return useMutation(getBulkCreateTujuanPembelajaranMutationOptions(options));
+    }
+
+export const getUpdateTujuanPembelajaranUrl = (id: string,) => {
+
+
+
+
+  return `/api/tp/${id}`
+}
+
+/**
+ * @summary Update a Tujuan Pembelajaran entry
+ */
+export const updateTujuanPembelajaran = async (id: string,
+    tujuanPembelajaranInput: TujuanPembelajaranInput, options?: RequestInit): Promise<TujuanPembelajaran> => {
+
+  return customFetch<TujuanPembelajaran>(getUpdateTujuanPembelajaranUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(tujuanPembelajaranInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateTujuanPembelajaranMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTujuanPembelajaran>>, TError,{id: string;data: BodyType<TujuanPembelajaranInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTujuanPembelajaran>>, TError,{id: string;data: BodyType<TujuanPembelajaranInput>}, TContext> => {
+
+const mutationKey = ['updateTujuanPembelajaran'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTujuanPembelajaran>>, {id: string;data: BodyType<TujuanPembelajaranInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateTujuanPembelajaran(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTujuanPembelajaranMutationResult = NonNullable<Awaited<ReturnType<typeof updateTujuanPembelajaran>>>
+    export type UpdateTujuanPembelajaranMutationBody = BodyType<TujuanPembelajaranInput>
+    export type UpdateTujuanPembelajaranMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update a Tujuan Pembelajaran entry
+ */
+export const useUpdateTujuanPembelajaran = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTujuanPembelajaran>>, TError,{id: string;data: BodyType<TujuanPembelajaranInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateTujuanPembelajaran>>,
+        TError,
+        {id: string;data: BodyType<TujuanPembelajaranInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateTujuanPembelajaranMutationOptions(options));
+    }
+
+export const getDeleteTujuanPembelajaranUrl = (id: string,) => {
+
+
+
+
+  return `/api/tp/${id}`
+}
+
+/**
+ * @summary Delete a Tujuan Pembelajaran entry
+ */
+export const deleteTujuanPembelajaran = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteTujuanPembelajaranUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteTujuanPembelajaranMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTujuanPembelajaran>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTujuanPembelajaran>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteTujuanPembelajaran'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTujuanPembelajaran>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteTujuanPembelajaran(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTujuanPembelajaranMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTujuanPembelajaran>>>
+
+    export type DeleteTujuanPembelajaranMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a Tujuan Pembelajaran entry
+ */
+export const useDeleteTujuanPembelajaran = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTujuanPembelajaran>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTujuanPembelajaran>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteTujuanPembelajaranMutationOptions(options));
+    }
 
 export const getListJournalEntriesUrl = (params?: ListJournalEntriesParams,) => {
   const normalizedParams = new URLSearchParams();

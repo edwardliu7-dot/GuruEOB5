@@ -156,6 +156,68 @@ export interface StudentImportAnalyzeResult {
   students: StudentInput[];
 }
 
+export interface TujuanPembelajaran {
+  id: string;
+  subjectId: string;
+  calendarId: string;
+  lingkupMateri: number;
+  tpNumber: number;
+  description: string;
+  createdAt: string;
+}
+
+export interface TujuanPembelajaranInput {
+  subjectId: string;
+  calendarId: string;
+  lingkupMateri: number;
+  tpNumber: number;
+  description: string;
+}
+
+/**
+ * Provide either `rows` (pre-parsed spreadsheet rows) or `fileData` (base64 raw file bytes) with `fileName`/`fileType`. The AI recognizes the content regardless of layout or file format (spreadsheet, PDF, Word document, image, or plain text).
+ */
+export interface TPImportAnalyzeInput {
+  /** @maxItems 2000 */
+  rows?: string[][];
+  /** Base64-encoded raw file content. */
+  fileData?: string;
+  fileName?: string;
+  /** MIME type of the uploaded file. */
+  fileType?: string;
+}
+
+export type TPImportAnalyzeResultItemsItem = {
+  lingkupMateri: number;
+  tpNumber: number;
+  description: string;
+};
+
+export interface TPImportAnalyzeResult {
+  items: TPImportAnalyzeResultItemsItem[];
+}
+
+export type BulkCreateTPInputItemsItem = {
+  lingkupMateri: number;
+  tpNumber: number;
+  description: string;
+};
+
+export interface BulkCreateTPInput {
+  subjectId: string;
+  calendarId: string;
+  /**
+     * @minItems 1
+     * @maxItems 2000
+     */
+  items: BulkCreateTPInputItemsItem[];
+}
+
+export interface BulkCreateTPResult {
+  count: number;
+  skipped: number;
+}
+
 export interface BulkCreateStudentsInput {
   /**
      * @minItems 1
@@ -777,6 +839,11 @@ search?: string;
 
 export type ListDocumentsParams = {
 subjectId?: string;
+};
+
+export type ListTujuanPembelajaranParams = {
+subjectId?: string;
+calendarId?: string;
 };
 
 export type ListJournalEntriesParams = {

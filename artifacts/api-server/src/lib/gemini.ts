@@ -81,6 +81,106 @@ export async function mapRowsToStudents(
 }
 
 // -----------------------------------------------------------------------
+// Tujuan Pembelajaran (TP) import -- AI recognizes any layout/format
+// -----------------------------------------------------------------------
+
+export interface MappedTPItem {
+  lingkupMateri: number;
+  tpNumber: number;
+  description: string;
+}
+
+const tpResponseSchema = {
+  type: Type.OBJECT,
+  properties: {
+    items: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          lingkupMateri: { type: Type.INTEGER },
+          tpNumber: { type: Type.INTEGER },
+          description: { type: Type.STRING },
+        },
+        required: ["lingkupMateri", "tpNumber", "description"],
+      },
+    },
+  },
+  required: ["items"],
+};
+
+const TP_INSTRUCTIONS = [
+  "Kamu adalah asisten kurikulum yang mengekstrak daftar Tujuan Pembelajaran (TP) Kurikulum Merdeka Indonesia dari dokumen guru, apa pun formatnya (tabel, daftar bernomor, paragraf, hasil OCR dari gambar/scan, dsb).",
+  "",
+  "Struktur data Kurikulum Merdeka: setiap mata pelajaran punya beberapa 'Lingkup Materi' (biasanya bernomor 1-5, kadang disebut 'elemen', 'domain', atau punya nama topik), dan setiap Lingkup Materi punya beberapa 'Tujuan Pembelajaran' bernomor (biasanya 1-4 per lingkup materi) berupa kalimat capaian belajar siswa.",
+  "",
+  "Tugasmu:",
+  "1. Cari setiap Lingkup Materi dan tentukan nomor urutnya (integer, mulai dari 1). Jika dokumen memberi nama/topik alih-alih nomor, tetap urutkan berdasarkan kemunculannya dan beri nomor mulai dari 1.",
+  "2. Untuk setiap Lingkup Materi, cari setiap Tujuan Pembelajaran di dalamnya dan tentukan nomor urutnya dalam lingkup materi tersebut (integer, mulai dari 1).",
+  "3. Jika dokumen tidak membagi berdasarkan Lingkup Materi sama sekali dan hanya berupa daftar tujuan pembelajaran datar, anggap semuanya berada di lingkupMateri 1 dan nomori tpNumber secara berurutan.",
+  "4. description harus berisi teks lengkap kalimat Tujuan Pembelajaran tersebut, dirapikan (hilangkan penomoran/bullet asli, spasi berlebih, karakter OCR yang rusak), tanpa memotong makna.",
+  "5. Abaikan judul dokumen, header/footer, informasi identitas guru/sekolah, atau bagian yang jelas bukan Tujuan Pembelajaran.",
+  "6. Tulis dalam Bahasa Indonesia sesuai dokumen asli.",
+].join("\n");
+
+async function runTPExtraction(
+  contents: Parameters<typeof gemini.models.generateContent>[0]["contents"],
+): Promise<MappedTPItem[]> {
+  const response = await gemini.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: tpResponseSchema,
+    },
+  });
+
+  const text = response.text;
+  if (!text) {
+    throw new Error("Gemini returned an empty response");
+  }
+
+  const parsed = JSON.parse(text) as { items?: unknown };
+  if (!parsed.items || !Array.isArray(parsed.items)) {
+    throw new Error("Gemini response missing items array");
+  }
+
+  return parsed.items as MappedTPItem[];
+}
+
+/** Spreadsheet rows (already parsed client-side, e.g. from xlsx/csv). */
+export async function mapRowsToTP(rows: string[][]): Promise<MappedTPItem[]> {
+  const prompt = [
+    TP_INSTRUCTIONS,
+    "",
+    "Berikut baris-baris mentah hasil pembacaan spreadsheet (kolom bisa dalam urutan apa pun):",
+    "",
+    "Data:",
+    JSON.stringify(rows),
+  ].join("\n");
+
+  return runTPExtraction(prompt);
+}
+
+/** Plain extracted text (e.g. from a .docx or .txt file). */
+export async function mapTextToTP(text: string): Promise<MappedTPItem[]> {
+  const prompt = [TP_INSTRUCTIONS, "", "Berikut isi dokumen:", "", text].join("\n");
+  return runTPExtraction(prompt);
+}
+
+/**
+ * Raw file bytes for formats Gemini can read natively (PDF, images).
+ * Lets the AI "see" the document directly instead of relying on
+ * pre-extracted text, so scans/photos of a curriculum table still work.
+ */
+export async function mapFileToTP(fileBase64: string, mimeType: string): Promise<MappedTPItem[]> {
+  return runTPExtraction([
+    { inlineData: { data: fileBase64, mimeType } },
+    { text: TP_INSTRUCTIONS },
+  ]);
+}
+
+// -----------------------------------------------------------------------
 // Buat Modul Ajar (Kurikulum Merdeka lesson-plan generator)
 // -----------------------------------------------------------------------
 
