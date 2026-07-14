@@ -255,61 +255,66 @@ router.post("/tp/bulk", requireAuth, async (req, res): Promise<void> => {
   }
   const { subjectId, calendarId, items } = parsed.data;
 
-  if (!(await isOwnSubject(subjectId, teacherId))) {
-    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
-    return;
-  }
+  try {
+    if (!(await isOwnSubject(subjectId, teacherId))) {
+      res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
+      return;
+    }
 
-  const existing = await db
-    .select({
-      lingkupMateri: tujuanPembelajaranTable.lingkupMateri,
-      description: tujuanPembelajaranTable.description,
-      tpNumber: tujuanPembelajaranTable.tpNumber,
-    })
-    .from(tujuanPembelajaranTable)
-    .where(
-      and(
-        eq(tujuanPembelajaranTable.subjectId, subjectId),
-        eq(tujuanPembelajaranTable.calendarId, calendarId),
-      ),
+    const existing = await db
+      .select({
+        lingkupMateri: tujuanPembelajaranTable.lingkupMateri,
+        description: tujuanPembelajaranTable.description,
+        tpNumber: tujuanPembelajaranTable.tpNumber,
+      })
+      .from(tujuanPembelajaranTable)
+      .where(
+        and(
+          eq(tujuanPembelajaranTable.subjectId, subjectId),
+          eq(tujuanPembelajaranTable.calendarId, calendarId),
+        ),
+      );
+    // Duplicates are detected by content (same Lingkup Materi + description),
+    // not by tpNumber -- tpNumber is always (re)assigned by the server as a
+    // continuous sequence across the whole subject+semester.
+    const existingKeys = new Set(
+      existing.map((e) => `${e.lingkupMateri}:${normalizeDescription(e.description)}`),
     );
-  // Duplicates are detected by content (same Lingkup Materi + description),
-  // not by tpNumber -- tpNumber is always (re)assigned by the server as a
-  // continuous sequence across the whole subject+semester.
-  const existingKeys = new Set(
-    existing.map((e) => `${e.lingkupMateri}:${normalizeDescription(e.description)}`),
-  );
-  let nextNumber = (existing.reduce((max, e) => Math.max(max, e.tpNumber), 0)) + 1;
+    let nextNumber = (existing.reduce((max, e) => Math.max(max, e.tpNumber), 0)) + 1;
 
-  // Preserve the AI's Lingkup Materi ordering (items already come grouped/sorted
-  // by lingkupMateri then tpNumber from the extraction step) so the continuous
-  // sequence reads naturally: LM1 TP1-2, LM2 TP3-4, etc.
-  const ordered = [...items].sort((a, b) =>
-    a.lingkupMateri !== b.lingkupMateri ? a.lingkupMateri - b.lingkupMateri : a.tpNumber - b.tpNumber,
-  );
+    // Preserve the AI's Lingkup Materi ordering (items already come grouped/sorted
+    // by lingkupMateri then tpNumber from the extraction step) so the continuous
+    // sequence reads naturally: LM1 TP1-2, LM2 TP3-4, etc.
+    const ordered = [...items].sort((a, b) =>
+      a.lingkupMateri !== b.lingkupMateri ? a.lingkupMateri - b.lingkupMateri : a.tpNumber - b.tpNumber,
+    );
 
-  const seen = new Set<string>();
-  const toInsert: { lingkupMateri: number; description: string; tpNumber: number }[] = [];
-  for (const item of ordered) {
-    const key = `${item.lingkupMateri}:${normalizeDescription(item.description)}`;
-    if (existingKeys.has(key) || seen.has(key)) continue;
-    seen.add(key);
-    toInsert.push({ lingkupMateri: item.lingkupMateri, description: item.description, tpNumber: nextNumber });
-    nextNumber += 1;
+    const seen = new Set<string>();
+    const toInsert: { lingkupMateri: number; description: string; tpNumber: number }[] = [];
+    for (const item of ordered) {
+      const key = `${item.lingkupMateri}:${normalizeDescription(item.description)}`;
+      if (existingKeys.has(key) || seen.has(key)) continue;
+      seen.add(key);
+      toInsert.push({ lingkupMateri: item.lingkupMateri, description: item.description, tpNumber: nextNumber });
+      nextNumber += 1;
+    }
+
+    let count = 0;
+    if (toInsert.length > 0) {
+      const inserted = await db
+        .insert(tujuanPembelajaranTable)
+        .values(toInsert.map((item) => ({ ...item, subjectId, calendarId, teacherId })))
+        .returning({ id: tujuanPembelajaranTable.id });
+      count = inserted.length;
+    }
+
+    res.json(
+      BulkCreateTujuanPembelajaranResponse.parse({ count, skipped: items.length - count }),
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Gagal menyimpan ke database";
+    res.status(500).json({ error: message });
   }
-
-  let count = 0;
-  if (toInsert.length > 0) {
-    const inserted = await db
-      .insert(tujuanPembelajaranTable)
-      .values(toInsert.map((item) => ({ ...item, subjectId, calendarId, teacherId })))
-      .returning({ id: tujuanPembelajaranTable.id });
-    count = inserted.length;
-  }
-
-  res.json(
-    BulkCreateTujuanPembelajaranResponse.parse({ count, skipped: items.length - count }),
-  );
 });
 
 export default router;

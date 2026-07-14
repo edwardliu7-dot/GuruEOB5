@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
@@ -119,5 +119,18 @@ if (fs.existsSync(frontendDist)) {
 } else {
   logger.info({ frontendDist }, "Frontend build not found; skipping static file serving");
 }
+
+// Global error handler — must be registered last and have 4 parameters so
+// Express recognises it as an error-handling middleware. Converts any
+// unhandled route error (DB crash, thrown exception, etc.) into a JSON
+// response instead of the default HTML page, so the frontend can always
+// read err.data.error and show a meaningful message.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  logger.error({ err }, "Unhandled route error");
+  const message =
+    err instanceof Error ? err.message : "Terjadi kesalahan pada server";
+  res.status(500).json({ error: message });
+});
 
 export default app;
