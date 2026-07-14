@@ -57,19 +57,34 @@ router.get("/walikelas/akun-siswa", requireAuth, async (req, res): Promise<void>
     return;
   }
 
-  const students = await ownClassStudents(guru);
-  const result = await Promise.all(
-    students.map(async (student) => {
-      const account = await getStudentAccount(student.id);
-      return {
-        studentId: student.id,
-        namaLengkap: student.namaLengkap,
-        hasAccount: !!account,
-        username: account?.username ?? null,
-        password: account?.password ?? null,
-      };
-    }),
-  );
+  let students: Awaited<ReturnType<typeof ownClassStudents>>;
+  try {
+    students = await ownClassStudents(guru);
+  } catch (err) {
+    req.log.error({ err }, "Gagal mengambil daftar siswa (student list query failed)");
+    res.status(500).json({ error: "Gagal mengambil data siswa dari database" });
+    return;
+  }
+
+  let result: { studentId: string; namaLengkap: string; hasAccount: boolean; username: string | null; password: string | null }[];
+  try {
+    result = await Promise.all(
+      students.map(async (student) => {
+        const account = await getStudentAccount(student.id);
+        return {
+          studentId: student.id,
+          namaLengkap: student.namaLengkap,
+          hasAccount: !!account,
+          username: account?.username ?? null,
+          password: account?.password ?? null,
+        };
+      }),
+    );
+  } catch (err) {
+    req.log.error({ err }, "Gagal mengambil status akun siswa (student_accounts query failed — tabel mungkin belum di-migrate)");
+    res.status(500).json({ error: "Gagal mengambil status akun siswa. Pastikan tabel student_accounts sudah ada di database." });
+    return;
+  }
 
   res.json(ListStudentAccountsResponse.parse(result));
 });

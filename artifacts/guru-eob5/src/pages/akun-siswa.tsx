@@ -189,7 +189,9 @@ export default function AkunSiswa() {
                 <AlertCircle className="w-8 h-8 text-destructive" />
                 <p className="font-medium text-foreground">Gagal memuat data siswa</p>
                 <p className="text-sm text-muted-foreground">
-                  Pastikan akun Anda terdaftar sebagai Wali Kelas dengan kelas yang sudah dikonfigurasi.
+                  {(isError as any)?.status === 403
+                    ? "Akun Anda belum dikonfigurasi sebagai Wali Kelas. Hubungi admin."
+                    : "Terjadi kesalahan pada server. Coba lagi atau hubungi admin jika masalah berlanjut."}
                 </p>
                 <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">Coba lagi</Button>
               </div>
