@@ -2183,7 +2183,7 @@ components:
           type: string
         jenis:
           type: string
-          enum: [formatif, sumatif_lm, sumatif_akhir]
+          enum: [formatif, sumatif_lm, sumatif_tengah, sumatif_akhir]
         lingkupMateri:
           type: ["integer", "null"]
           minimum: 1
@@ -2210,7 +2210,7 @@ components:
           type: string
         jenis:
           type: string
-          enum: [formatif, sumatif_lm, sumatif_akhir]
+          enum: [formatif, sumatif_lm, sumatif_tengah, sumatif_akhir]
         lingkupMateri:
           type: integer
           minimum: 1

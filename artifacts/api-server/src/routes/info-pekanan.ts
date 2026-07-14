@@ -79,6 +79,10 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  // No calendarId filter here — prosem items are uniquely linked to week UUIDs,
+  // which already encode the calendar context. Filtering by calendarId was too strict
+  // and caused items to vanish when the user's prosem was created under a slightly
+  // different calendar than the one currently selected in info-pekanan.
   const prosemRows = await db
     .select({
       prosemId: prosemTable.id,
@@ -86,9 +90,7 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
       kelas: prosemTable.kelas,
     })
     .from(prosemTable)
-    .where(
-      and(eq(prosemTable.teacherId, teacherId), eq(prosemTable.calendarId, calendarId)),
-    );
+    .where(eq(prosemTable.teacherId, teacherId));
 
   const subjectRows = await db
     .select()

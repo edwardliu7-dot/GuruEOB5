@@ -23,7 +23,7 @@ export const gradesTable = pgTable(
     calendarId: uuid("calendar_id")
       .notNull()
       .references(() => academicCalendarsTable.id, { onDelete: "cascade" }),
-    jenis: text("jenis", { enum: ["formatif", "sumatif_lm", "sumatif_akhir"] }).notNull(),
+    jenis: text("jenis", { enum: ["formatif", "sumatif_lm", "sumatif_tengah", "sumatif_akhir"] }).notNull(),
     lingkupMateri: integer("lingkup_materi"),
     tpNumber: integer("tp_number"),
     nilai: numeric("nilai", { mode: "number" }).notNull(),
@@ -36,6 +36,9 @@ export const gradesTable = pgTable(
     uniqueIndex("grades_sumatif_lm_unique")
       .on(t.studentId, t.subjectId, t.calendarId, t.lingkupMateri)
       .where(sql`${t.jenis} = 'sumatif_lm'`),
+    uniqueIndex("grades_sumatif_tengah_unique")
+      .on(t.studentId, t.subjectId, t.calendarId)
+      .where(sql`${t.jenis} = 'sumatif_tengah'`),
     uniqueIndex("grades_sumatif_akhir_unique")
       .on(t.studentId, t.subjectId, t.calendarId)
       .where(sql`${t.jenis} = 'sumatif_akhir'`),
