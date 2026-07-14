@@ -1734,6 +1734,10 @@ components:
 
     TujuanPembelajaranInput:
       type: object
+      description: >
+        tpNumber is not part of the input -- it is assigned automatically by the
+        server as a continuous sequence across the whole subject+semester (not
+        reset per Lingkup Materi).
       properties:
         subjectId:
           type: string
@@ -1741,11 +1745,9 @@ components:
           type: string
         lingkupMateri:
           type: integer
-        tpNumber:
-          type: integer
         description:
           type: string
-      required: [subjectId, calendarId, lingkupMateri, tpNumber, description]
+      required: [subjectId, calendarId, lingkupMateri, description]
 
     TPImportAnalyzeInput:
       type: object

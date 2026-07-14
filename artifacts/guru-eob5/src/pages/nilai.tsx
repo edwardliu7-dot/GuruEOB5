@@ -6,6 +6,7 @@ import {
   useListSubjects,
   useListStudents,
   useListAcademicCalendars,
+  useListTujuanPembelajaran,
 } from "@workspace/api-client-react";
 import { useEffect, useMemo, useState } from "react";
 import ExcelJS from "exceljs";
@@ -16,9 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Download } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const LM_LIST = [1, 2, 3, 4, 5];
-const TP_LIST = [1, 2, 3, 4];
 
 type Grade = {
   id: string;
@@ -121,6 +119,36 @@ export default function Nilai() {
     },
   );
 
+  const { data: tpList, isLoading: isLoadingTP } = useListTujuanPembelajaran(
+    { subjectId: subjectId || undefined, calendarId: calendarId || undefined },
+    {
+      query: {
+        queryKey: ["/api/tp", subjectId, calendarId],
+        enabled: ready,
+      },
+    },
+  );
+
+  // Formatif columns follow exactly what's filled in the TP (Tujuan
+  // Pembelajaran) feature: number of TP columns per Lingkup Materi matches
+  // the actual TP entries, and TP numbers are continuous across LM (not
+  // reset per LM) -- e.g. LM1 has TP1-2, LM2 continues with TP3.
+  const LM_LIST = useMemo(() => {
+    const set = new Set<number>((tpList ?? []).map((tp: any) => tp.lingkupMateri));
+    return [...set].sort((a, b) => a - b);
+  }, [tpList]);
+
+  const tpByLM = useMemo(() => {
+    const map = new Map<number, number[]>();
+    for (const tp of (tpList ?? []) as any[]) {
+      const arr = map.get(tp.lingkupMateri) ?? [];
+      arr.push(tp.tpNumber);
+      map.set(tp.lingkupMateri, arr);
+    }
+    for (const arr of map.values()) arr.sort((a, b) => a - b);
+    return map;
+  }, [tpList]);
+
   const createGrade = useCreateGrade();
   const deleteGrade = useDeleteGrade();
 
@@ -174,7 +202,8 @@ export default function Nilai() {
   const handleExport = async () => {
     if (!kelasStudents.length) return;
 
-    const totalCols = 3 + LM_LIST.length * TP_LIST.length + LM_LIST.length + 1;
+    const formatifCols = LM_LIST.reduce((sum, lm) => sum + (tpByLM.get(lm)?.length ?? 0), 0);
+    const totalCols = 3 + formatifCols + LM_LIST.length + 1;
 
     const thinBorder = {
       top: { style: "thin" as const },
@@ -213,9 +242,11 @@ export default function Nilai() {
 
     let col = 4;
     for (const lm of LM_LIST) {
-      ws.mergeCells(headerRow1, col, headerRow1, col + TP_LIST.length - 1);
+      const tpNumbers = tpByLM.get(lm) ?? [];
+      if (tpNumbers.length === 0) continue;
+      ws.mergeCells(headerRow1, col, headerRow1, col + tpNumbers.length - 1);
       ws.getCell(headerRow1, col).value = `Formatif - Lingkup Materi ${lm}`;
-      for (const tp of TP_LIST) {
+      for (const tp of tpNumbers) {
         ws.getCell(headerRow2, col).value = `TP${tp}`;
         col += 1;
       }
@@ -246,7 +277,7 @@ export default function Nilai() {
 
       let c = 4;
       for (const lm of LM_LIST) {
-        for (const tp of TP_LIST) {
+        for (const tp of tpByLM.get(lm) ?? []) {
           const g = gradeMap.get(`${s.id}::${gradeKey("formatif", lm, tp)}`);
           ws.getCell(r, c).value = g ? g.nilai : "";
           c += 1;
@@ -333,19 +364,25 @@ export default function Nilai() {
             <p className="p-8 text-center text-muted-foreground">Belum ada mata pelajaran.</p>
           ) : !kelasStudents.length ? (
             <p className="p-8 text-center text-muted-foreground">Belum ada siswa di kelas ini.</p>
-          ) : isLoading ? (
+          ) : isLoading || isLoadingTP ? (
             <div className="p-6 space-y-2">
               {Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
             </div>
           ) : (
             <div className="overflow-x-auto">
+              {LM_LIST.length === 0 && (
+                <p className="px-4 pt-4 text-sm text-muted-foreground">
+                  Belum ada Tujuan Pembelajaran untuk mata pelajaran ini. Isi TP terlebih dahulu di tab "Tujuan
+                  Pembelajaran" pada halaman Administrasi agar kolom nilai formatif muncul di sini.
+                </p>
+              )}
               <table className="text-sm border-collapse w-full">
                 <thead>
                   <tr className="bg-gray-50/70">
                     <th rowSpan={2} className="sticky left-0 bg-gray-50/70 border px-2 py-1 min-w-[40px]">No</th>
                     <th rowSpan={2} className="sticky left-[40px] bg-gray-50/70 border px-2 py-1 min-w-[180px] text-left">Nama Siswa</th>
                     {LM_LIST.map((lm) => (
-                      <th key={lm} colSpan={4} className="border px-2 py-1 whitespace-nowrap">Formatif - LM {lm}</th>
+                      <th key={lm} colSpan={tpByLM.get(lm)?.length ?? 0} className="border px-2 py-1 whitespace-nowrap">Formatif - LM {lm}</th>
                     ))}
                     {LM_LIST.map((lm) => (
                       <th key={lm} rowSpan={2} className="border px-2 py-1 whitespace-nowrap">Sumatif LM{lm}</th>
@@ -354,7 +391,7 @@ export default function Nilai() {
                   </tr>
                   <tr className="bg-gray-50/70">
                     {LM_LIST.map((lm) =>
-                      TP_LIST.map((tp) => (
+                      (tpByLM.get(lm) ?? []).map((tp) => (
                         <th key={`${lm}-${tp}`} className="border px-1 py-1 font-normal text-xs">TP{tp}</th>
                       )),
                     )}
@@ -366,7 +403,7 @@ export default function Nilai() {
                       <td className="sticky left-0 bg-white border px-2 py-1 text-center text-muted-foreground">{i + 1}</td>
                       <td className="sticky left-[40px] bg-white border px-2 py-1 font-medium whitespace-nowrap">{s.namaLengkap}</td>
                       {LM_LIST.map((lm) =>
-                        TP_LIST.map((tp) => {
+                        (tpByLM.get(lm) ?? []).map((tp) => {
                           const g = gradeMap.get(`${s.id}::${gradeKey("formatif", lm, tp)}`);
                           return (
                             <td key={`${lm}-${tp}`} className="border px-1 py-1">

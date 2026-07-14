@@ -685,9 +685,8 @@ export const CreateTujuanPembelajaranBody = zod.object({
   "subjectId": zod.string(),
   "calendarId": zod.string(),
   "lingkupMateri": zod.number(),
-  "tpNumber": zod.number(),
   "description": zod.string()
-})
+}).describe('tpNumber is not part of the input -- it is assigned automatically by the server as a continuous sequence across the whole subject+semester (not reset per Lingkup Materi).\n')
 
 export const CreateTujuanPembelajaranResponse = zod.object({
   "id": zod.string(),
@@ -757,9 +756,8 @@ export const UpdateTujuanPembelajaranBody = zod.object({
   "subjectId": zod.string(),
   "calendarId": zod.string(),
   "lingkupMateri": zod.number(),
-  "tpNumber": zod.number(),
   "description": zod.string()
-})
+}).describe('tpNumber is not part of the input -- it is assigned automatically by the server as a continuous sequence across the whole subject+semester (not reset per Lingkup Materi).\n')
 
 export const UpdateTujuanPembelajaranResponse = zod.object({
   "id": zod.string(),

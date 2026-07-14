@@ -6,10 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
+/**
+ * tpNumber is not part of the input -- it is assigned automatically by the server as a continuous sequence across the whole subject+semester (not reset per Lingkup Materi).
+ */
 export interface TujuanPembelajaranInput {
   subjectId: string;
   calendarId: string;
   lingkupMateri: number;
-  tpNumber: number;
   description: string;
 }

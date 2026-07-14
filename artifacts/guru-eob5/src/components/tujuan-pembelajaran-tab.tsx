@@ -11,7 +11,6 @@ import {
   getListTujuanPembelajaranQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -28,7 +27,6 @@ const LM_LIST = [1, 2, 3, 4, 5];
 
 const tpSchema = z.object({
   lingkupMateri: z.coerce.number().int().min(1, "Wajib diisi"),
-  tpNumber: z.coerce.number().int().min(1, "Wajib diisi"),
   description: z.string().min(1, "Tujuan pembelajaran harus diisi"),
 });
 type TPFormValues = z.infer<typeof tpSchema>;
@@ -82,7 +80,7 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
 
   const form = useForm<TPFormValues>({
     resolver: zodResolver(tpSchema),
-    defaultValues: { lingkupMateri: 1, tpNumber: 1, description: "" },
+    defaultValues: { lingkupMateri: 1, description: "" },
   });
 
   const grouped = useMemo(() => {
@@ -107,7 +105,7 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
         toast({ title: "Berhasil", description: "Tujuan Pembelajaran ditambahkan" });
       }
       setIsDialogOpen(false);
-      form.reset({ lingkupMateri: 1, tpNumber: 1, description: "" });
+      form.reset({ lingkupMateri: 1, description: "" });
       setEditingTP(null);
       invalidate();
     } catch (err: any) {
@@ -239,7 +237,7 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
               setIsDialogOpen(open);
               if (!open) {
                 setEditingTP(null);
-                form.reset({ lingkupMateri: 1, tpNumber: 1, description: "" });
+                form.reset({ lingkupMateri: 1, description: "" });
               }
             }}
           >
@@ -252,45 +250,33 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="lingkupMateri"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Lingkup Materi</FormLabel>
-                          <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value)}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {LM_LIST.map((lm) => (
-                                <SelectItem key={lm} value={String(lm)}>
-                                  Lingkup Materi {lm}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="tpNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nomor TP</FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="lingkupMateri"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lingkup Materi</FormLabel>
+                        <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value)}>
                           <FormControl>
-                            <Input type="number" min={1} {...field} />
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                          <SelectContent>
+                            {LM_LIST.map((lm) => (
+                              <SelectItem key={lm} value={String(lm)}>
+                                Lingkup Materi {lm}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Nomor TP diberikan otomatis dan berurutan mengikuti Lingkup Materi sebelumnya.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="description"
@@ -323,6 +309,7 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             AI menemukan {importItems.length} Tujuan Pembelajaran. Periksa dan perbaiki bila perlu sebelum disimpan.
+            Nomor TP akan diberikan otomatis secara berurutan mengikuti Lingkup Materi saat disimpan.
           </p>
           <div className="max-h-[50vh] overflow-y-auto space-y-3 pr-1">
             {importItems.map((item, i) => (
@@ -340,14 +327,6 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Input
-                    type="number"
-                    min={1}
-                    className="h-8 w-24"
-                    value={item.tpNumber}
-                    onChange={(e) => updateImportItem(i, { tpNumber: Number(e.target.value) || 1 })}
-                  />
-                  <span className="text-xs text-muted-foreground">Nomor TP</span>
                   <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto text-destructive hover:bg-destructive/10" onClick={() => removeImportItem(i)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -414,7 +393,6 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
                             setEditingTP(item);
                             form.reset({
                               lingkupMateri: item.lingkupMateri,
-                              tpNumber: item.tpNumber,
                               description: item.description,
                             });
                             setIsDialogOpen(true);

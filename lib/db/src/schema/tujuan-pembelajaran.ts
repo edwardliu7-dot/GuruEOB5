@@ -5,7 +5,10 @@ import { subjectsTable } from "./subjects";
 import { academicCalendarsTable } from "./academic-calendar";
 
 // Tujuan Pembelajaran (TP) -- Kurikulum Merdeka learning objectives, grouped by
-// Lingkup Materi (1-5), numbered within each lingkup materi, per subject + semester.
+// Lingkup Materi (1-5), per subject + semester. tpNumber is a continuous sequence
+// across the whole subject+semester (not reset per Lingkup Materi): e.g. if
+// Lingkup Materi 1 has TP 1-2, Lingkup Materi 2 continues with TP 3, etc. It is
+// assigned server-side, never by the client.
 export const tujuanPembelajaranTable = pgTable(
   "tujuan_pembelajaran",
   {
@@ -23,12 +26,7 @@ export const tujuanPembelajaranTable = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex("tujuan_pembelajaran_unique").on(
-      t.subjectId,
-      t.calendarId,
-      t.lingkupMateri,
-      t.tpNumber,
-    ),
+    uniqueIndex("tujuan_pembelajaran_unique").on(t.subjectId, t.calendarId, t.tpNumber),
   ],
 );
 

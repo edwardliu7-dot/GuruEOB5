@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import mammoth from "mammoth";
 import { db, subjectsTable, tujuanPembelajaranTable } from "@workspace/db";
 import {
@@ -42,6 +42,28 @@ async function isOwnSubject(subjectId: string, teacherId: string): Promise<boole
   return !!subject;
 }
 
+// tpNumber is a continuous sequence across the whole subject+semester (never
+// reset per Lingkup Materi): if Lingkup Materi 1 has TP 1-2, a TP added to
+// Lingkup Materi 2 continues with TP 3, and so on. Always assigned server-side.
+async function nextTpNumber(subjectId: string, calendarId: string): Promise<number> {
+  const [last] = await db
+    .select({ tpNumber: tujuanPembelajaranTable.tpNumber })
+    .from(tujuanPembelajaranTable)
+    .where(
+      and(
+        eq(tujuanPembelajaranTable.subjectId, subjectId),
+        eq(tujuanPembelajaranTable.calendarId, calendarId),
+      ),
+    )
+    .orderBy(desc(tujuanPembelajaranTable.tpNumber))
+    .limit(1);
+  return (last?.tpNumber ?? 0) + 1;
+}
+
+function normalizeDescription(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 router.get("/tp", requireAuth, async (req, res): Promise<void> => {
   const teacherId = req.session.teacherId as string;
   const subjectId =
@@ -78,27 +100,28 @@ router.post("/tp", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const [existing] = await db
-    .select({ id: tujuanPembelajaranTable.id })
+  const existingForSubject = await db
+    .select({ description: tujuanPembelajaranTable.description })
     .from(tujuanPembelajaranTable)
     .where(
       and(
         eq(tujuanPembelajaranTable.subjectId, parsed.data.subjectId),
         eq(tujuanPembelajaranTable.calendarId, parsed.data.calendarId),
         eq(tujuanPembelajaranTable.lingkupMateri, parsed.data.lingkupMateri),
-        eq(tujuanPembelajaranTable.tpNumber, parsed.data.tpNumber),
       ),
     );
-  if (existing) {
+  const normalizedNew = normalizeDescription(parsed.data.description);
+  if (existingForSubject.some((e) => normalizeDescription(e.description) === normalizedNew)) {
     res.status(409).json({
-      error: `TP nomor ${parsed.data.tpNumber} pada Lingkup Materi ${parsed.data.lingkupMateri} sudah ada`,
+      error: `Tujuan Pembelajaran ini sudah ada di Lingkup Materi ${parsed.data.lingkupMateri}`,
     });
     return;
   }
 
+  const tpNumber = await nextTpNumber(parsed.data.subjectId, parsed.data.calendarId);
   const [row] = await db
     .insert(tujuanPembelajaranTable)
-    .values({ ...parsed.data, teacherId })
+    .values({ ...parsed.data, tpNumber, teacherId })
     .returning();
   res.status(201).json(CreateTujuanPembelajaranResponse.parse(row));
 });
@@ -238,7 +261,11 @@ router.post("/tp/bulk", requireAuth, async (req, res): Promise<void> => {
   }
 
   const existing = await db
-    .select({ lingkupMateri: tujuanPembelajaranTable.lingkupMateri, tpNumber: tujuanPembelajaranTable.tpNumber })
+    .select({
+      lingkupMateri: tujuanPembelajaranTable.lingkupMateri,
+      description: tujuanPembelajaranTable.description,
+      tpNumber: tujuanPembelajaranTable.tpNumber,
+    })
     .from(tujuanPembelajaranTable)
     .where(
       and(
@@ -246,15 +273,30 @@ router.post("/tp/bulk", requireAuth, async (req, res): Promise<void> => {
         eq(tujuanPembelajaranTable.calendarId, calendarId),
       ),
     );
-  const existingKeys = new Set(existing.map((e) => `${e.lingkupMateri}:${e.tpNumber}`));
+  // Duplicates are detected by content (same Lingkup Materi + description),
+  // not by tpNumber -- tpNumber is always (re)assigned by the server as a
+  // continuous sequence across the whole subject+semester.
+  const existingKeys = new Set(
+    existing.map((e) => `${e.lingkupMateri}:${normalizeDescription(e.description)}`),
+  );
+  let nextNumber = (existing.reduce((max, e) => Math.max(max, e.tpNumber), 0)) + 1;
+
+  // Preserve the AI's Lingkup Materi ordering (items already come grouped/sorted
+  // by lingkupMateri then tpNumber from the extraction step) so the continuous
+  // sequence reads naturally: LM1 TP1-2, LM2 TP3-4, etc.
+  const ordered = [...items].sort((a, b) =>
+    a.lingkupMateri !== b.lingkupMateri ? a.lingkupMateri - b.lingkupMateri : a.tpNumber - b.tpNumber,
+  );
 
   const seen = new Set<string>();
-  const toInsert = items.filter((item) => {
-    const key = `${item.lingkupMateri}:${item.tpNumber}`;
-    if (existingKeys.has(key) || seen.has(key)) return false;
+  const toInsert: { lingkupMateri: number; description: string; tpNumber: number }[] = [];
+  for (const item of ordered) {
+    const key = `${item.lingkupMateri}:${normalizeDescription(item.description)}`;
+    if (existingKeys.has(key) || seen.has(key)) continue;
     seen.add(key);
-    return true;
-  });
+    toInsert.push({ lingkupMateri: item.lingkupMateri, description: item.description, tpNumber: nextNumber });
+    nextNumber += 1;
+  }
 
   let count = 0;
   if (toInsert.length > 0) {
