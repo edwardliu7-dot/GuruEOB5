@@ -13,6 +13,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -75,6 +85,7 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
   const [editingTP, setEditingTP] = useState<any | null>(null);
   const [importItems, setImportItems] = useState<ImportItem[]>([]);
   const [isVerifyOpen, setIsVerifyOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey });
 
@@ -187,10 +198,12 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
             ? `${res.count} TP ditambahkan, ${res.skipped} dilewati karena sudah ada`
             : `${res.count} TP ditambahkan`,
       });
+      setIsConfirmOpen(false);
       setIsVerifyOpen(false);
       setImportItems([]);
       invalidate();
     } catch (err: any) {
+      setIsConfirmOpen(false);
       toast({ variant: "destructive", title: "Gagal Import", description: err?.data?.error ?? "Terjadi kesalahan" });
     }
   };
@@ -343,7 +356,7 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
             <Button variant="outline" onClick={() => { setIsVerifyOpen(false); setImportItems([]); }} disabled={bulkCreate.isPending}>
               Batal
             </Button>
-            <Button onClick={handleConfirmImport} disabled={bulkCreate.isPending || importItems.length === 0}>
+            <Button onClick={() => setIsConfirmOpen(true)} disabled={bulkCreate.isPending || importItems.length === 0}>
               {bulkCreate.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</>
               ) : (
@@ -353,6 +366,34 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Simpan Tujuan Pembelajaran</AlertDialogTitle>
+            <AlertDialogDescription>
+              Anda akan menyimpan {importItems.length} Tujuan Pembelajaran hasil analisis AI ke mata pelajaran ini.
+              Pastikan data pada langkah verifikasi sebelumnya sudah benar. Lanjutkan?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkCreate.isPending}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmImport();
+              }}
+              disabled={bulkCreate.isPending}
+            >
+              {bulkCreate.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</>
+              ) : (
+                "Ya, Simpan"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
         {isLoadingCalendars || isLoading ? (

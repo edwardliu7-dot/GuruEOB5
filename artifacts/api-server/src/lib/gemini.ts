@@ -112,15 +112,37 @@ const tpResponseSchema = {
 const TP_INSTRUCTIONS = [
   "Kamu adalah asisten kurikulum yang mengekstrak daftar Tujuan Pembelajaran (TP) Kurikulum Merdeka Indonesia dari dokumen guru, apa pun formatnya (tabel, daftar bernomor, paragraf, hasil OCR dari gambar/scan, dsb).",
   "",
-  "Struktur data Kurikulum Merdeka: setiap mata pelajaran punya beberapa 'Lingkup Materi' (biasanya bernomor 1-5, kadang disebut 'elemen', 'domain', atau punya nama topik), dan setiap Lingkup Materi punya beberapa 'Tujuan Pembelajaran' bernomor (biasanya 1-4 per lingkup materi) berupa kalimat capaian belajar siswa.",
+  "Struktur data Kurikulum Merdeka: setiap mata pelajaran punya beberapa 'Lingkup Materi' (kelompok/bagian materi besar), dan setiap Lingkup Materi punya beberapa 'Tujuan Pembelajaran' (kalimat capaian belajar siswa) di dalamnya.",
+  "",
+  "PENTING -- pengenalan istilah: dokumen guru Indonesia memakai berbagai istilah berbeda untuk kedua level ini, dan kamu HARUS mengenali semuanya, bukan hanya istilah baku 'Lingkup Materi' dan 'Tujuan Pembelajaran' persis:",
+  "- Level 'Lingkup Materi' (level atas/pengelompokan) bisa juga ditulis sebagai: 'Elemen', 'Domain', 'BAB' / 'Bab' (contoh: 'BAB 1', 'Bab I'), 'Materi Pokok', 'Pokok Bahasan', 'Unit', 'Topik', 'Kompetensi Dasar'/'KD', 'Capaian Pembelajaran'/'CP', 'Fase', atau sekadar judul bagian tanpa label eksplisit (contoh: langsung nama topik seperti 'Bilangan Bulat').",
+  "- Level 'Tujuan Pembelajaran' (level bawah/item per baris) bisa juga ditulis sebagai: 'TP', 'Indikator', 'Indikator Pencapaian Kompetensi'/'IPK', 'Sub Materi', 'Materi' (ketika muncul sebagai daftar butir di bawah sebuah BAB/Elemen, bukan sebagai judul bagian itu sendiri), atau kalimat tanpa label sama sekali yang berupa capaian/kemampuan yang diharapkan dikuasai siswa (biasanya diawali kata kerja seperti 'siswa dapat...', 'peserta didik mampu...', 'menjelaskan...', 'menganalisis...').",
+  "- Jika sebuah dokumen memakai angka romawi, huruf, atau tanpa nomor sama sekali untuk salah satu level, itu TIDAK berarti data tersebut tidak valid -- tetap ekstrak dan beri nomor urut integer sendiri berdasarkan urutan kemunculan.",
   "",
   "Tugasmu:",
-  "1. Cari setiap Lingkup Materi dan tentukan nomor urutnya (integer, mulai dari 1). Jika dokumen memberi nama/topik alih-alih nomor, tetap urutkan berdasarkan kemunculannya dan beri nomor mulai dari 1.",
-  "2. Untuk setiap Lingkup Materi, cari setiap Tujuan Pembelajaran di dalamnya dan tentukan nomor urutnya dalam lingkup materi tersebut (integer, mulai dari 1).",
-  "3. Jika dokumen tidak membagi berdasarkan Lingkup Materi sama sekali dan hanya berupa daftar tujuan pembelajaran datar, anggap semuanya berada di lingkupMateri 1 dan nomori tpNumber secara berurutan.",
+  "1. Cari setiap kelompok level-atas (Lingkup Materi, dengan istilah apa pun di atas) dan tentukan nomor urutnya (integer, mulai dari 1) berdasarkan urutan kemunculan di dokumen, walau dokumen memberi nama/topik/angka romawi alih-alih angka biasa.",
+  "2. Untuk setiap kelompok tersebut, cari setiap item level-bawah (Tujuan Pembelajaran, dengan istilah apa pun di atas) di dalamnya dan tentukan nomor urutnya dalam kelompok itu (integer, mulai dari 1).",
+  "3. Jika dokumen sama sekali tidak punya pengelompokan dua level (hanya daftar datar berisi kalimat-kalimat capaian belajar), anggap semuanya berada di lingkupMateri 1 dan nomori tpNumber secara berurutan -- JANGAN mengembalikan array kosong hanya karena strukturnya tidak baku.",
   "4. description harus berisi teks lengkap kalimat Tujuan Pembelajaran tersebut, dirapikan (hilangkan penomoran/bullet asli, spasi berlebih, karakter OCR yang rusak), tanpa memotong makna.",
-  "5. Abaikan judul dokumen, header/footer, informasi identitas guru/sekolah, atau bagian yang jelas bukan Tujuan Pembelajaran.",
+  "5. Abaikan judul dokumen, header/footer, informasi identitas guru/sekolah, atau bagian yang jelas bukan Tujuan Pembelajaran (misalnya kop surat, nama sekolah, tahun ajaran).",
   "6. Tulis dalam Bahasa Indonesia sesuai dokumen asli.",
+  "7. Jangan pernah mengembalikan items kosong jika dokumen memuat teks apa pun yang menyerupai daftar materi/capaian belajar -- lebih baik menebak pengelompokan secara wajar daripada mengosongkan hasil.",
+].join("\n");
+
+// Used only when the primary structured pass returns zero items. Much more
+// permissive: any bullet/numbered/paragraph text that looks like a learning
+// objective or topic list should be captured, even without recognizable
+// Kurikulum Merdeka terminology.
+const TP_FALLBACK_INSTRUCTIONS = [
+  "Kamu adalah asisten yang mengekstrak daftar materi/topik pembelajaran dari sebuah dokumen guru Indonesia yang formatnya TIDAK baku atau tidak mengikuti terminologi Kurikulum Merdeka standar.",
+  "",
+  "Percobaan sebelumnya gagal menemukan struktur baku -- sekarang bersikaplah SANGAT permisif:",
+  "1. Anggap dokumen ini terdiri dari satu atau lebih kelompok/bagian (bisa berupa BAB, topik, judul sub-bagian apa pun, atau tanpa pembagian sama sekali).",
+  "2. Di dalam setiap kelompok, ekstrak setiap baris/kalimat/butir yang menyebutkan materi, topik, kemampuan, atau capaian belajar sebagai satu item Tujuan Pembelajaran.",
+  "3. Jika tidak ada pembagian kelompok yang jelas, masukkan semua item ke lingkupMateri 1.",
+  "4. Beri nomor lingkupMateri dan tpNumber secara berurutan berdasarkan urutan kemunculan.",
+  "5. Hanya kembalikan items kosong jika dokumen benar-benar tidak memuat teks yang berkaitan dengan materi/topik pembelajaran sama sekali (misalnya dokumen kosong, atau sepenuhnya tidak relevan seperti surat undangan rapat).",
+  "6. Tulis description dalam Bahasa Indonesia, dirapikan dari teks asli.",
 ].join("\n");
 
 async function runTPExtraction(
@@ -148,24 +170,43 @@ async function runTPExtraction(
   return parsed.items as MappedTPItem[];
 }
 
+/**
+ * Runs the primary structured extraction, and if it comes back empty,
+ * automatically retries once with a much more permissive fallback prompt
+ * before giving up. This avoids surfacing "AI tidak menemukan..." for
+ * documents that use non-standard terminology (e.g. "BAB" instead of
+ * "Lingkup Materi") that the strict pass didn't recognize.
+ */
+async function runTPExtractionWithFallback(
+  buildContents: (
+    instructions: string,
+  ) => Parameters<typeof gemini.models.generateContent>[0]["contents"],
+): Promise<MappedTPItem[]> {
+  const primary = await runTPExtraction(buildContents(TP_INSTRUCTIONS));
+  if (primary.length > 0) return primary;
+
+  return runTPExtraction(buildContents(TP_FALLBACK_INSTRUCTIONS));
+}
+
 /** Spreadsheet rows (already parsed client-side, e.g. from xlsx/csv). */
 export async function mapRowsToTP(rows: string[][]): Promise<MappedTPItem[]> {
-  const prompt = [
-    TP_INSTRUCTIONS,
-    "",
-    "Berikut baris-baris mentah hasil pembacaan spreadsheet (kolom bisa dalam urutan apa pun):",
-    "",
-    "Data:",
-    JSON.stringify(rows),
-  ].join("\n");
-
-  return runTPExtraction(prompt);
+  return runTPExtractionWithFallback((instructions) =>
+    [
+      instructions,
+      "",
+      "Berikut baris-baris mentah hasil pembacaan spreadsheet (kolom bisa dalam urutan apa pun):",
+      "",
+      "Data:",
+      JSON.stringify(rows),
+    ].join("\n"),
+  );
 }
 
 /** Plain extracted text (e.g. from a .docx or .txt file). */
 export async function mapTextToTP(text: string): Promise<MappedTPItem[]> {
-  const prompt = [TP_INSTRUCTIONS, "", "Berikut isi dokumen:", "", text].join("\n");
-  return runTPExtraction(prompt);
+  return runTPExtractionWithFallback((instructions) =>
+    [instructions, "", "Berikut isi dokumen:", "", text].join("\n"),
+  );
 }
 
 /**
@@ -174,9 +215,9 @@ export async function mapTextToTP(text: string): Promise<MappedTPItem[]> {
  * pre-extracted text, so scans/photos of a curriculum table still work.
  */
 export async function mapFileToTP(fileBase64: string, mimeType: string): Promise<MappedTPItem[]> {
-  return runTPExtraction([
+  return runTPExtractionWithFallback((instructions) => [
     { inlineData: { data: fileBase64, mimeType } },
-    { text: TP_INSTRUCTIONS },
+    { text: instructions },
   ]);
 }
 
