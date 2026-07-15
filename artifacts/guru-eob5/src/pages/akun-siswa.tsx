@@ -92,7 +92,10 @@ export default function AkunSiswa() {
       setAccounts((prev) => ({ ...prev, ...map }));
       toast({
         title: "Selesai",
-        description: `${result.generated} akun baru dibuat, ${result.alreadyExisted} sudah ada sebelumnya.`,
+        description:
+          result.alreadyExisted > 0
+            ? `${result.generated} akun baru dibuat, ${result.alreadyExisted} akun lama diperbarui dengan password baru.`
+            : `${result.generated} akun baru dibuat.`,
       });
     } catch {
       toast({ title: "Gagal membuat akun siswa", variant: "destructive" });
