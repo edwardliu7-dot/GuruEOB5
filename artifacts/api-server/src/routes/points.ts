@@ -12,6 +12,8 @@ import {
   DeletePointResponse,
   BulkCreatePointsBody,
   BulkCreatePointsResponse,
+  BulkMixedCreatePointsBody,
+  BulkMixedCreatePointsResponse,
 } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru } from "../lib/auth";
 import type { Request } from "express";
@@ -161,6 +163,40 @@ router.post("/points/bulk", requireAuth, async (req, res): Promise<void> => {
     .values(targets.map((studentId) => ({ studentId, jenis, poin, keterangan, tanggal })))
     .returning();
   res.json(BulkCreatePointsResponse.parse({ count: inserted.length }));
+});
+
+/**
+ * Daily input: one date, an optional, different point entry per student.
+ * Powers the "isi sekaligus semua siswa" roster table alongside
+ * /attendance/bulk-mixed. Students with no entry (poin not filled in) are
+ * simply skipped -- points are opt-in per student, unlike attendance.
+ */
+router.post("/points/bulk-mixed", requireAuth, async (req, res): Promise<void> => {
+  const parsed = BulkMixedCreatePointsBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const allowed = await schoolStudentIds(req);
+  if (allowed === null) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const { tanggal, entries } = parsed.data;
+  const targets = entries.filter((e) => allowed.has(e.studentId));
+
+  if (targets.length === 0) {
+    res.json(BulkMixedCreatePointsResponse.parse({ count: 0 }));
+    return;
+  }
+
+  const inserted = await db
+    .insert(pointsTable)
+    .values(targets.map((e) => ({ studentId: e.studentId, jenis: e.jenis, poin: e.poin, keterangan: e.keterangan, tanggal })))
+    .returning();
+  res.json(BulkMixedCreatePointsResponse.parse({ count: inserted.length }));
 });
 
 export default router;

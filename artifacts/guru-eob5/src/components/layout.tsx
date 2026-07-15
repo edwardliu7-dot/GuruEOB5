@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox, CalendarCheck2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileDialog } from "@/components/profile-dialog";
@@ -80,6 +80,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   const kegiatanBelajarMengajarNavItems = [
+    { href: "/input-harian", label: "Input Harian", icon: CalendarCheck2 },
     { href: "/absensi", label: "Absensi", icon: ClipboardCheck },
     { href: "/jurnal", label: "Jurnal Mengajar", icon: BookOpen },
     { href: "/nilai", label: "Nilai", icon: GraduationCap },

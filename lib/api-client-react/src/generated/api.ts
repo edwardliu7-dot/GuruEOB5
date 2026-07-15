@@ -37,6 +37,8 @@ import type {
   BulkCreateStudentsResult,
   BulkCreateTPInput,
   BulkCreateTPResult,
+  BulkMixedAttendanceInput,
+  BulkMixedPointsInput,
   DashboardSummary,
   GenerateAllStudentAccounts200,
   GenerateModulAjarInput,
@@ -3842,6 +3844,77 @@ export const useBulkCreateAttendance = <TError = ErrorType<unknown>,
       return useMutation(getBulkCreateAttendanceMutationOptions(options));
     }
 
+export const getBulkMixedCreateAttendanceUrl = () => {
+
+
+
+
+  return `/api/attendance/bulk-mixed`
+}
+
+/**
+ * @summary Record a different attendance status per student for one subject/date (daily input)
+ */
+export const bulkMixedCreateAttendance = async (bulkMixedAttendanceInput: BulkMixedAttendanceInput, options?: RequestInit): Promise<BulkCreateResult> => {
+
+  return customFetch<BulkCreateResult>(getBulkMixedCreateAttendanceUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bulkMixedAttendanceInput)
+  }
+);}
+
+
+
+
+
+export const getBulkMixedCreateAttendanceMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkMixedCreateAttendance>>, TError,{data: BodyType<BulkMixedAttendanceInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkMixedCreateAttendance>>, TError,{data: BodyType<BulkMixedAttendanceInput>}, TContext> => {
+
+const mutationKey = ['bulkMixedCreateAttendance'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkMixedCreateAttendance>>, {data: BodyType<BulkMixedAttendanceInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkMixedCreateAttendance(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkMixedCreateAttendanceMutationResult = NonNullable<Awaited<ReturnType<typeof bulkMixedCreateAttendance>>>
+    export type BulkMixedCreateAttendanceMutationBody = BodyType<BulkMixedAttendanceInput>
+    export type BulkMixedCreateAttendanceMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Record a different attendance status per student for one subject/date (daily input)
+ */
+export const useBulkMixedCreateAttendance = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkMixedCreateAttendance>>, TError,{data: BodyType<BulkMixedAttendanceInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof bulkMixedCreateAttendance>>,
+        TError,
+        {data: BodyType<BulkMixedAttendanceInput>},
+        TContext
+      > => {
+      return useMutation(getBulkMixedCreateAttendanceMutationOptions(options));
+    }
+
 export const getListGradesUrl = (params?: ListGradesParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -4507,6 +4580,77 @@ export const useBulkCreatePoints = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getBulkCreatePointsMutationOptions(options));
+    }
+
+export const getBulkMixedCreatePointsUrl = () => {
+
+
+
+
+  return `/api/points/bulk-mixed`
+}
+
+/**
+ * @summary Record a different (optional) point entry per student for one date (daily input)
+ */
+export const bulkMixedCreatePoints = async (bulkMixedPointsInput: BulkMixedPointsInput, options?: RequestInit): Promise<BulkCreatePointsResult> => {
+
+  return customFetch<BulkCreatePointsResult>(getBulkMixedCreatePointsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bulkMixedPointsInput)
+  }
+);}
+
+
+
+
+
+export const getBulkMixedCreatePointsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkMixedCreatePoints>>, TError,{data: BodyType<BulkMixedPointsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkMixedCreatePoints>>, TError,{data: BodyType<BulkMixedPointsInput>}, TContext> => {
+
+const mutationKey = ['bulkMixedCreatePoints'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkMixedCreatePoints>>, {data: BodyType<BulkMixedPointsInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkMixedCreatePoints(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkMixedCreatePointsMutationResult = NonNullable<Awaited<ReturnType<typeof bulkMixedCreatePoints>>>
+    export type BulkMixedCreatePointsMutationBody = BodyType<BulkMixedPointsInput>
+    export type BulkMixedCreatePointsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Record a different (optional) point entry per student for one date (daily input)
+ */
+export const useBulkMixedCreatePoints = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkMixedCreatePoints>>, TError,{data: BodyType<BulkMixedPointsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof bulkMixedCreatePoints>>,
+        TError,
+        {data: BodyType<BulkMixedPointsInput>},
+        TContext
+      > => {
+      return useMutation(getBulkMixedCreatePointsMutationOptions(options));
     }
 
 export const getListAcademicCalendarsUrl = () => {

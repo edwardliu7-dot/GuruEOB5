@@ -7,6 +7,8 @@ import {
   CreateAttendanceRecordResponse,
   BulkCreateAttendanceBody,
   BulkCreateAttendanceResponse,
+  BulkMixedCreateAttendanceBody,
+  BulkMixedCreateAttendanceResponse,
   UpdateAttendanceRecordParams,
   UpdateAttendanceRecordBody,
   UpdateAttendanceRecordResponse,
@@ -214,6 +216,58 @@ router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => 
     })
     .returning();
   res.json(BulkCreateAttendanceResponse.parse({ count: inserted.length }));
+});
+
+/**
+ * Daily input: one subject/date, a different status per student. Powers the
+ * "isi sekaligus semua siswa" roster table so a teacher doesn't have to open
+ * a dialog per student.
+ */
+router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<void> => {
+  const parsed = BulkMixedCreateAttendanceBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const allowed = await schoolStudentIds(req);
+  if (allowed === null) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const { subjectId, tanggal, entries } = parsed.data;
+  const byStudent = new Map(entries.map((e) => [e.studentId, e.status]));
+  const targets = [...byStudent.keys()].filter((id) => allowed.has(id));
+
+  if (targets.length === 0) {
+    res.status(400).json({ error: "Tidak ada siswa valid yang dipilih" });
+    return;
+  }
+  if (!(await ownsSubject(subjectId, guru.id))) {
+    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
+    return;
+  }
+
+  let count = 0;
+  for (const studentId of targets) {
+    const status = byStudent.get(studentId)!;
+    await db
+      .insert(attendanceTable)
+      .values({ studentId, subjectId, tanggal, status })
+      .onConflictDoUpdate({
+        target: [attendanceTable.studentId, attendanceTable.subjectId, attendanceTable.tanggal],
+        set: { status },
+      });
+    count++;
+  }
+  res.json(BulkMixedCreateAttendanceResponse.parse({ count }));
 });
 
 export default router;

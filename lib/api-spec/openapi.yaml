@@ -891,6 +891,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/BulkCreateResult"
 
+  /attendance/bulk-mixed:
+    post:
+      operationId: bulkMixedCreateAttendance
+      tags: [attendance]
+      summary: Record a different attendance status per student for one subject/date (daily input)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkMixedAttendanceInput"
+      responses:
+        "200":
+          description: Bulk create result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkCreateResult"
+
   /grades:
     get:
       operationId: listGrades
@@ -1052,6 +1071,25 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/BulkCreatePointsInput"
+      responses:
+        "200":
+          description: Bulk create result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkCreatePointsResult"
+
+  /points/bulk-mixed:
+    post:
+      operationId: bulkMixedCreatePoints
+      tags: [points]
+      summary: Record a different (optional) point entry per student for one date (daily input)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkMixedPointsInput"
       responses:
         "200":
           description: Bulk create result
@@ -1884,6 +1922,58 @@ components:
           type: string
           enum: [hadir, izin, sakit, alpa]
       required: [studentIds, subjectId, tanggal, status]
+
+    BulkMixedAttendanceEntry:
+      type: object
+      properties:
+        studentId:
+          type: string
+        status:
+          type: string
+          enum: [hadir, izin, sakit, alpa]
+      required: [studentId, status]
+
+    BulkMixedAttendanceInput:
+      type: object
+      properties:
+        subjectId:
+          type: string
+        tanggal:
+          type: string
+        entries:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            $ref: "#/components/schemas/BulkMixedAttendanceEntry"
+      required: [subjectId, tanggal, entries]
+
+    BulkMixedPointsEntry:
+      type: object
+      properties:
+        studentId:
+          type: string
+        jenis:
+          type: string
+          enum: [positif, negatif]
+        poin:
+          type: number
+        keterangan:
+          type: string
+      required: [studentId, jenis, poin, keterangan]
+
+    BulkMixedPointsInput:
+      type: object
+      properties:
+        tanggal:
+          type: string
+        entries:
+          type: array
+          minItems: 0
+          maxItems: 500
+          items:
+            $ref: "#/components/schemas/BulkMixedPointsEntry"
+      required: [tanggal, entries]
 
     BulkCreateStudentsResult:
       type: object

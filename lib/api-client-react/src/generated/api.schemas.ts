@@ -277,6 +277,55 @@ export interface BulkCreateAttendanceInput {
   status: BulkCreateAttendanceInputStatus;
 }
 
+export type BulkMixedAttendanceEntryStatus = typeof BulkMixedAttendanceEntryStatus[keyof typeof BulkMixedAttendanceEntryStatus];
+
+
+export const BulkMixedAttendanceEntryStatus = {
+  hadir: 'hadir',
+  izin: 'izin',
+  sakit: 'sakit',
+  alpa: 'alpa',
+} as const;
+
+export interface BulkMixedAttendanceEntry {
+  studentId: string;
+  status: BulkMixedAttendanceEntryStatus;
+}
+
+export interface BulkMixedAttendanceInput {
+  subjectId: string;
+  tanggal: string;
+  /**
+     * @minItems 1
+     * @maxItems 500
+     */
+  entries: BulkMixedAttendanceEntry[];
+}
+
+export type BulkMixedPointsEntryJenis = typeof BulkMixedPointsEntryJenis[keyof typeof BulkMixedPointsEntryJenis];
+
+
+export const BulkMixedPointsEntryJenis = {
+  positif: 'positif',
+  negatif: 'negatif',
+} as const;
+
+export interface BulkMixedPointsEntry {
+  studentId: string;
+  jenis: BulkMixedPointsEntryJenis;
+  poin: number;
+  keterangan: string;
+}
+
+export interface BulkMixedPointsInput {
+  tanggal: string;
+  /**
+     * @minItems 0
+     * @maxItems 500
+     */
+  entries: BulkMixedPointsEntry[];
+}
+
 export interface BulkCreateStudentsResult {
   count: number;
   skipped: number;

@@ -85,6 +85,18 @@ export default function Absensi() {
     (s: any) => kelasFilter === "all" || s.kelas === kelasFilter,
   );
 
+  // Group attendance history by date (most recent first) so a teacher can
+  // scan a day's roster at a glance instead of a long flat list.
+  const groupedByDate = (() => {
+    const groups = new Map<string, any[]>();
+    for (const a of (attendanceList ?? []) as any[]) {
+      const list = groups.get(a.tanggal) ?? [];
+      list.push(a);
+      groups.set(a.tanggal, list);
+    }
+    return [...groups.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  })();
+
   const onSubmit = async (data: z.infer<typeof attendanceSchema>) => {
     try {
       const result = await bulkCreateAttendance.mutateAsync({ data });
@@ -221,7 +233,6 @@ export default function Absensi() {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/50">
-                <TableHead>Tanggal</TableHead>
                 <TableHead>Nama Siswa</TableHead>
                 <TableHead>Mata Pelajaran</TableHead>
                 <TableHead>Status</TableHead>
@@ -230,36 +241,45 @@ export default function Absensi() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
+                Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
               ) : !attendanceList?.length ? (
-                <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Belum ada data kehadiran.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Belum ada data kehadiran.</TableCell></TableRow>
               ) : (
-                attendanceList.map((a:any) => (
-                  <TableRow key={a.id}>
-                    <TableCell>{format(new Date(a.tanggal), "dd MMM yyyy")}</TableCell>
-                    <TableCell className="font-medium">{students?.find((s:any) => s.id === a.studentId)?.namaLengkap}</TableCell>
-                    <TableCell>{subjects?.find((s:any) => s.id === a.subjectId)?.name}</TableCell>
-                    <TableCell>
-                      <Select value={a.status} onValueChange={(status) => handleStatusChange(a.id, status)}>
-                        <SelectTrigger className="w-[110px] h-8">
-                          <Badge variant="outline" className={`${statusColors[a.status]} capitalize`}>
-                            {a.status}
-                          </Badge>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="hadir">Hadir</SelectItem>
-                          <SelectItem value="izin">Izin</SelectItem>
-                          <SelectItem value="sakit">Sakit</SelectItem>
-                          <SelectItem value="alpa">Alpa</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteAttendance(a.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                groupedByDate.map(([tanggal, records]) => (
+                  <>
+                    <TableRow key={`date-${tanggal}`} className="bg-gray-100/80 hover:bg-gray-100/80">
+                      <TableCell colSpan={4} className="font-semibold text-sm py-2">
+                        {format(new Date(tanggal), "EEEE, dd MMMM yyyy")}
+                        <span className="ml-2 font-normal text-muted-foreground">({records.length} siswa)</span>
+                      </TableCell>
+                    </TableRow>
+                    {records.map((a: any) => (
+                      <TableRow key={a.id}>
+                        <TableCell className="font-medium">{students?.find((s:any) => s.id === a.studentId)?.namaLengkap}</TableCell>
+                        <TableCell>{subjects?.find((s:any) => s.id === a.subjectId)?.name}</TableCell>
+                        <TableCell>
+                          <Select value={a.status} onValueChange={(status) => handleStatusChange(a.id, status)}>
+                            <SelectTrigger className="w-[110px] h-8">
+                              <Badge variant="outline" className={`${statusColors[a.status]} capitalize`}>
+                                {a.status}
+                              </Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="hadir">Hadir</SelectItem>
+                              <SelectItem value="izin">Izin</SelectItem>
+                              <SelectItem value="sakit">Sakit</SelectItem>
+                              <SelectItem value="alpa">Alpa</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteAttendance(a.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </>
                 ))
               )}
             </TableBody>

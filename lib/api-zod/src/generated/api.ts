@@ -962,6 +962,27 @@ export const BulkCreateAttendanceResponse = zod.object({
 
 
 /**
+ * @summary Record a different attendance status per student for one subject/date (daily input)
+ */
+export const bulkMixedCreateAttendanceBodyEntriesMax = 500;
+
+
+
+export const BulkMixedCreateAttendanceBody = zod.object({
+  "subjectId": zod.string(),
+  "tanggal": zod.string(),
+  "entries": zod.array(zod.object({
+  "studentId": zod.string(),
+  "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa'])
+})).min(1).max(bulkMixedCreateAttendanceBodyEntriesMax)
+})
+
+export const BulkMixedCreateAttendanceResponse = zod.object({
+  "count": zod.number()
+})
+
+
+/**
  * @summary List grades
  */
 export const ListGradesQueryParams = zod.object({
@@ -1164,6 +1185,29 @@ export const BulkCreatePointsBody = zod.object({
 })
 
 export const BulkCreatePointsResponse = zod.object({
+  "count": zod.number()
+})
+
+
+/**
+ * @summary Record a different (optional) point entry per student for one date (daily input)
+ */
+export const bulkMixedCreatePointsBodyEntriesMin = 0;
+export const bulkMixedCreatePointsBodyEntriesMax = 500;
+
+
+
+export const BulkMixedCreatePointsBody = zod.object({
+  "tanggal": zod.string(),
+  "entries": zod.array(zod.object({
+  "studentId": zod.string(),
+  "jenis": zod.enum(['positif', 'negatif']),
+  "poin": zod.number(),
+  "keterangan": zod.string()
+})).min(bulkMixedCreatePointsBodyEntriesMin).max(bulkMixedCreatePointsBodyEntriesMax)
+})
+
+export const BulkMixedCreatePointsResponse = zod.object({
   "count": zod.number()
 })
 
