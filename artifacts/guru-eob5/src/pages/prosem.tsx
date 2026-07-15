@@ -10,6 +10,7 @@ import {
   useCreateProsemItem,
   useUpdateProsemItem,
   useDeleteProsemItem,
+  useListTujuanPembelajaran,
 } from "@workspace/api-client-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -203,6 +204,16 @@ export default function Prosem() {
   };
 
   const openProsem = prosemList?.find((p: any) => p.id === openProsemId);
+
+  const { data: tpList } = useListTujuanPembelajaran(
+    { subjectId: openProsem?.subjectId || undefined, calendarId: selectedCalendar || undefined },
+    {
+      query: {
+        queryKey: ["/api/tp", openProsem?.subjectId, selectedCalendar],
+        enabled: !!openProsem?.subjectId && !!selectedCalendar,
+      },
+    },
+  );
 
   const noCalendar = !calLoading && !calendars?.length;
 
@@ -485,9 +496,30 @@ export default function Prosem() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>CP (Opsional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="3.1" {...field} />
-                      </FormControl>
+                      {tpList && tpList.length > 0 ? (
+                        <Select
+                          onValueChange={(v) => field.onChange(v === "__none__" ? "" : v)}
+                          value={field.value ? field.value : "__none__"}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih TP" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="__none__">— Tidak ada —</SelectItem>
+                            {tpList.map((tp: any) => (
+                              <SelectItem key={tp.id} value={`TP ${tp.tpNumber}`}>
+                                LM {tp.lingkupMateri} · TP {tp.tpNumber} — {tp.description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="text-xs text-muted-foreground pt-1">
+                          {tpList ? "Belum ada TP untuk mapel ini." : "Memuat TP…"}
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
