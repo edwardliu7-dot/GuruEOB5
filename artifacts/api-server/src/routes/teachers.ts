@@ -11,11 +11,11 @@ import {
   DeleteTeacherParams,
   DeleteTeacherResponse,
 } from "@workspace/api-zod";
-import { requireAuth, requireAdmin, getCurrentGuru, guruToTeacher, sameSchoolFilter, isAdminGuru } from "../lib/auth";
+import { requireAuth, requireSchoolAdmin, getCurrentGuru, guruToTeacher, sameSchoolFilter, isSchoolAdmin } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/teachers", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.get("/teachers", requireAuth, requireSchoolAdmin, async (req, res): Promise<void> => {
   const current = await getCurrentGuru(req);
   if (!current) {
     res.status(401).json({ error: "Unauthorized" });
@@ -70,7 +70,7 @@ router.patch("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
   const isSelf = req.session.teacherId === params.data.id;
-  if (!isSelf && !isAdminGuru(current)) {
+  if (!isSelf && !isSchoolAdmin(current)) {
     res.status(403).json({ error: "Hanya boleh mengubah profil sendiri" });
     return;
   }
@@ -109,7 +109,7 @@ router.delete("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
   const isSelf = req.session.teacherId === params.data.id;
-  if (!isSelf && !isAdminGuru(current)) {
+  if (!isSelf && !isSchoolAdmin(current)) {
     res.status(403).json({ error: "Hanya boleh menghapus akun sendiri" });
     return;
   }

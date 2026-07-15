@@ -14,6 +14,12 @@ export function isAdminGuru(guru: Guru): boolean {
   return ADMIN_USERNAMES.includes(guru.username);
 }
 
+// School-level admin: the platform admin, or a "kepala_sekolah" (principal) managing
+// their own school's data (students, teachers, teaching materials, academic calendar).
+export function isSchoolAdmin(guru: Guru): boolean {
+  return isAdminGuru(guru) || guru.jabatan.includes("kepala_sekolah");
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   if (!req.session.teacherId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -30,6 +36,21 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
   }
   if (!isAdminGuru(guru)) {
     res.status(403).json({ error: "Hanya admin yang boleh mengakses fitur ini" });
+    return;
+  }
+  next();
+}
+
+// For school-scoped resources (students, teachers, teaching materials, academic
+// calendar): platform admin OR the school's own kepala sekolah may manage them.
+export async function requireSchoolAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!isSchoolAdmin(guru)) {
+    res.status(403).json({ error: "Hanya kepala sekolah atau admin yang boleh mengakses fitur ini" });
     return;
   }
   next();
@@ -62,6 +83,6 @@ export function guruToTeacher(guru: Guru): Record<string, unknown> {
     photoUrl: guru.photoUrl,
     bio: guru.bio,
     createdAt: guru.createdAt,
-    isAdmin: isAdminGuru(guru),
+    isAdmin: isSchoolAdmin(guru),
   };
 }

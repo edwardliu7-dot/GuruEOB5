@@ -16,7 +16,7 @@ import {
   DeleteAcademicWeekParams,
   DeleteAcademicWeekResponse,
 } from "@workspace/api-zod";
-import { requireAuth, requireAdmin, getCurrentGuru } from "../lib/auth";
+import { requireAuth, requireSchoolAdmin, getCurrentGuru } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -55,7 +55,7 @@ router.get("/academic-calendars", requireAuth, async (req, res): Promise<void> =
   res.json(ListAcademicCalendarsResponse.parse(calendars));
 });
 
-router.post("/academic-calendars", requireAdmin, async (req, res): Promise<void> => {
+router.post("/academic-calendars", requireSchoolAdmin, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) {
     res.status(401).json({ error: "Unauthorized" });
@@ -77,7 +77,7 @@ router.post("/academic-calendars", requireAdmin, async (req, res): Promise<void>
   res.status(201).json(CreateAcademicCalendarResponse.parse(calendar));
 });
 
-router.delete("/academic-calendars/:id", requireAdmin, async (req, res): Promise<void> => {
+router.delete("/academic-calendars/:id", requireSchoolAdmin, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) {
     res.status(401).json({ error: "Unauthorized" });
@@ -128,7 +128,7 @@ router.get("/academic-weeks", requireAuth, async (req, res): Promise<void> => {
   res.json(ListAcademicWeeksResponse.parse(weeks));
 });
 
-router.post("/academic-weeks", requireAdmin, async (req, res): Promise<void> => {
+router.post("/academic-weeks", requireSchoolAdmin, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) {
     res.status(401).json({ error: "Unauthorized" });
@@ -147,7 +147,7 @@ router.post("/academic-weeks", requireAdmin, async (req, res): Promise<void> => 
   res.status(201).json(CreateAcademicWeekResponse.parse(week));
 });
 
-router.put("/academic-weeks/:id", requireAdmin, async (req, res): Promise<void> => {
+router.put("/academic-weeks/:id", requireSchoolAdmin, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) {
     res.status(401).json({ error: "Unauthorized" });
@@ -183,7 +183,7 @@ router.put("/academic-weeks/:id", requireAdmin, async (req, res): Promise<void> 
   res.json(UpdateAcademicWeekResponse.parse(week));
 });
 
-router.delete("/academic-weeks/:id", requireAdmin, async (req, res): Promise<void> => {
+router.delete("/academic-weeks/:id", requireSchoolAdmin, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) {
     res.status(401).json({ error: "Unauthorized" });

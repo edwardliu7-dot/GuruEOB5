@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, bahanAjarTable } from "@workspace/db";
-import { requireAuth, requireAdmin, getCurrentGuru } from "../lib/auth";
+import { requireAuth, requireSchoolAdmin, getCurrentGuru } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -60,7 +60,7 @@ router.get("/bahan-ajar/:id/file", requireAuth, async (req, res): Promise<void> 
 });
 
 // POST /bahan-ajar — admin only
-router.post("/bahan-ajar", requireAdmin, async (req, res): Promise<void> => {
+router.post("/bahan-ajar", requireSchoolAdmin, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
 
@@ -106,7 +106,7 @@ router.post("/bahan-ajar", requireAdmin, async (req, res): Promise<void> => {
 });
 
 // DELETE /bahan-ajar/:id — admin only
-router.delete("/bahan-ajar/:id", requireAdmin, async (req, res): Promise<void> => {
+router.delete("/bahan-ajar/:id", requireSchoolAdmin, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
 

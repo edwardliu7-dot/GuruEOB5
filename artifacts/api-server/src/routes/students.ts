@@ -17,7 +17,7 @@ import {
   BulkCreateStudentsBody,
   BulkCreateStudentsResponse,
 } from "@workspace/api-zod";
-import { requireAuth, requireAdmin, getCurrentGuru } from "../lib/auth";
+import { requireAuth, requireSchoolAdmin, getCurrentGuru } from "../lib/auth";
 import { mapRowsToStudents } from "../lib/gemini";
 
 const router: IRouter = Router();
@@ -57,7 +57,7 @@ router.get("/students", requireAuth, async (req, res): Promise<void> => {
   res.json(ListStudentsResponse.parse(filtered));
 });
 
-router.post("/students", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.post("/students", requireAuth, requireSchoolAdmin, async (req, res): Promise<void> => {
   const parsed = CreateStudentBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -86,7 +86,7 @@ router.post("/students", requireAuth, requireAdmin, async (req, res): Promise<vo
   res.status(201).json(CreateStudentResponse.parse(student));
 });
 
-router.post("/students/import/analyze", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.post("/students/import/analyze", requireAuth, requireSchoolAdmin, async (req, res): Promise<void> => {
   const parsed = AnalyzeStudentImportBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -109,7 +109,7 @@ router.post("/students/import/analyze", requireAuth, requireAdmin, async (req, r
   }
 });
 
-router.post("/students/bulk", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.post("/students/bulk", requireAuth, requireSchoolAdmin, async (req, res): Promise<void> => {
   const parsed = BulkCreateStudentsBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -172,7 +172,7 @@ router.get("/students/:id", requireAuth, async (req, res): Promise<void> => {
   res.json(GetStudentResponse.parse(student));
 });
 
-router.patch("/students/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.patch("/students/:id", requireAuth, requireSchoolAdmin, async (req, res): Promise<void> => {
   const params = UpdateStudentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -210,7 +210,7 @@ router.patch("/students/:id", requireAuth, requireAdmin, async (req, res): Promi
   res.json(UpdateStudentResponse.parse(student));
 });
 
-router.delete("/students/:id", requireAuth, requireAdmin, async (req, res): Promise<void> => {
+router.delete("/students/:id", requireAuth, requireSchoolAdmin, async (req, res): Promise<void> => {
   const params = DeleteStudentParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
