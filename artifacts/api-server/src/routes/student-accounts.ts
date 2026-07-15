@@ -141,7 +141,10 @@ router.post(
     const accounts: GeneratedAccount[] = [];
     for (const student of students) {
       const existing = await getStudentAccount(student.id);
-      const account = await getOrCreateStudentAccount(student);
+      // Always regenerate so existing accounts get a fresh password and the
+      // Neon TOMAT row is updated in sync.  This is what "generate all" means
+      // from the teacher's perspective: every student gets a working account.
+      const account = await getOrCreateStudentAccount(student, { regenerate: true });
       accounts.push(account);
       if (existing) alreadyExisted++;
       else generated++;
