@@ -64,7 +64,8 @@ async function buildAll() {
       "@azure/*",
       "@opentelemetry/*",
       "@google-cloud/*",
-      "@google/*",
+      // "@google/*" -- @google/genai is pure-JS and CAN be bundled; keeping it
+      // external would require a costly `pnpm deploy` step on the VPS.
       "googleapis",
       "firebase-admin",
       "@parcel/watcher",

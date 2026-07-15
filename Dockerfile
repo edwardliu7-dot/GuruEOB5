@@ -7,9 +7,12 @@
 # final image small, which matters a lot on a small-RAM VPS: Docker can run
 # out of memory while exporting a bloated single-stage image.
 #
-# The api-server bundles all its JS dependencies into one file via esbuild,
-# and also serves the built frontend (see artifacts/api-server/src/app.ts),
-# so the runtime stage needs nothing but the two "dist" folders to run.
+# esbuild bundles virtually everything into dist/index.mjs.  The one
+# exception is pdfkit: it loads its built-in .afm font files from disk at
+# runtime using paths relative to its own package directory, so bundling
+# breaks those paths. We install pdfkit directly in the runtime stage via a
+# plain npm install — it's ~5 MB and avoids the RAM-heavy `pnpm deploy` step
+# that was previously needed to copy external deps.
 
 # ---------- Stage 1: build ----------
 FROM node:22-slim AS build
@@ -36,13 +39,6 @@ ENV BASE_PATH=/
 # locally or in CI before deploying.
 RUN pnpm run build:app
 
-# esbuild bundles almost everything, but a few packages (e.g. @google/genai)
-# are deliberately left external in artifacts/api-server/build.mjs. Use
-# `pnpm deploy` to produce a small, self-contained node_modules with just
-# those production dependencies, so the runtime image doesn't need the
-# full (devDependencies-heavy) workspace node_modules.
-RUN pnpm --filter @workspace/api-server --prod deploy --legacy /app/deploy
-
 # ---------- Stage 2: runtime ----------
 FROM node:22-slim AS runtime
 
@@ -51,16 +47,20 @@ WORKDIR /app
 # Coolify's healthcheck runs `curl`/`wget` inside the container to verify
 # the app is up. node:22-slim has neither by default, so the check always
 # fails and Coolify rolls back a perfectly working deployment. Install curl.
+# Also install pdfkit here: it reads .afm font files from its own package
+# directory at runtime (path traversal), so esbuild cannot bundle it safely.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends curl \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && npm install -g npm@latest --quiet \
+  && npm install pdfkit --omit=dev --no-package-lock --no-save \
+     --prefix /app 2>&1 | tail -5
 
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Only the compiled output + the small set of external prod dependencies
-# are needed to run the app.
-COPY --from=build /app/deploy/node_modules ./node_modules
+# Only the compiled output is needed to run the app.
+# (pdfkit node_modules installed above; everything else is bundled by esbuild)
 COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
 COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
 
