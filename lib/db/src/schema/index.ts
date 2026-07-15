@@ -11,3 +11,4 @@ export * from "./ai-content";
 export * from "./student-accounts";
 export * from "./tujuan-pembelajaran";
 export * from "./feedback";
+export * from "./bahan-ajar";

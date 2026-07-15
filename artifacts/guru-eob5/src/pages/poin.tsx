@@ -6,7 +6,7 @@ import {
   useDeletePoint,
   useListStudents,
 } from "@workspace/api-client-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,12 +17,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, ArrowUpRight, ArrowDownRight, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 
 const pointSchema = z.object({
   studentIds: z.array(z.string()).min(1, "Pilih minimal satu siswa"),
@@ -47,6 +49,7 @@ export default function Poin() {
   const deletePoint = useDeletePoint();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [kelasFilter, setKelasFilter] = useState<string>("all");
+  const [rekapKelasFilter, setRekapKelasFilter] = useState<string>("all");
   const [editingPoint, setEditingPoint] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -91,7 +94,11 @@ export default function Poin() {
     defaultValues: { studentIds: [], jenis: "positif", poin: 5, keterangan: "", tanggal: new Date().toISOString().split("T")[0] },
   });
 
-  const kelasList = [...new Set((students ?? []).map((s: any) => s.kelas))].sort();
+  const kelasList = useMemo(
+    () => [...new Set((students ?? []).map((s: any) => s.kelas))].sort(),
+    [students],
+  );
+
   const visibleStudents = (students ?? []).filter(
     (s: any) => kelasFilter === "all" || s.kelas === kelasFilter,
   );
@@ -108,6 +115,25 @@ export default function Poin() {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
     }
   };
+
+  // ---- Rekap akumulasi poin per siswa ----
+  const rekapRows = useMemo(() => {
+    if (!students || !pointsList) return [];
+    const map = new Map<string, { positif: number; negatif: number }>();
+    for (const p of pointsList as any[]) {
+      const cur = map.get(p.studentId) ?? { positif: 0, negatif: 0 };
+      if (p.jenis === "positif") cur.positif += p.poin;
+      else cur.negatif += p.poin;
+      map.set(p.studentId, cur);
+    }
+    return (students as any[])
+      .filter((s) => rekapKelasFilter === "all" || s.kelas === rekapKelasFilter)
+      .map((s) => {
+        const acc = map.get(s.id) ?? { positif: 0, negatif: 0 };
+        return { ...s, positif: acc.positif, negatif: acc.negatif, saldo: acc.positif - acc.negatif };
+      })
+      .sort((a, b) => b.negatif - a.negatif);
+  }, [students, pointsList, rekapKelasFilter]);
 
   return (
     <Layout>
@@ -208,6 +234,7 @@ export default function Poin() {
           </Dialog>
         </div>
 
+        {/* Edit dialog */}
         <Dialog open={!!editingPoint} onOpenChange={(open) => !open && setEditingPoint(null)}>
           <DialogContent>
             <DialogHeader><DialogTitle>Edit Poin</DialogTitle></DialogHeader>
@@ -241,44 +268,137 @@ export default function Poin() {
           </DialogContent>
         </Dialog>
 
-        <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50/50">
-                <TableHead>Nama Siswa</TableHead>
-                <TableHead>Poin</TableHead>
-                <TableHead>Keterangan</TableHead>
-                <TableHead>Tanggal</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
-              ) : !pointsList?.length ? (
-                <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Belum ada catatan poin.</TableCell></TableRow>
-              ) : (
-                pointsList.map((p:any) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">{students?.find((s:any) => s.id === p.studentId)?.namaLengkap}</TableCell>
-                    <TableCell>
-                      <div className={`flex items-center gap-1 font-bold ${p.jenis === 'positif' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        {p.jenis === 'positif' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                        {p.poin}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[300px] truncate">{p.keterangan}</TableCell>
-                    <TableCell className="text-muted-foreground">{format(new Date(p.tanggal), "dd MMM yyyy")}</TableCell>
-                    <TableCell className="text-right space-x-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEditPoint(p)}><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeletePoint(p.id)}><Trash2 className="w-4 h-4" /></Button>
-                    </TableCell>
+        <Tabs defaultValue="rekap">
+          <TabsList>
+            <TabsTrigger value="rekap">Rekap Akumulasi</TabsTrigger>
+            <TabsTrigger value="riwayat">Riwayat Catatan</TabsTrigger>
+          </TabsList>
+
+          {/* ---- Tab Rekap Akumulasi ---- */}
+          <TabsContent value="rekap">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Total poin yang terakumulasi per siswa.
+                </p>
+                <Select value={rekapKelasFilter} onValueChange={setRekapKelasFilter}>
+                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="Semua Kelas" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Kelas</SelectItem>
+                    {kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50/50">
+                      <TableHead>Nama Siswa</TableHead>
+                      <TableHead>Kelas</TableHead>
+                      <TableHead className="text-emerald-600">Poin Positif</TableHead>
+                      <TableHead className="text-rose-600">Poin Negatif</TableHead>
+                      <TableHead>Saldo</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      Array(5).fill(0).map((_, i) => (
+                        <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell></TableRow>
+                      ))
+                    ) : rekapRows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                          Belum ada data poin.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      rekapRows.map((s: any) => {
+                        const saldo = s.saldo;
+                        return (
+                          <TableRow key={s.id}>
+                            <TableCell className="font-medium">{s.namaLengkap}</TableCell>
+                            <TableCell className="text-muted-foreground">{s.kelas}</TableCell>
+                            <TableCell>
+                              {s.positif > 0 ? (
+                                <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                                  <ArrowUpRight className="w-4 h-4" />{s.positif}
+                                </span>
+                              ) : <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell>
+                              {s.negatif > 0 ? (
+                                <span className="flex items-center gap-1 text-rose-600 font-semibold">
+                                  <ArrowDownRight className="w-4 h-4" />{s.negatif}
+                                </span>
+                              ) : <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className={
+                                  saldo > 0
+                                    ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                                    : saldo < 0
+                                      ? "border-rose-300 bg-rose-50 text-rose-700"
+                                      : "border-gray-200 text-muted-foreground"
+                                }
+                              >
+                                {saldo > 0 ? "+" : ""}{saldo}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* ---- Tab Riwayat Catatan ---- */}
+          <TabsContent value="riwayat">
+            <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/50">
+                    <TableHead>Nama Siswa</TableHead>
+                    <TableHead>Poin</TableHead>
+                    <TableHead>Keterangan</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
+                  ) : !(pointsList as any[])?.length ? (
+                    <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Belum ada catatan poin.</TableCell></TableRow>
+                  ) : (
+                    (pointsList as any[]).map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium">{(students as any[])?.find((s) => s.id === p.studentId)?.namaLengkap}</TableCell>
+                        <TableCell>
+                          <div className={`flex items-center gap-1 font-bold ${p.jenis === 'positif' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {p.jenis === 'positif' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                            {p.poin}
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-[300px] truncate">{p.keterangan}</TableCell>
+                        <TableCell className="text-muted-foreground">{format(new Date(p.tanggal), "dd MMM yyyy")}</TableCell>
+                        <TableCell className="text-right space-x-1">
+                          <Button variant="ghost" size="icon" onClick={() => openEditPoint(p)}><Pencil className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeletePoint(p.id)}><Trash2 className="w-4 h-4" /></Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
