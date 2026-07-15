@@ -19,6 +19,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { KeyRound, Download, Loader2, RotateCw, AlertCircle } from "lucide-react";
 
 export default function AkunSiswa() {
@@ -31,6 +41,17 @@ export default function AkunSiswa() {
   const [accounts, setAccounts] = useState<Record<string, { username: string; password: string }>>({});
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadingAll, setDownloadingAll] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    studentId?: string;
+    studentName?: string;
+    isRegenerateAll?: boolean;
+  }>({ open: false });
+  const [pendingAction, setPendingAction] = useState<{
+    studentId?: string;
+    regenerate?: boolean;
+    isAll?: boolean;
+  }>({});
 
   useEffect(() => {
     if (!data) return;
@@ -55,7 +76,7 @@ export default function AkunSiswa() {
         ...prev,
         [studentId]: { username: account.username, password: account.password },
       }));
-      toast({ title: regenerate ? "Password baru dibuat" : "Akun berhasil dibuat" });
+      toast({ title: regenerate ? "Akun berhasil diperbaharui" : "Akun berhasil dibuat" });
     } catch {
       toast({ title: "Gagal membuat akun", variant: "destructive" });
     }
@@ -76,6 +97,35 @@ export default function AkunSiswa() {
     } catch {
       toast({ title: "Gagal membuat akun siswa", variant: "destructive" });
     }
+  };
+
+  const openConfirmDialog = (
+    studentId?: string,
+    studentName?: string,
+    regenerate = false,
+    isAll = false
+  ) => {
+    setConfirmDialog({
+      open: true,
+      studentId,
+      studentName,
+      isRegenerateAll: regenerate && !isAll,
+    });
+    setPendingAction({
+      studentId,
+      regenerate,
+      isAll,
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    if (pendingAction.isAll) {
+      await handleGenerateAll();
+    } else if (pendingAction.studentId) {
+      await handleGenerate(pendingAction.studentId, pendingAction.regenerate || false);
+    }
+    setConfirmDialog({ open: false });
+    setPendingAction({});
   };
 
   const downloadFile = async (url: string, fallbackName: string) => {
@@ -162,7 +212,10 @@ export default function AkunSiswa() {
               )}
               Unduh Semua Kartu (PDF)
             </Button>
-            <Button onClick={handleGenerateAll} disabled={generateAll.isPending}>
+            <Button
+              onClick={() => openConfirmDialog(undefined, undefined, false, true)}
+              disabled={generateAll.isPending}
+            >
               {generateAll.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
@@ -232,9 +285,9 @@ export default function AkunSiswa() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleGenerate(s.studentId, true)}
+                                  onClick={() => openConfirmDialog(s.studentId, s.namaLengkap, true)}
                                   disabled={generateOne.isPending}
-                                  title="Buat ulang password"
+                                  title="Ganti username dan password"
                                 >
                                   <RotateCw className="w-3.5 h-3.5" />
                                 </Button>
@@ -254,7 +307,7 @@ export default function AkunSiswa() {
                             ) : (
                               <Button
                                 size="sm"
-                                onClick={() => handleGenerate(s.studentId)}
+                                onClick={() => openConfirmDialog(s.studentId, s.namaLengkap, false)}
                                 disabled={generateOne.isPending}
                               >
                                 <KeyRound className="w-3.5 h-3.5 mr-1.5" />
@@ -282,6 +335,77 @@ export default function AkunSiswa() {
           </Button>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingAction.isAll
+                ? "Generate Semua Akun Siswa?"
+                : pendingAction.regenerate
+                ? "Ganti Username dan Password?"
+                : "Buat Akun Baru?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingAction.isAll ? (
+                <div className="space-y-2">
+                  <p>
+                    Anda akan membuat akun baru untuk semua siswa di kelas <strong>{waliKelasKelas}</strong> yang belum memiliki akun.
+                  </p>
+                  <p className="text-amber-600 font-medium">
+                    <strong>⚠️ Perhatian:</strong> Jika siswa sudah memiliki akun, username dan password lama akan diganti dengan yang baru.
+                  </p>
+                </div>
+              ) : pendingAction.regenerate ? (
+                <div className="space-y-2">
+                  <p>
+                    Username dan password lama untuk <strong>{confirmDialog.studentName}</strong> akan diganti dengan yang baru.
+                  </p>
+                  <div className="bg-amber-50 border border-amber-200 rounded p-3 mt-3">
+                    <p className="text-amber-900 text-sm font-medium">
+                      <strong>⚠️ Perhatian Penting:</strong>
+                    </p>
+                    <ul className="text-sm text-amber-800 mt-2 space-y-1 ml-4 list-disc">
+                      <li>Akun lama <strong>tidak akan bisa digunakan</strong></li>
+                      <li>Siswa harus menggunakan username dan password baru untuk login</li>
+                      <li>Download kartu akun terbaru untuk memberikan ke siswa</li>
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p>
+                    Akun BLP & TOMAT akan dibuat untuk siswa <strong>{confirmDialog.studentName}</strong>.
+                  </p>
+                  <p>Pastikan data siswa sudah benar sebelum melanjutkan.</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              disabled={generateOne.isPending || generateAll.isPending}
+              className={pendingAction.regenerate ? "bg-amber-600 hover:bg-amber-700" : ""}
+            >
+              {generateOne.isPending || generateAll.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Memproses...
+                </>
+              ) : pendingAction.regenerate ? (
+                "Ganti Akun"
+              ) : pendingAction.isAll ? (
+                "Generate Semua"
+              ) : (
+                "Generate"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 }
