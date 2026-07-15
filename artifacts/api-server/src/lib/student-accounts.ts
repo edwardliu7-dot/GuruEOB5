@@ -91,7 +91,10 @@ export type GeneratedAccount = {
 /**
  * Creates (or returns the existing) TOMAT/BLP-ready account for a roster
  * student. Idempotent unless `regenerate` is set, in which case a fresh
- * password is issued and the shared `students` row is updated in place.
+ * username AND password are issued and the shared `students` row is updated
+ * in place (same row id, so the student's TOMAT/BLP progress -- nilai,
+ * daily_records, inventory, badges -- all of which are foreign-keyed to that
+ * id, is preserved; only the login credentials change).
  */
 export async function getOrCreateStudentAccount(
   student: Student,
@@ -115,18 +118,20 @@ export async function getOrCreateStudentAccount(
   const passwordHash = await bcrypt.hash(password, 10);
 
   if (existing) {
+    const username = await uniqueUsername(student.namaLengkap);
+
     await neonDb
       .update(tomatStudentsTable)
-      .set({ password: passwordHash })
+      .set({ username, password: passwordHash })
       .where(eq(tomatStudentsTable.id, existing.tomatStudentId));
     const [updated] = await db
       .update(studentAccountsTable)
-      .set({ password })
+      .set({ username, password })
       .where(eq(studentAccountsTable.id, existing.id))
       .returning();
     return {
       studentId: student.id,
-      username: existing.username,
+      username,
       password,
       createdAt: updated?.createdAt ?? existing.createdAt,
     };
