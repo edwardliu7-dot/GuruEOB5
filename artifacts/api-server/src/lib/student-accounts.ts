@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { db, neonDb, studentAccountsTable, tomatStudentsTable, type Student } from "@workspace/db";
 
@@ -118,23 +118,14 @@ export async function getOrCreateStudentAccount(
   const passwordHash = await bcrypt.hash(password, 10);
 
   if (existing) {
-    const username = await uniqueUsername(student.namaLengkap);
-
+    // Delete the old Neon/VPS students row and the local student_accounts row,
+    // then create fresh rows in both — same behaviour as a brand-new generate.
     await neonDb
-      .update(tomatStudentsTable)
-      .set({ username, password: passwordHash })
+      .delete(tomatStudentsTable)
       .where(eq(tomatStudentsTable.id, existing.tomatStudentId));
-    const [updated] = await db
-      .update(studentAccountsTable)
-      .set({ username, password })
-      .where(eq(studentAccountsTable.id, existing.id))
-      .returning();
-    return {
-      studentId: student.id,
-      username,
-      password,
-      createdAt: updated?.createdAt ?? existing.createdAt,
-    };
+    await db
+      .delete(studentAccountsTable)
+      .where(eq(studentAccountsTable.id, existing.id));
   }
 
   const username = await uniqueUsername(student.namaLengkap);
