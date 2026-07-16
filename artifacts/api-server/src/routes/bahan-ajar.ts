@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, bahanAjarTable } from "@workspace/db";
-import { requireAuth, requireSchoolAdmin, getCurrentGuru } from "../lib/auth";
+import { requireAuth, isSchoolAdmin, getCurrentGuru } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -59,8 +59,8 @@ router.get("/bahan-ajar/:id/file", requireAuth, async (req, res): Promise<void> 
   res.send(buf);
 });
 
-// POST /bahan-ajar — admin only
-router.post("/bahan-ajar", requireSchoolAdmin, async (req, res): Promise<void> => {
+// POST /bahan-ajar — semua guru yang sudah login bisa upload
+router.post("/bahan-ajar", requireAuth, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
 
@@ -105,22 +105,28 @@ router.post("/bahan-ajar", requireSchoolAdmin, async (req, res): Promise<void> =
   res.status(201).json(row);
 });
 
-// DELETE /bahan-ajar/:id — admin only
-router.delete("/bahan-ajar/:id", requireSchoolAdmin, async (req, res): Promise<void> => {
+// DELETE /bahan-ajar/:id — pembuat atau school admin
+router.delete("/bahan-ajar/:id", requireAuth, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const [deleted] = await db
-    .delete(bahanAjarTable)
-    .where(
-      and(
-        eq(bahanAjarTable.id, req.params.id),
-        guru.school ? eq(bahanAjarTable.school, guru.school) : eq(bahanAjarTable.school, ""),
-      ),
-    )
-    .returning({ id: bahanAjarTable.id });
+  // Ambil dulu data untuk cek kepemilikan
+  const [item] = await db
+    .select({ id: bahanAjarTable.id, createdBy: bahanAjarTable.createdBy, school: bahanAjarTable.school })
+    .from(bahanAjarTable)
+    .where(eq(bahanAjarTable.id, req.params.id));
 
-  if (!deleted) { res.status(404).json({ error: "Bahan ajar tidak ditemukan" }); return; }
+  if (!item) { res.status(404).json({ error: "Bahan ajar tidak ditemukan" }); return; }
+
+  // Hanya pembuat atau school admin yang boleh hapus
+  const isOwner = item.createdBy === guru.id;
+  const canDelete = isOwner || isSchoolAdmin(guru);
+  if (!canDelete) {
+    res.status(403).json({ error: "Hanya pembuat atau admin yang dapat menghapus bahan ajar ini" });
+    return;
+  }
+
+  await db.delete(bahanAjarTable).where(eq(bahanAjarTable.id, req.params.id));
   res.json({ success: true });
 });
 

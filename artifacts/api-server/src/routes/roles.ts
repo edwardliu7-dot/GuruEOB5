@@ -56,8 +56,11 @@ router.get("/kepsek/overview", requireAuth, async (req, res): Promise<void> => {
   monthStart.setDate(1);
   const monthStartStr = monthStart.toISOString().slice(0, 10);
 
+  const schoolWhere = guru.school ? eq(gurusTable.school, guru.school) : undefined;
   const [gurus, subjects, documents, journalThisMonth] = await Promise.all([
-    neonDb.select().from(gurusTable).where(sameSchoolFilter(guru)),
+    schoolWhere
+      ? neonDb.select().from(gurusTable).where(schoolWhere)
+      : neonDb.select().from(gurusTable),
     db.select().from(subjectsTable),
     db.select().from(documentsTable),
     db
@@ -108,8 +111,11 @@ router.get("/kurikulum/overview", requireAuth, async (req, res): Promise<void> =
     return;
   }
 
+  const kurikulumSchoolWhere = guru.school ? eq(gurusTable.school, guru.school) : undefined;
   const [gurus, subjects, documents] = await Promise.all([
-    neonDb.select().from(gurusTable).where(sameSchoolFilter(guru)),
+    kurikulumSchoolWhere
+      ? neonDb.select().from(gurusTable).where(kurikulumSchoolWhere)
+      : neonDb.select().from(gurusTable),
     db.select().from(subjectsTable),
     db.select().from(documentsTable),
   ]);

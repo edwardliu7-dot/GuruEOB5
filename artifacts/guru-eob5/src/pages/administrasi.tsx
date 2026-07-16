@@ -95,7 +95,7 @@ function useDeleteBahanAjar() {
 }
 
 // ─── Bahan Ajar Tab ───────────────────────────────────────────────────────────
-function BahanAjarTab({ isAdmin }: { isAdmin: boolean }) {
+function BahanAjarTab({ isAdmin, currentUserId }: { isAdmin: boolean; currentUserId?: string }) {
   const { data: items, isLoading } = useBahanAjar();
   const createBA = useCreateBahanAjar();
   const deleteBA = useDeleteBahanAjar();
@@ -168,15 +168,13 @@ function BahanAjarTab({ isAdmin }: { isAdmin: boolean }) {
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <BookOpen className="w-4 h-4" />
           <span>
-            Dapat dilihat oleh semua guru, wali kelas, wakasek, dan kepala sekolah.
-            {isAdmin && " Hanya admin yang dapat mengelola."}
+            Semua guru dapat menambahkan bahan ajar. Guru hanya dapat menghapus unggahan miliknya sendiri.
           </span>
         </div>
-        {isAdmin && (
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { form.reset(); setSelectedFile(null); } }}>
-            <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" /> Tambah Bahan Ajar</Button>
-            </DialogTrigger>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { form.reset(); setSelectedFile(null); } }}>
+          <DialogTrigger asChild>
+            <Button><Plus className="w-4 h-4 mr-2" /> Tambah Bahan Ajar</Button>
+          </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader><DialogTitle>Tambah Bahan Ajar</DialogTitle></DialogHeader>
               <Form {...form}>
@@ -213,8 +211,7 @@ function BahanAjarTab({ isAdmin }: { isAdmin: boolean }) {
                 </form>
               </Form>
             </DialogContent>
-          </Dialog>
-        )}
+        </Dialog>
       </div>
 
       {isLoading ? (
@@ -225,7 +222,7 @@ function BahanAjarTab({ isAdmin }: { isAdmin: boolean }) {
         <div className="py-16 text-center text-muted-foreground bg-white rounded-xl border border-dashed border-border">
           <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
           <p>Belum ada bahan ajar.</p>
-          {isAdmin && <p className="text-sm mt-1">Klik "Tambah Bahan Ajar" untuk memulai.</p>}
+          <p className="text-sm mt-1">Klik "Tambah Bahan Ajar" untuk memulai.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -236,7 +233,7 @@ function BahanAjarTab({ isAdmin }: { isAdmin: boolean }) {
                   <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
                     <BookOpen className="w-5 h-5" />
                   </div>
-                  {isAdmin && (
+                  {(item.createdBy === currentUserId || isAdmin) && (
                     <Button
                       variant="ghost" size="icon"
                       className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
@@ -611,7 +608,7 @@ export default function Administrasi() {
 
           {/* ── Tab Bahan Ajar ── */}
           <TabsContent value="bahan-ajar" className="mt-4">
-            <BahanAjarTab isAdmin={isAdmin} />
+            <BahanAjarTab isAdmin={isAdmin} currentUserId={(me as any)?.id} />
           </TabsContent>
         </Tabs>
 
