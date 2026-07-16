@@ -1,31 +1,32 @@
 kind = "web"
-previewPath = "/"
-title = "GuruEOB5"
-version = "1.0.0"
-id = "artifacts/guru-eob5"
-router = "path"
+    previewPath = "/"
+    title = "GuruEOB5"
+    version = "1.0.0"
+    id = "artifacts/guru-eob5"
+    router = "path"
 
-[[integratedSkills]]
-name = "react-vite"
-version = "1.0.0"
+    [[integratedSkills]]
+    name = "react-vite"
+    version = "1.0.0"
 
-[[services]]
-name = "web"
-paths = [ "/" ]
-localPort = 19160
+    [[services]]
+    name = "web"
+    paths = [ "/" ]
+    localPort = 19160
 
-[services.development]
-run = "pnpm --filter @workspace/guru-eob5 run dev"
+    [services.development]
+    run = "pnpm --filter @workspace/guru-eob5 run dev"
 
-[services.production]
-build = [ "pnpm", "--filter", "@workspace/guru-eob5", "run", "build" ]
-publicDir = "artifacts/guru-eob5/dist/public"
-serve = "static"
+    [services.production]
+    build = [ "pnpm", "--filter", "@workspace/guru-eob5", "run", "build" ]
+    publicDir = "artifacts/guru-eob5/dist/public"
+    serve = "static"
 
-[[services.production.rewrites]]
-from = "/*"
-to = "/index.html"
+    [[services.production.rewrites]]
+    from = "/*"
+    to = "/index.html"
 
-[services.env]
-PORT = "19160"
-BASE_PATH = "/"
+    [services.env]
+    PORT = "19160"
+    BASE_PATH = "/"
+    
