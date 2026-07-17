@@ -34,7 +34,7 @@ const journalSchema = z.object({
   subjectId: z.string().min(1, "Mata pelajaran harus dipilih"),
   tanggal: z.string().min(1, "Tanggal harus diisi"),
   kelas: z.string().min(1, "Kelas harus dipilih"),
-  materi: z.string().min(1, "Materi harus diisi"),
+  materi: z.string().optional(),
   catatan: z.string().optional(),
   prosemItemId: z.string().optional(),
 });
@@ -331,9 +331,11 @@ export default function Jurnal() {
                     }}
                   />
                   <AttendanceContext subjectId={watchedSubjectId} kelas={watchedKelas} tanggal={watchedTanggal} />
-                  <FormField control={form.control} name="materi" render={({ field }) => (
-                    <FormItem><FormLabel>Materi</FormLabel><FormControl><Input placeholder="Topik bahasan" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
+                  {!watchedProsemItemId && (
+                    <FormField control={form.control} name="materi" render={({ field }) => (
+                      <FormItem><FormLabel>Materi</FormLabel><FormControl><Input placeholder="Topik bahasan" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                  )}
                   <FormField control={form.control} name="catatan" render={({ field }) => (
                     <FormItem><FormLabel>Catatan (Opsional)</FormLabel><FormControl><Textarea placeholder="Keterangan tambahan" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
