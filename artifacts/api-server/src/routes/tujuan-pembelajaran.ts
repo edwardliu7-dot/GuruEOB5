@@ -43,8 +43,13 @@ async function isOwnSubject(subjectId: string, teacherId: string): Promise<boole
 }
 
 // Shift all TPs in a subject+calendar with tpNumber >= shiftFrom up by shiftBy.
-// PostgreSQL checks the unique constraint at statement end so incrementing a
-// contiguous range in one UPDATE never causes transient duplicates.
+// We use a two-step UPDATE with a large temporary offset (100000) to avoid
+// transient unique-constraint violations: PostgreSQL checks (subject_id,
+// calendar_id, tp_number) per-row, so directly incrementing a contiguous
+// range causes TP N+1 to collide with the existing TP N+1 before that row
+// is updated. Jumping to 100000+ first puts all affected rows safely out of
+// range of the unaffected rows, then the second UPDATE brings them to their
+// final positions with no conflicts.
 async function shiftTpNumbers(
   subjectId: string,
   calendarId: string,
@@ -52,14 +57,26 @@ async function shiftTpNumbers(
   shiftBy: number,
 ): Promise<void> {
   if (shiftBy <= 0) return;
+  const OFFSET = 100_000;
+  const where = and(
+    eq(tujuanPembelajaranTable.subjectId, subjectId),
+    eq(tujuanPembelajaranTable.calendarId, calendarId),
+    gte(tujuanPembelajaranTable.tpNumber, shiftFrom),
+  );
+  // Step 1: jump to a safe range far above any real tp_number
   await db
     .update(tujuanPembelajaranTable)
-    .set({ tpNumber: sql`${tujuanPembelajaranTable.tpNumber} + ${shiftBy}` })
+    .set({ tpNumber: sql`${tujuanPembelajaranTable.tpNumber} + ${OFFSET}` })
+    .where(where);
+  // Step 2: land at the intended final value
+  await db
+    .update(tujuanPembelajaranTable)
+    .set({ tpNumber: sql`${tujuanPembelajaranTable.tpNumber} - ${OFFSET} + ${shiftBy}` })
     .where(
       and(
         eq(tujuanPembelajaranTable.subjectId, subjectId),
         eq(tujuanPembelajaranTable.calendarId, calendarId),
-        gte(tujuanPembelajaranTable.tpNumber, shiftFrom),
+        gte(tujuanPembelajaranTable.tpNumber, shiftFrom + OFFSET),
       ),
     );
 }
