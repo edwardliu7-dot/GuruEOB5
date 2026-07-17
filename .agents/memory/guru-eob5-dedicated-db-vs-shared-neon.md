@@ -3,7 +3,7 @@ name: GuruEOB5 has two databases, not one
 description: DATABASE_URL is a dedicated per-app Postgres (most tables); NEON_DATABASE_URL is the shared cross-app Neon DB (gurus table only). Also covers a drizzle-kit push gotcha.
 ---
 
-`db`/`DATABASE_URL` (Replit-managed Postgres, host `helium`) is this app's own dedicated dev database — it holds subjects, documents, grades, journal, attendance, points, academic calendars, prosem, and any new app-specific tables. `neonDb`/`NEON_DATABASE_URL` is the separate shared Neon DB that only holds the cross-app `gurus` accounts table (see shared-neon-accounts.md).
+`db`/`DATABASE_URL` is this app's own dedicated dev database — **not** Replit-managed (it must be provided as a secret; `viewEnvVars` will show `runtimeManaged: []` and the secret must be set manually) — it holds subjects, documents, grades, journal, attendance, points, academic calendars, prosem, and any new app-specific tables. `neonDb`/`NEON_DATABASE_URL` is the separate shared Neon DB that only holds the cross-app `gurus` accounts table (see shared-neon-accounts.md).
 
 **Why it matters:** earlier memory entries about "shared DB" collision/leak risk apply only to the `gurus` table via `NEON_DATABASE_URL`. New app-specific tables added via `lib/db/src/schema/*.ts` go through `DATABASE_URL` and are safe from cross-app collisions — no need for defensive naming there (though descriptive names are still good practice).
 
