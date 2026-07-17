@@ -15,13 +15,11 @@ export interface Grade {
   jenis: GradeJenis;
   /**
      * @minimum 1
-     * @maximum 5
      * @nullable
      */
   lingkupMateri?: number | null;
   /**
      * @minimum 1
-     * @maximum 4
      * @nullable
      */
   tpNumber?: number | null;

@@ -569,7 +569,6 @@ export type GradeJenis = typeof GradeJenis[keyof typeof GradeJenis];
 export const GradeJenis = {
   formatif: 'formatif',
   sumatif_lm: 'sumatif_lm',
-  sumatif_tengah: 'sumatif_tengah',
   sumatif_akhir: 'sumatif_akhir',
 } as const;
 
@@ -581,13 +580,11 @@ export interface Grade {
   jenis: GradeJenis;
   /**
      * @minimum 1
-     * @maximum 5
      * @nullable
      */
   lingkupMateri?: number | null;
   /**
      * @minimum 1
-     * @maximum 4
      * @nullable
      */
   tpNumber?: number | null;
@@ -601,7 +598,6 @@ export type GradeInputJenis = typeof GradeInputJenis[keyof typeof GradeInputJeni
 export const GradeInputJenis = {
   formatif: 'formatif',
   sumatif_lm: 'sumatif_lm',
-  sumatif_tengah: 'sumatif_tengah',
   sumatif_akhir: 'sumatif_akhir',
 } as const;
 
@@ -610,15 +606,9 @@ export interface GradeInput {
   subjectId: string;
   calendarId: string;
   jenis: GradeInputJenis;
-  /**
-     * @minimum 1
-     * @maximum 5
-     */
+  /** @minimum 1 */
   lingkupMateri?: number;
-  /**
-     * @minimum 1
-     * @maximum 4
-     */
+  /** @minimum 1 */
   tpNumber?: number;
   nilai: number;
 }

@@ -2273,15 +2273,13 @@ components:
           type: string
         jenis:
           type: string
-          enum: [formatif, sumatif_lm, sumatif_tengah, sumatif_akhir]
+          enum: [formatif, sumatif_lm, sumatif_akhir]
         lingkupMateri:
           type: ["integer", "null"]
           minimum: 1
-          maximum: 5
         tpNumber:
           type: ["integer", "null"]
           minimum: 1
-          maximum: 4
         nilai:
           type: number
         createdAt:
@@ -2300,15 +2298,13 @@ components:
           type: string
         jenis:
           type: string
-          enum: [formatif, sumatif_lm, sumatif_tengah, sumatif_akhir]
+          enum: [formatif, sumatif_lm, sumatif_akhir]
         lingkupMateri:
           type: integer
           minimum: 1
-          maximum: 5
         tpNumber:
           type: integer
           minimum: 1
-          maximum: 4
         nilai:
           type: number
       required: [studentId, subjectId, calendarId, jenis, nilai]

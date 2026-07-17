@@ -12,15 +12,9 @@ export interface GradeInput {
   subjectId: string;
   calendarId: string;
   jenis: GradeInputJenis;
-  /**
-     * @minimum 1
-     * @maximum 5
-     */
+  /** @minimum 1 */
   lingkupMateri?: number;
-  /**
-     * @minimum 1
-     * @maximum 4
-     */
+  /** @minimum 1 */
   tpNumber?: number;
   nilai: number;
 }

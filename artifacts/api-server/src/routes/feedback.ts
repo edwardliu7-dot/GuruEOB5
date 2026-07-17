@@ -14,7 +14,17 @@ router.post("/feedback", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const { kategori, pesan } = req.body as { kategori?: string; pesan?: string };
+  const {
+    kategori,
+    pesan,
+    screenshotBase64,
+    pageUrl,
+  } = req.body as {
+    kategori?: string;
+    pesan?: string;
+    screenshotBase64?: string;
+    pageUrl?: string;
+  };
 
   if (!kategori || !["saran", "kritik", "bug"].includes(kategori)) {
     res.status(400).json({ error: "Kategori tidak valid. Pilih saran, kritik, atau bug." });
@@ -28,6 +38,15 @@ router.post("/feedback", requireAuth, async (req, res): Promise<void> => {
     res.status(400).json({ error: "Pesan terlalu panjang (maks. 2000 karakter)." });
     return;
   }
+  // Validate screenshot: must be a base64 data URL and < 2 MB
+  const cleanedScreenshot =
+    typeof screenshotBase64 === "string" && screenshotBase64.startsWith("data:image/")
+      ? screenshotBase64
+      : null;
+  if (cleanedScreenshot && cleanedScreenshot.length > 2_000_000) {
+    res.status(413).json({ error: "Screenshot terlalu besar (maks. 2 MB)." });
+    return;
+  }
 
   const [row] = await db
     .insert(feedbackTable)
@@ -36,6 +55,8 @@ router.post("/feedback", requireAuth, async (req, res): Promise<void> => {
       teacherName: guru.name,
       kategori: kategori as "saran" | "kritik" | "bug",
       pesan: pesan.trim(),
+      screenshotBase64: cleanedScreenshot,
+      pageUrl: typeof pageUrl === "string" ? pageUrl.slice(0, 500) : null,
     })
     .returning();
 
@@ -82,7 +103,7 @@ router.patch("/feedback/:id/read", requireAuth, async (req, res): Promise<void> 
     return;
   }
 
-  const { id } = req.params;
+  const id = String(req.params["id"]);
   await db.update(feedbackTable).set({ isRead: true }).where(eq(feedbackTable.id, id));
   res.json({ ok: true });
 });
@@ -95,7 +116,7 @@ router.delete("/feedback/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const { id } = req.params;
+  const id = String(req.params["id"]);
   await db.delete(feedbackTable).where(eq(feedbackTable.id, id));
   res.json({ ok: true });
 });

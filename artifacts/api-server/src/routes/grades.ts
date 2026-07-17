@@ -110,7 +110,7 @@ router.post("/grades", requireAuth, async (req, res): Promise<void> => {
 
   const { studentId, subjectId, calendarId, jenis, nilai } = parsed.data;
   const lingkupMateri =
-    jenis === "sumatif_akhir" || jenis === "sumatif_tengah"
+    jenis === "sumatif_akhir"
       ? null
       : (parsed.data.lingkupMateri ?? null);
   const tpNumber = jenis === "formatif" ? (parsed.data.tpNumber ?? null) : null;

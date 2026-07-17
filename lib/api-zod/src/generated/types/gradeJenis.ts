@@ -12,6 +12,5 @@ export type GradeJenis = typeof GradeJenis[keyof typeof GradeJenis];
 export const GradeJenis = {
   formatif: 'formatif',
   sumatif_lm: 'sumatif_lm',
-  sumatif_tengah: 'sumatif_tengah',
   sumatif_akhir: 'sumatif_akhir',
 } as const;

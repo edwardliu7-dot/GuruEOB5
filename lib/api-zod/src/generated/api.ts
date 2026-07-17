@@ -991,9 +991,7 @@ export const ListGradesQueryParams = zod.object({
   "calendarId": zod.coerce.string().optional()
 })
 
-export const listGradesResponseLingkupMateriMax = 5;
 
-export const listGradesResponseTpNumberMax = 4;
 
 
 
@@ -1002,9 +1000,9 @@ export const ListGradesResponseItem = zod.object({
   "studentId": zod.string(),
   "subjectId": zod.string(),
   "calendarId": zod.string(),
-  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_tengah', 'sumatif_akhir']),
-  "lingkupMateri": zod.number().min(1).max(listGradesResponseLingkupMateriMax).nullish(),
-  "tpNumber": zod.number().min(1).max(listGradesResponseTpNumberMax).nullish(),
+  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_akhir']),
+  "lingkupMateri": zod.number().min(1).nullish(),
+  "tpNumber": zod.number().min(1).nullish(),
   "nilai": zod.number(),
   "createdAt": zod.coerce.date()
 })
@@ -1014,9 +1012,7 @@ export const ListGradesResponse = zod.array(ListGradesResponseItem)
 /**
  * @summary Record or update a grade (upsert by student/subject/calendar/jenis/lingkup materi/tp)
  */
-export const createGradeBodyLingkupMateriMax = 5;
 
-export const createGradeBodyTpNumberMax = 4;
 
 
 
@@ -1024,15 +1020,13 @@ export const CreateGradeBody = zod.object({
   "studentId": zod.string(),
   "subjectId": zod.string(),
   "calendarId": zod.string(),
-  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_tengah', 'sumatif_akhir']),
-  "lingkupMateri": zod.number().min(1).max(createGradeBodyLingkupMateriMax).optional(),
-  "tpNumber": zod.number().min(1).max(createGradeBodyTpNumberMax).optional(),
+  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_akhir']),
+  "lingkupMateri": zod.number().min(1).optional(),
+  "tpNumber": zod.number().min(1).optional(),
   "nilai": zod.number()
 })
 
-export const createGradeResponseLingkupMateriMax = 5;
 
-export const createGradeResponseTpNumberMax = 4;
 
 
 
@@ -1041,9 +1035,9 @@ export const CreateGradeResponse = zod.object({
   "studentId": zod.string(),
   "subjectId": zod.string(),
   "calendarId": zod.string(),
-  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_tengah', 'sumatif_akhir']),
-  "lingkupMateri": zod.number().min(1).max(createGradeResponseLingkupMateriMax).nullish(),
-  "tpNumber": zod.number().min(1).max(createGradeResponseTpNumberMax).nullish(),
+  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_akhir']),
+  "lingkupMateri": zod.number().min(1).nullish(),
+  "tpNumber": zod.number().min(1).nullish(),
   "nilai": zod.number(),
   "createdAt": zod.coerce.date()
 })
@@ -1060,9 +1054,7 @@ export const UpdateGradeBody = zod.object({
   "nilai": zod.number()
 })
 
-export const updateGradeResponseLingkupMateriMax = 5;
 
-export const updateGradeResponseTpNumberMax = 4;
 
 
 
@@ -1071,9 +1063,9 @@ export const UpdateGradeResponse = zod.object({
   "studentId": zod.string(),
   "subjectId": zod.string(),
   "calendarId": zod.string(),
-  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_tengah', 'sumatif_akhir']),
-  "lingkupMateri": zod.number().min(1).max(updateGradeResponseLingkupMateriMax).nullish(),
-  "tpNumber": zod.number().min(1).max(updateGradeResponseTpNumberMax).nullish(),
+  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_akhir']),
+  "lingkupMateri": zod.number().min(1).nullish(),
+  "tpNumber": zod.number().min(1).nullish(),
   "nilai": zod.number(),
   "createdAt": zod.coerce.date()
 })

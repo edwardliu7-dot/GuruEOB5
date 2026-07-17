@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, aiModulAjarTable, subjectsTable } from "@workspace/db";
 import {
   ListModulAjarResponse,
@@ -91,10 +91,37 @@ router.post("/modul-ajar/generate", requireAuth, async (req, res): Promise<void>
       })
       .returning();
 
+    // Storage guard: keep only the 15 most recent modul ajar per teacher.
+    // The oldest entries are silently pruned after each successful generation.
+    const MAX_PER_TEACHER = 15;
+    try {
+      const allIds = await db
+        .select({ id: aiModulAjarTable.id })
+        .from(aiModulAjarTable)
+        .where(eq(aiModulAjarTable.teacherId, guru.id))
+        .orderBy(desc(aiModulAjarTable.createdAt));
+      if (allIds.length > MAX_PER_TEACHER) {
+        const toDelete = allIds.slice(MAX_PER_TEACHER).map((r) => r.id);
+        await db
+          .delete(aiModulAjarTable)
+          .where(
+            and(
+              eq(aiModulAjarTable.teacherId, guru.id),
+              inArray(aiModulAjarTable.id, toDelete),
+            ),
+          );
+      }
+    } catch (cleanupErr) {
+      // Non-fatal — log but do not fail the request
+      req.log.warn({ err: cleanupErr }, "Modul ajar cleanup failed");
+    }
+
     res.status(201).json(GenerateModulAjarResponse.parse(row));
-  } catch (err) {
-    req.log.error({ err }, "Modul ajar generation failed");
-    res.status(502).json({ error: "Gagal membuat modul ajar dengan AI. Coba lagi." });
+  } catch (err: any) {
+    req.log.error({ err, errMsg: err?.message, errStatus: err?.status }, "Modul ajar generation failed");
+    res.status(502).json({
+      error: `Gagal membuat modul ajar: ${err?.message ?? "Coba lagi dalam beberapa saat."}`,
+    });
   }
 });
 

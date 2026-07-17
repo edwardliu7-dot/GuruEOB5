@@ -3,7 +3,7 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCheck, Trash2, Bug, Lightbulb, ThumbsDown, Inbox, RefreshCw } from "lucide-react";
+import { CheckCheck, Trash2, Bug, Lightbulb, ThumbsDown, Inbox, RefreshCw, ExternalLink, ImageIcon } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,8 @@ type Feedback = {
   teacherName: string;
   kategori: "saran" | "kritik" | "bug";
   pesan: string;
+  screenshotBase64: string | null;
+  pageUrl: string | null;
   isRead: boolean;
   createdAt: string;
 };
@@ -188,7 +190,31 @@ export default function FeedbackAdmin() {
                         )}
                         <span className="text-xs text-muted-foreground ml-auto">{formatDate(item.createdAt)}</span>
                       </div>
+                      {item.pageUrl && (
+                        <a
+                          href={item.pageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          {item.pageUrl.replace(/^https?:\/\/[^/]+/, "")}
+                        </a>
+                      )}
                       <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{item.pesan}</p>
+                      {item.screenshotBase64 && (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-xs text-muted-foreground flex items-center gap-1 select-none">
+                            <ImageIcon className="w-3 h-3" />
+                            Lihat screenshot
+                          </summary>
+                          <img
+                            src={item.screenshotBase64}
+                            alt="Screenshot"
+                            className="mt-2 rounded-lg border border-border max-w-full max-h-96 object-contain"
+                          />
+                        </details>
+                      )}
                     </div>
 
                     {/* Actions */}

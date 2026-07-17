@@ -8,6 +8,10 @@ export const feedbackTable = pgTable("feedback", {
   teacherName: text("teacher_name").notNull(),
   kategori: text("kategori", { enum: ["saran", "kritik", "bug"] }).notNull(),
   pesan: text("pesan").notNull(),
+  // Optional screenshot attached by the user (base64 JPEG, compressed before storage)
+  screenshotBase64: text("screenshot_base64"),
+  // URL of the page the user was on when they submitted the feedback
+  pageUrl: text("page_url"),
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

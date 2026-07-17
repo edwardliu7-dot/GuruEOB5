@@ -417,12 +417,15 @@ export async function generateModulAjar(params: {
     config: {
       responseMimeType: "application/json",
       responseSchema: modulAjarResponseSchema,
+      // Disable thinking: structured JSON output is more reliable without it,
+      // and the extra latency / token cost from thinking is not needed here.
+      thinkingConfig: { thinkingBudget: 0 },
     },
   });
 
   const text = response.text;
   if (!text) {
-    throw new Error("Gemini returned an empty response");
+    throw new Error("Gemini returned an empty response for modul ajar");
   }
   return JSON.parse(text) as ModulAjarContent;
 }
