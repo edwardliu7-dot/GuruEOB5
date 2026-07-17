@@ -62,7 +62,7 @@ const prosemSchema = z.object({
 const itemSchema = z.object({
   weekId: z.string().min(1, "Pekan harus dipilih"),
   kd: z.string().optional(),
-  materi: z.string().min(1, "Materi harus diisi"),
+  materi: z.string().optional(),
   jp: z.string().optional(),
   catatan: z.string().optional(),
 });
@@ -170,11 +170,18 @@ export default function Prosem() {
   const onSubmitItem = async (data: z.infer<typeof itemSchema>) => {
     if (!openProsemId) return;
     try {
+      // If a TP was selected, materi was auto-filled from its description.
+      // If not, fall back to the manually typed materi, then to the kd string itself.
+      const resolvedMateri =
+        data.materi?.trim() ||
+        (data.kd
+          ? tpList?.find((t: any) => `TP ${t.tpNumber}` === data.kd)?.description ?? data.kd
+          : "");
       const payload = {
         prosemId: openProsemId,
         weekId: data.weekId,
         kd: data.kd || undefined,
-        materi: data.materi,
+        materi: resolvedMateri,
         jp: data.jp ? Number(data.jp) : undefined,
         catatan: data.catatan || undefined,
       };
@@ -498,7 +505,16 @@ export default function Prosem() {
                       <FormLabel>CP (Opsional)</FormLabel>
                       {tpList && tpList.length > 0 ? (
                         <Select
-                          onValueChange={(v) => field.onChange(v === "__none__" ? "" : v)}
+                          onValueChange={(v) => {
+                            const cleared = v === "__none__";
+                            field.onChange(cleared ? "" : v);
+                            if (cleared) {
+                              itemForm.setValue("materi", "");
+                            } else {
+                              const tp = tpList?.find((t: any) => `TP ${t.tpNumber}` === v);
+                              if (tp) itemForm.setValue("materi", tp.description);
+                            }
+                          }}
                           value={field.value ? field.value : "__none__"}
                         >
                           <FormControl>
@@ -538,19 +554,21 @@ export default function Prosem() {
                   )}
                 />
               </div>
-              <FormField
-                control={itemForm.control}
-                name="materi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Materi</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Topik bahasan" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!itemForm.watch("kd") && (
+                <FormField
+                  control={itemForm.control}
+                  name="materi"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Materi</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Topik bahasan" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={itemForm.control}
                 name="catatan"
