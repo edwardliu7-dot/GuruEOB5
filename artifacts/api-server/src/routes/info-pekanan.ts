@@ -11,6 +11,7 @@ import {
 } from "@workspace/db";
 import { GetInfoPekananResponse } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru } from "../lib/auth";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -87,13 +88,53 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     .where(eq(subjectsTable.teacherId, teacherId));
   const subjectName = new Map(subjectRows.map((s) => [s.id, s.name]));
 
-  const journalRows = await db
-    .select()
-    .from(journalEntriesTable)
-    .where(eq(journalEntriesTable.teacherId, teacherId));
-  const weekJournals = journalRows.filter(
-    (j) => j.tanggal >= week.tanggalMulai && j.tanggal <= week.tanggalSelesai,
-  );
+  // Fetch journal entries with explicit column selection — prosem_item_id is
+  // intentionally omitted here because the column may not yet exist in the
+  // production DB (schema drift). Matching falls back to subject+kelas heuristic,
+  // which is correct for all existing journal rows (they predate the column).
+  // Once the column is added to production via ALTER TABLE, the journal route
+  // will start populating it and matching will automatically improve.
+  let weekJournals: Array<{
+    id: string;
+    subjectId: string;
+    kelas: string;
+    tanggal: string;
+    materi: string;
+    prosemItemId: string | null;
+  }> = [];
+  try {
+    const journalRows = await db
+      .select({
+        id: journalEntriesTable.id,
+        subjectId: journalEntriesTable.subjectId,
+        kelas: journalEntriesTable.kelas,
+        tanggal: journalEntriesTable.tanggal,
+        materi: journalEntriesTable.materi,
+        prosemItemId: journalEntriesTable.prosemItemId,
+      })
+      .from(journalEntriesTable)
+      .where(eq(journalEntriesTable.teacherId, teacherId));
+    weekJournals = journalRows.filter(
+      (j) => j.tanggal >= week.tanggalMulai && j.tanggal <= week.tanggalSelesai,
+    );
+  } catch (journalErr) {
+    // Column prosem_item_id doesn't exist yet in the production DB.
+    // Fall back to fetching without it so the page still renders.
+    logger.warn({ err: journalErr }, "prosem_item_id column missing — fetching journals without it");
+    const journalRows = await db
+      .select({
+        id: journalEntriesTable.id,
+        subjectId: journalEntriesTable.subjectId,
+        kelas: journalEntriesTable.kelas,
+        tanggal: journalEntriesTable.tanggal,
+        materi: journalEntriesTable.materi,
+      })
+      .from(journalEntriesTable)
+      .where(eq(journalEntriesTable.teacherId, teacherId));
+    weekJournals = journalRows
+      .filter((j) => j.tanggal >= week.tanggalMulai && j.tanggal <= week.tanggalSelesai)
+      .map((j) => ({ ...j, prosemItemId: null }));
+  }
 
   // Join prosem_items → prosem → academic_weeks and match by the active week's
   // date range (tanggalMulai + tanggalSelesai) rather than an exact weekId UUID.
@@ -122,21 +163,26 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
       ),
     );
 
+  logger.info(
+    { teacherId, weekTanggalMulai: week.tanggalMulai, weekTanggalSelesai: week.tanggalSelesai, planRowsCount: planRows.length, weekJournalsCount: weekJournals.length },
+    "info-pekanan query results",
+  );
+
   const items: InfoItem[] = [];
   const matchedJournalIds = new Set<string>();
 
   for (const pi of planRows) {
     // Prefer an explicit link to this exact topic (set when the teacher picks
     // it from the Prosem while writing the journal entry). Fall back to the
-    // old subject+kelas heuristic for entries that don't reference a topic.
+    // subject+kelas heuristic for entries that don't have a prosemItemId link.
     const linked = weekJournals.find(
-      (j) => j.prosemItemId === pi.prosemItemId && !matchedJournalIds.has(j.id),
+      (j) => j.prosemItemId != null && j.prosemItemId === pi.prosemItemId && !matchedJournalIds.has(j.id),
     );
     const match =
       linked ??
       weekJournals.find(
         (j) =>
-          !j.prosemItemId &&
+          j.prosemItemId == null &&
           j.subjectId === pi.subjectId &&
           j.kelas === pi.kelas &&
           !matchedJournalIds.has(j.id),
