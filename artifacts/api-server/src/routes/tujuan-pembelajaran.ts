@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, sql } from "drizzle-orm";
 import mammoth from "mammoth";
 import { db, subjectsTable, tujuanPembelajaranTable } from "@workspace/db";
 import {
@@ -227,6 +227,22 @@ router.delete("/tp/:id", requireAuth, async (req, res): Promise<void> => {
     res.status(404).json({ error: "TP tidak ditemukan" });
     return;
   }
+
+  // Compact: shift all TPs that came after the deleted one down by 1 so the
+  // sequence stays contiguous (e.g. deleting TP 8 makes former TP 9 become TP 8).
+  // Decrementing is safe to do in a single UPDATE because we are filling the
+  // gap left by the deleted row — no unique-constraint collision can occur.
+  await db
+    .update(tujuanPembelajaranTable)
+    .set({ tpNumber: sql`${tujuanPembelajaranTable.tpNumber} - 1` })
+    .where(
+      and(
+        eq(tujuanPembelajaranTable.subjectId, row.subjectId),
+        eq(tujuanPembelajaranTable.calendarId, row.calendarId),
+        gt(tujuanPembelajaranTable.tpNumber, row.tpNumber),
+      ),
+    );
+
   res.json(DeleteTujuanPembelajaranResponse.parse({ success: true }));
 });
 
