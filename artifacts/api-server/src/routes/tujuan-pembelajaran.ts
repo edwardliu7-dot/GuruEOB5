@@ -343,11 +343,19 @@ router.post("/tp/bulk", requireAuth, async (req, res): Promise<void> => {
 
     const toInsert: { lingkupMateri: number; description: string; tpNumber: number }[] = [];
 
+    // globalLastUsed tracks the highest tpNumber claimed so far (either by
+    // an existing row in the DB or by items already queued in toInsert).
+    // Without this, two LMs with no existing rows both compute insertAt=1
+    // and produce duplicate (subjectId, calendarId, tpNumber) tuples.
+    let globalLastUsed = existing.reduce((m, e) => Math.max(m, e.tpNumber), 0);
+
     for (const [lm, descs] of [...byLm.entries()].sort((a, b) => a[0] - b[0])) {
       const maxInLm = tracked
         .filter((t) => t.lm === lm)
         .reduce((m, t) => Math.max(m, t.tp), 0);
-      const insertAt = maxInLm + 1;
+      // insertAt must be strictly after BOTH the last item in this LM AND
+      // the last tpNumber already claimed by any previous LM's new items.
+      const insertAt = Math.max(maxInLm, globalLastUsed) + 1;
       const newCount = descs.length;
 
       // Shift subsequent TPs in DB and in our in-memory tracker.
@@ -359,6 +367,9 @@ router.post("/tp/bulk", requireAuth, async (req, res): Promise<void> => {
       descs.forEach((desc, i) => {
         toInsert.push({ lingkupMateri: lm, description: desc, tpNumber: insertAt + i });
       });
+
+      // Advance the high-water mark so the next LM starts after these items.
+      globalLastUsed = insertAt + newCount - 1;
     }
 
     let count = 0;
