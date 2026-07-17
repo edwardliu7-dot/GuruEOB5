@@ -55,15 +55,17 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  if (!guru.school) {
-    res.json(GetInfoPekananResponse.parse(empty));
-    return;
-  }
   const [calendar] = await db
     .select()
     .from(academicCalendarsTable)
     .where(eq(academicCalendarsTable.id, calendarId));
-  if (!calendar || calendar.school !== guru.school) {
+  if (!calendar) {
+    res.json(GetInfoPekananResponse.parse(empty));
+    return;
+  }
+  // Only enforce school-scoped calendar ownership when the teacher has a school
+  // assigned. Teachers without a school set can still view their own prosem data.
+  if (guru.school && calendar.school !== guru.school) {
     res.json(GetInfoPekananResponse.parse(empty));
     return;
   }
