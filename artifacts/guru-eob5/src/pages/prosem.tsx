@@ -506,7 +506,7 @@ export default function Prosem() {
                               <SelectValue placeholder="Pilih TP" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="max-h-64 overflow-y-auto">
                             <SelectItem value="__none__">— Tidak ada —</SelectItem>
                             {tpList.map((tp: any) => (
                               <SelectItem key={tp.id} value={`TP ${tp.tpNumber}`}>

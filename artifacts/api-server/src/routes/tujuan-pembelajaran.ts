@@ -42,10 +42,10 @@ async function isOwnSubject(subjectId: string, teacherId: string): Promise<boole
   return !!subject;
 }
 
-// tpNumber is a continuous sequence across the whole subject+semester (never
-// reset per Lingkup Materi): if Lingkup Materi 1 has TP 1-2, a TP added to
-// Lingkup Materi 2 continues with TP 3, and so on. Always assigned server-side.
-async function nextTpNumber(subjectId: string, calendarId: string): Promise<number> {
+// tpNumber is scoped per Lingkup Materi: LM 1 has its own sequence (1, 2, 3…),
+// LM 2 has its own (1, 2, 3…), etc. This way adding a TP to LM 1 always
+// continues from the last TP in LM 1, regardless of how many TPs LM 2 has.
+async function nextTpNumber(subjectId: string, calendarId: string, lingkupMateri: number): Promise<number> {
   const [last] = await db
     .select({ tpNumber: tujuanPembelajaranTable.tpNumber })
     .from(tujuanPembelajaranTable)
@@ -53,6 +53,7 @@ async function nextTpNumber(subjectId: string, calendarId: string): Promise<numb
       and(
         eq(tujuanPembelajaranTable.subjectId, subjectId),
         eq(tujuanPembelajaranTable.calendarId, calendarId),
+        eq(tujuanPembelajaranTable.lingkupMateri, lingkupMateri),
       ),
     )
     .orderBy(desc(tujuanPembelajaranTable.tpNumber))
@@ -118,7 +119,7 @@ router.post("/tp", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const tpNumber = await nextTpNumber(parsed.data.subjectId, parsed.data.calendarId);
+  const tpNumber = await nextTpNumber(parsed.data.subjectId, parsed.data.calendarId, parsed.data.lingkupMateri);
   const [row] = await db
     .insert(tujuanPembelajaranTable)
     .values({ ...parsed.data, tpNumber, teacherId })
@@ -275,16 +276,24 @@ router.post("/tp/bulk", requireAuth, async (req, res): Promise<void> => {
         ),
       );
     // Duplicates are detected by content (same Lingkup Materi + description),
-    // not by tpNumber -- tpNumber is always (re)assigned by the server as a
-    // continuous sequence across the whole subject+semester.
+    // not by tpNumber -- tpNumber is always (re)assigned by the server per LM.
     const existingKeys = new Set(
       existing.map((e) => `${e.lingkupMateri}:${normalizeDescription(e.description)}`),
     );
-    let nextNumber = (existing.reduce((max, e) => Math.max(max, e.tpNumber), 0)) + 1;
 
-    // Preserve the AI's Lingkup Materi ordering (items already come grouped/sorted
-    // by lingkupMateri then tpNumber from the extraction step) so the continuous
-    // sequence reads naturally: LM1 TP1-2, LM2 TP3-4, etc.
+    // Per-LM counters: each LM has its own sequence starting after the existing max.
+    const lmMax = new Map<number, number>();
+    for (const e of existing) {
+      lmMax.set(e.lingkupMateri, Math.max(lmMax.get(e.lingkupMateri) ?? 0, e.tpNumber));
+    }
+    const nextForLm = (lm: number): number => {
+      const next = (lmMax.get(lm) ?? 0) + 1;
+      lmMax.set(lm, next);
+      return next;
+    };
+
+    // Preserve the AI's Lingkup Materi ordering so items are numbered in sequence
+    // within each LM: LM1 TP1, TP2…; LM2 TP1, TP2…; etc.
     const ordered = [...items].sort((a, b) =>
       a.lingkupMateri !== b.lingkupMateri ? a.lingkupMateri - b.lingkupMateri : a.tpNumber - b.tpNumber,
     );
@@ -295,8 +304,7 @@ router.post("/tp/bulk", requireAuth, async (req, res): Promise<void> => {
       const key = `${item.lingkupMateri}:${normalizeDescription(item.description)}`;
       if (existingKeys.has(key) || seen.has(key)) continue;
       seen.add(key);
-      toInsert.push({ lingkupMateri: item.lingkupMateri, description: item.description, tpNumber: nextNumber });
-      nextNumber += 1;
+      toInsert.push({ lingkupMateri: item.lingkupMateri, description: item.description, tpNumber: nextForLm(item.lingkupMateri) });
     }
 
     let count = 0;
