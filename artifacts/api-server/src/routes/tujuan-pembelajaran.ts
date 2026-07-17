@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import mammoth from "mammoth";
 import { db, subjectsTable, tujuanPembelajaranTable } from "@workspace/db";
 import {
@@ -42,23 +42,26 @@ async function isOwnSubject(subjectId: string, teacherId: string): Promise<boole
   return !!subject;
 }
 
-// tpNumber is scoped per Lingkup Materi: LM 1 has its own sequence (1, 2, 3…),
-// LM 2 has its own (1, 2, 3…), etc. This way adding a TP to LM 1 always
-// continues from the last TP in LM 1, regardless of how many TPs LM 2 has.
-async function nextTpNumber(subjectId: string, calendarId: string, lingkupMateri: number): Promise<number> {
-  const [last] = await db
-    .select({ tpNumber: tujuanPembelajaranTable.tpNumber })
-    .from(tujuanPembelajaranTable)
+// Shift all TPs in a subject+calendar with tpNumber >= shiftFrom up by shiftBy.
+// PostgreSQL checks the unique constraint at statement end so incrementing a
+// contiguous range in one UPDATE never causes transient duplicates.
+async function shiftTpNumbers(
+  subjectId: string,
+  calendarId: string,
+  shiftFrom: number,
+  shiftBy: number,
+): Promise<void> {
+  if (shiftBy <= 0) return;
+  await db
+    .update(tujuanPembelajaranTable)
+    .set({ tpNumber: sql`${tujuanPembelajaranTable.tpNumber} + ${shiftBy}` })
     .where(
       and(
         eq(tujuanPembelajaranTable.subjectId, subjectId),
         eq(tujuanPembelajaranTable.calendarId, calendarId),
-        eq(tujuanPembelajaranTable.lingkupMateri, lingkupMateri),
+        gte(tujuanPembelajaranTable.tpNumber, shiftFrom),
       ),
-    )
-    .orderBy(desc(tujuanPembelajaranTable.tpNumber))
-    .limit(1);
-  return (last?.tpNumber ?? 0) + 1;
+    );
 }
 
 function normalizeDescription(text: string): string {
@@ -119,10 +122,31 @@ router.post("/tp", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const tpNumber = await nextTpNumber(parsed.data.subjectId, parsed.data.calendarId, parsed.data.lingkupMateri);
+  const { subjectId, calendarId, lingkupMateri } = parsed.data;
+
+  // Find the last TP number in this LM — new TP slots in right after it.
+  const [lastInLm] = await db
+    .select({ tpNumber: tujuanPembelajaranTable.tpNumber })
+    .from(tujuanPembelajaranTable)
+    .where(
+      and(
+        eq(tujuanPembelajaranTable.subjectId, subjectId),
+        eq(tujuanPembelajaranTable.calendarId, calendarId),
+        eq(tujuanPembelajaranTable.lingkupMateri, lingkupMateri),
+      ),
+    )
+    .orderBy(desc(tujuanPembelajaranTable.tpNumber))
+    .limit(1);
+
+  const insertAt = (lastInLm?.tpNumber ?? 0) + 1;
+
+  // Push every TP that comes after this insertion point up by 1 so the
+  // global sequence stays gap-free (LM 2's TP 8 becomes TP 9, etc.).
+  await shiftTpNumbers(subjectId, calendarId, insertAt, 1);
+
   const [row] = await db
     .insert(tujuanPembelajaranTable)
-    .values({ ...parsed.data, tpNumber, teacherId })
+    .values({ ...parsed.data, tpNumber: insertAt, teacherId })
     .returning();
   res.status(201).json(CreateTujuanPembelajaranResponse.parse(row));
 });
@@ -275,36 +299,49 @@ router.post("/tp/bulk", requireAuth, async (req, res): Promise<void> => {
           eq(tujuanPembelajaranTable.calendarId, calendarId),
         ),
       );
-    // Duplicates are detected by content (same Lingkup Materi + description),
-    // not by tpNumber -- tpNumber is always (re)assigned by the server per LM.
+    // Duplicates detected by content (LM + description), not by tpNumber.
     const existingKeys = new Set(
       existing.map((e) => `${e.lingkupMateri}:${normalizeDescription(e.description)}`),
     );
 
-    // Per-LM counters: each LM has its own sequence starting after the existing max.
-    const lmMax = new Map<number, number>();
-    for (const e of existing) {
-      lmMax.set(e.lingkupMateri, Math.max(lmMax.get(e.lingkupMateri) ?? 0, e.tpNumber));
-    }
-    const nextForLm = (lm: number): number => {
-      const next = (lmMax.get(lm) ?? 0) + 1;
-      lmMax.set(lm, next);
-      return next;
-    };
-
-    // Preserve the AI's Lingkup Materi ordering so items are numbered in sequence
-    // within each LM: LM1 TP1, TP2…; LM2 TP1, TP2…; etc.
+    // Sort AI items by LM asc, then by their suggested tpNumber within each LM.
     const ordered = [...items].sort((a, b) =>
       a.lingkupMateri !== b.lingkupMateri ? a.lingkupMateri - b.lingkupMateri : a.tpNumber - b.tpNumber,
     );
 
+    // Group unique new items by LM (preserving order within each LM).
     const seen = new Set<string>();
-    const toInsert: { lingkupMateri: number; description: string; tpNumber: number }[] = [];
+    const byLm = new Map<number, string[]>();
     for (const item of ordered) {
       const key = `${item.lingkupMateri}:${normalizeDescription(item.description)}`;
       if (existingKeys.has(key) || seen.has(key)) continue;
       seen.add(key);
-      toInsert.push({ lingkupMateri: item.lingkupMateri, description: item.description, tpNumber: nextForLm(item.lingkupMateri) });
+      if (!byLm.has(item.lingkupMateri)) byLm.set(item.lingkupMateri, []);
+      byLm.get(item.lingkupMateri)!.push(item.description);
+    }
+
+    // Track each existing row's current tpNumber in memory so we can compute
+    // correct insertion points as we shift LM by LM (lowest LM first).
+    const tracked = existing.map((e) => ({ lm: e.lingkupMateri, tp: e.tpNumber }));
+
+    const toInsert: { lingkupMateri: number; description: string; tpNumber: number }[] = [];
+
+    for (const [lm, descs] of [...byLm.entries()].sort((a, b) => a[0] - b[0])) {
+      const maxInLm = tracked
+        .filter((t) => t.lm === lm)
+        .reduce((m, t) => Math.max(m, t.tp), 0);
+      const insertAt = maxInLm + 1;
+      const newCount = descs.length;
+
+      // Shift subsequent TPs in DB and in our in-memory tracker.
+      await shiftTpNumbers(subjectId, calendarId, insertAt, newCount);
+      for (const t of tracked) {
+        if (t.tp >= insertAt) t.tp += newCount;
+      }
+
+      descs.forEach((desc, i) => {
+        toInsert.push({ lingkupMateri: lm, description: desc, tpNumber: insertAt + i });
+      });
     }
 
     let count = 0;
