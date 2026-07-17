@@ -7,7 +7,6 @@ import {
   useListSubjects,
   useListStudents,
   useListAttendance,
-  useListAcademicCalendars,
   useListProsem,
   useListProsemItems,
 } from "@workspace/api-client-react";
@@ -134,15 +133,13 @@ function ProsemTopicPicker({
   value: string | undefined;
   onPick: (prosemItemId: string | undefined, materi?: string) => void;
 }) {
-  const { data: calendars } = useListAcademicCalendars();
-  const calendarId = calendars?.[0]?.id;
-  const ready = !!subjectId && !!kelas && !!calendarId;
+  const ready = !!subjectId && !!kelas;
 
   const { data: prosemList } = useListProsem(
-    { calendarId: calendarId || undefined, subjectId: subjectId || undefined },
+    { subjectId: subjectId || undefined },
     {
       query: {
-        queryKey: ["/api/prosem", "picker", calendarId, subjectId],
+        queryKey: ["/api/prosem", "picker", subjectId],
         enabled: ready,
       },
     },
