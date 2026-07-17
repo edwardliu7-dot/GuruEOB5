@@ -15,7 +15,6 @@ import Kalender from "@/pages/kalender";
 import Prosem from "@/pages/prosem";
 import InfoPekanan from "@/pages/info-pekanan";
 import Absensi from "@/pages/absensi";
-import InputHarian from "@/pages/input-harian";
 import Nilai from "@/pages/nilai";
 import Poin from "@/pages/poin";
 import Guru from "@/pages/guru";
@@ -71,7 +70,6 @@ function Router() {
       <Route path="/prosem" component={() => <ProtectedRoute component={Prosem} />} />
       <Route path="/info-pekanan" component={() => <ProtectedRoute component={InfoPekanan} />} />
       <Route path="/absensi" component={() => <ProtectedRoute component={Absensi} />} />
-      <Route path="/input-harian" component={() => <ProtectedRoute component={InputHarian} />} />
       <Route path="/nilai" component={() => <ProtectedRoute component={Nilai} />} />
       <Route path="/poin" component={() => <ProtectedRoute component={Poin} />} />
       <Route path="/guru" component={() => <ProtectedRoute component={Guru} adminOnly />} />
