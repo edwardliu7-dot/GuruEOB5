@@ -95,7 +95,12 @@ function useDeleteBahanAjar() {
 }
 
 // ─── Bahan Ajar Tab ───────────────────────────────────────────────────────────
-function BahanAjarTab({ isAdmin, currentUserId }: { isAdmin: boolean; currentUserId?: string }) {
+function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
+  isAdmin: boolean;
+  currentUserId?: string;
+  subjects?: any[];
+  me?: any;
+}) {
   const { data: items, isLoading } = useBahanAjar();
   const createBA = useCreateBahanAjar();
   const deleteBA = useDeleteBahanAjar();
@@ -104,6 +109,10 @@ function BahanAjarTab({ isAdmin, currentUserId }: { isAdmin: boolean; currentUse
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  // Build dropdown options from existing data
+  const subjectOptions: string[] = subjects?.map((s: any) => s.name).filter(Boolean) ?? [];
+  const kelasOptions: string[] = (me?.kelasDiampu as string[] | undefined) ?? [];
 
   const form = useForm<BahanAjarFormValues>({
     resolver: zodResolver(bahanAjarSchema),
@@ -184,10 +193,44 @@ function BahanAjarTab({ isAdmin, currentUserId }: { isAdmin: boolean; currentUse
                   )} />
                   <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="mataPelajaran" render={({ field }) => (
-                      <FormItem><FormLabel>Mata Pelajaran</FormLabel><FormControl><Input placeholder="Misal: Matematika" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem>
+                        <FormLabel>Mata Pelajaran</FormLabel>
+                        {subjectOptions.length > 0 ? (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger><SelectValue placeholder="Pilih mata pelajaran" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {subjectOptions.map((name) => (
+                                <SelectItem key={name} value={name}>{name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <FormControl><Input placeholder="Misal: Matematika" {...field} /></FormControl>
+                        )}
+                        <FormMessage />
+                      </FormItem>
                     )} />
                     <FormField control={form.control} name="kelas" render={({ field }) => (
-                      <FormItem><FormLabel>Kelas</FormLabel><FormControl><Input placeholder="Misal: 7A" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem>
+                        <FormLabel>Kelas</FormLabel>
+                        {kelasOptions.length > 0 ? (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger><SelectValue placeholder="Pilih kelas" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {kelasOptions.map((k) => (
+                                <SelectItem key={k} value={k}>{k}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <FormControl><Input placeholder="Misal: VII Ibnu Battutah" {...field} /></FormControl>
+                        )}
+                        <FormMessage />
+                      </FormItem>
                     )} />
                   </div>
                   <FormField control={form.control} name="deskripsi" render={({ field }) => (
@@ -608,7 +651,7 @@ export default function Administrasi() {
 
           {/* ── Tab Bahan Ajar ── */}
           <TabsContent value="bahan-ajar" className="mt-4">
-            <BahanAjarTab isAdmin={isAdmin} currentUserId={(me as any)?.id} />
+            <BahanAjarTab isAdmin={isAdmin} currentUserId={(me as any)?.id} subjects={subjects} me={me} />
           </TabsContent>
         </Tabs>
 

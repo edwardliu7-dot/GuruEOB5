@@ -44,6 +44,24 @@ const sessionTableReady = sessionPool
     ALTER TABLE journal_entries
       ADD COLUMN IF NOT EXISTS prosem_item_id uuid
         REFERENCES prosem_items(id) ON DELETE SET NULL;
+
+    -- Create bahan_ajar table if it doesn't exist yet.
+    CREATE TABLE IF NOT EXISTS bahan_ajar (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      school text NOT NULL,
+      judul text NOT NULL,
+      mata_pelajaran text,
+      kelas text,
+      deskripsi text,
+      file_name text,
+      file_type text,
+      file_size integer,
+      file_data text,
+      link_url text,
+      created_by text NOT NULL,
+      created_by_name text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
     `,
   )
   .then(() => {
