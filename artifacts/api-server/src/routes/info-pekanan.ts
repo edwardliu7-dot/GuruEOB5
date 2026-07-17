@@ -81,19 +81,6 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  // No calendarId filter here — prosem items are uniquely linked to week UUIDs,
-  // which already encode the calendar context. Filtering by calendarId was too strict
-  // and caused items to vanish when the user's prosem was created under a slightly
-  // different calendar than the one currently selected in info-pekanan.
-  const prosemRows = await db
-    .select({
-      prosemId: prosemTable.id,
-      subjectId: prosemTable.subjectId,
-      kelas: prosemTable.kelas,
-    })
-    .from(prosemTable)
-    .where(eq(prosemTable.teacherId, teacherId));
-
   const subjectRows = await db
     .select()
     .from(subjectsTable)
@@ -108,45 +95,64 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     (j) => j.tanggal >= week.tanggalMulai && j.tanggal <= week.tanggalSelesai,
   );
 
+  // Join prosem_items → prosem → academic_weeks and match by the active week's
+  // date range (tanggalMulai + tanggalSelesai) rather than an exact weekId UUID.
+  //
+  // This is more robust than UUID matching: if the admin ever deleted and recreated
+  // the academic calendar (producing new week UUIDs), prosem items that were saved
+  // against the old UUIDs would still surface here as long as the date range matches.
+  const planRows = await db
+    .select({
+      prosemItemId: prosemItemsTable.id,
+      weekId: prosemItemsTable.weekId,
+      kd: prosemItemsTable.kd,
+      materi: prosemItemsTable.materi,
+      jp: prosemItemsTable.jp,
+      subjectId: prosemTable.subjectId,
+      kelas: prosemTable.kelas,
+    })
+    .from(prosemItemsTable)
+    .innerJoin(prosemTable, eq(prosemItemsTable.prosemId, prosemTable.id))
+    .innerJoin(academicWeeksTable, eq(prosemItemsTable.weekId, academicWeeksTable.id))
+    .where(
+      and(
+        eq(prosemTable.teacherId, teacherId),
+        eq(academicWeeksTable.tanggalMulai, week.tanggalMulai),
+        eq(academicWeeksTable.tanggalSelesai, week.tanggalSelesai),
+      ),
+    );
+
   const items: InfoItem[] = [];
   const matchedJournalIds = new Set<string>();
 
-  for (const p of prosemRows) {
-    const planItems = await db
-      .select()
-      .from(prosemItemsTable)
-      .where(
-        and(eq(prosemItemsTable.prosemId, p.prosemId), eq(prosemItemsTable.weekId, weekId)),
+  for (const pi of planRows) {
+    // Prefer an explicit link to this exact topic (set when the teacher picks
+    // it from the Prosem while writing the journal entry). Fall back to the
+    // old subject+kelas heuristic for entries that don't reference a topic.
+    const linked = weekJournals.find(
+      (j) => j.prosemItemId === pi.prosemItemId && !matchedJournalIds.has(j.id),
+    );
+    const match =
+      linked ??
+      weekJournals.find(
+        (j) =>
+          !j.prosemItemId &&
+          j.subjectId === pi.subjectId &&
+          j.kelas === pi.kelas &&
+          !matchedJournalIds.has(j.id),
       );
-    for (const pi of planItems) {
-      // Prefer an explicit link to this exact topic (set when the teacher picks
-      // it from the Prosem while writing the journal entry). Fall back to the
-      // old subject+kelas heuristic for entries that don't reference a topic.
-      const linked = weekJournals.find(
-        (j) => j.prosemItemId === pi.id && !matchedJournalIds.has(j.id),
-      );
-      const match =
-        linked ??
-        weekJournals.find(
-          (j) =>
-            !j.prosemItemId &&
-            j.subjectId === p.subjectId &&
-            j.kelas === p.kelas &&
-            !matchedJournalIds.has(j.id),
-        );
-      if (match) matchedJournalIds.add(match.id);
-      items.push({
-        prosemItemId: pi.id,
-        subjectId: p.subjectId,
-        subjectName: subjectName.get(p.subjectId) ?? "-",
-        kelas: p.kelas,
-        kd: pi.kd,
-        materi: pi.materi,
-        jp: pi.jp,
-        status: match ? "sesuai" : "tertinggal",
-        journalEntryId: match ? match.id : null,
-      });
-    }
+    if (match) matchedJournalIds.add(match.id);
+    items.push({
+      prosemItemId: pi.prosemItemId,
+      subjectId: pi.subjectId,
+      subjectName: subjectName.get(pi.subjectId) ?? "-",
+      kelas: pi.kelas,
+      kd: pi.kd,
+      materi: pi.materi,
+      jp: pi.jp,
+      status: match ? "sesuai" : "tertinggal",
+      journalEntryId: match ? match.id : null,
+    });
   }
 
   for (const j of weekJournals) {
