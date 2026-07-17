@@ -51,8 +51,10 @@ router.get("/dashboard/summary", requireAuth, async (req, res): Promise<void> =>
   monthStart.setDate(1);
   const monthStartStr = monthStart.toISOString().slice(0, 10);
 
+  // Only select tanggal — avoids crashing if prosem_item_id column hasn't been
+  // added to the production DB yet (schema drift).
   const entriesThisMonth = await db
-    .select()
+    .select({ tanggal: journalEntriesTable.tanggal })
     .from(journalEntriesTable)
     .where(
       and(

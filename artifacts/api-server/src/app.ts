@@ -37,13 +37,20 @@ const sessionTableReady = sessionPool
       "expire" timestamp(6) NOT NULL,
       CONSTRAINT "guru_eob5_session_pkey" PRIMARY KEY ("sid")
     );
-    CREATE INDEX IF NOT EXISTS "IDX_guru_eob5_session_expire" ON "guru_eob5_session" ("expire");`,
+    CREATE INDEX IF NOT EXISTS "IDX_guru_eob5_session_expire" ON "guru_eob5_session" ("expire");
+
+    -- Additive schema migrations: safe to run repeatedly (IF NOT EXISTS / IF COLUMN).
+    -- Add prosem_item_id to journal_entries if the production DB predates this column.
+    ALTER TABLE journal_entries
+      ADD COLUMN IF NOT EXISTS prosem_item_id uuid
+        REFERENCES prosem_items(id) ON DELETE SET NULL;
+    `,
   )
   .then(() => {
-    logger.info("Session table ready");
+    logger.info("Session table and schema migrations ready");
   })
   .catch((err) => {
-    logger.error({ err }, "Failed to ensure session table exists");
+    logger.error({ err }, "Failed to ensure session table / run migrations");
     throw err;
   });
 
