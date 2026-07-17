@@ -23,6 +23,7 @@ import {
   ArrowUpRight,
   BookOpen,
   Info,
+  Share2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -136,6 +137,51 @@ function LessonCard({ item }: { item: any }) {
       </div>
     </div>
   );
+}
+
+function buildWhatsAppText(
+  items: any[],
+  pekanKe: number | null,
+  tanggalMulai: string | null,
+  tanggalSelesai: string | null,
+): string {
+  if (!items.length) return "";
+
+  // Group by subject name, preserving insertion order
+  const bySubject = new Map<string, { kelas: string; materi: string }[]>();
+  for (const item of items) {
+    const key = item.subjectName ?? "-";
+    const arr = bySubject.get(key) ?? [];
+    arr.push({ kelas: item.kelas, materi: item.materi });
+    bySubject.set(key, arr);
+  }
+
+  const lines: string[] = ["Bismillah", "Info pekanan"];
+  if (pekanKe != null) {
+    let weekLine = `Pekan ke-${pekanKe}`;
+    if (tanggalMulai && tanggalSelesai) {
+      const fmt = (d: string) => {
+        const [y, m, day] = d.split("-");
+        const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+        return `${parseInt(day)} ${months[parseInt(m) - 1]}`;
+      };
+      weekLine += ` (${fmt(tanggalMulai)} – ${fmt(tanggalSelesai)})`;
+    }
+    lines.push(weekLine);
+  }
+
+  let first = true;
+  for (const [subject, classItems] of bySubject) {
+    if (!first) lines.push(""); // blank line between subjects
+    first = false;
+    lines.push(subject);
+    for (const ci of classItems) {
+      lines.push(`G. ${ci.kelas}`);
+      lines.push(ci.materi);
+    }
+  }
+
+  return lines.join("\n");
 }
 
 export default function InfoPekanan() {
@@ -259,14 +305,38 @@ export default function InfoPekanan() {
                 </div>
                 <div className="text-sm text-muted-foreground">{dateRange}</div>
               </div>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={weekIndex >= (weeks.length - 1)}
-                onClick={() => setWeekIndex((i) => Math.min(weeks.length - 1, i + 1))}
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {!!info?.items?.length && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                    onClick={() => {
+                      const text = buildWhatsAppText(
+                        info.items,
+                        info.pekanKe ?? null,
+                        info.tanggalMulai ?? null,
+                        info.tanggalSelesai ?? null,
+                      );
+                      window.open(
+                        `https://wa.me/?text=${encodeURIComponent(text)}`,
+                        "_blank",
+                      );
+                    }}
+                  >
+                    <Share2 className="h-4 w-4" />
+                    WhatsApp
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={weekIndex >= (weeks.length - 1)}
+                  onClick={() => setWeekIndex((i) => Math.min(weeks.length - 1, i + 1))}
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
