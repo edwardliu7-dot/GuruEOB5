@@ -94,7 +94,7 @@ export default function Nilai() {
 
   // Subjects filtered to those whose name includes the selected kelas.
   // Teachers typically name subjects with the class embedded
-  // (e.g. "Matematika - VII Ibnu Battutah"), so this prevents subjects
+  // (e.g. "Matematika - VII Ibnu Batuttah"), so this prevents subjects
   // from other classes appearing in the dropdown.
   const filteredSubjects = useMemo(
     () =>

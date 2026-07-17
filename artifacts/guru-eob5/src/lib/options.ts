@@ -15,7 +15,7 @@ export const JABATAN_LABELS: Record<string, string> = {
 export const WAKASEK_BIDANG_OPTIONS = ["Kurikulum", "Kesiswaan"] as const;
 
 export const KELAS_OPTIONS = [
-  "VII Ibnu Battutah",
+  "VII Ibnu Batuttah",
   "VIII Ibnu Sina",
   "IX Al Khawarizmi",
 ] as const;
