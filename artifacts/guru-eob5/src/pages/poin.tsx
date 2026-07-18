@@ -27,6 +27,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 
+// Preset saran poin: pelanggaran & prestasi umum
+type PoinPreset = { label: string; jenis: "positif" | "negatif"; poin: number };
+const SARAN_NEGATIF: PoinPreset[] = [
+  { label: "Terlambat", jenis: "negatif", poin: 5 },
+  { label: "Tidak bawa buku", jenis: "negatif", poin: 3 },
+  { label: "Tidak kerjakan PR", jenis: "negatif", poin: 5 },
+  { label: "Tidak pakai seragam", jenis: "negatif", poin: 5 },
+  { label: "Menyontek", jenis: "negatif", poin: 15 },
+  { label: "Bolos", jenis: "negatif", poin: 20 },
+];
+const SARAN_POSITIF: PoinPreset[] = [
+  { label: "Aktif menjawab", jenis: "positif", poin: 5 },
+  { label: "Membantu teman", jenis: "positif", poin: 5 },
+  { label: "Nilai ujian terbaik", jenis: "positif", poin: 10 },
+  { label: "Juara kelas", jenis: "positif", poin: 20 },
+  { label: "Mewakili lomba", jenis: "positif", poin: 15 },
+];
+
 type PoinJenis = "positif" | "negatif";
 
 type BulkRow = {
@@ -304,6 +322,42 @@ export default function Poin() {
                       <FormField control={form.control} name="poin" render={({ field }) => (
                         <FormItem><FormLabel>Jumlah Poin</FormLabel><FormControl><Input type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
                       )} />
+                    </div>
+                    {/* Saran poin: preset tombol cepat */}
+                    <div className="space-y-1.5">
+                      <p className="text-sm font-medium leading-none">Saran Cepat</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SARAN_NEGATIF.map((s) => (
+                          <button
+                            key={s.label}
+                            type="button"
+                            onClick={() => {
+                              form.setValue("jenis", s.jenis);
+                              form.setValue("poin", s.poin);
+                              form.setValue("keterangan", s.label);
+                            }}
+                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors"
+                          >
+                            <ArrowDownRight className="w-3 h-3" />{s.label} ({s.poin})
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SARAN_POSITIF.map((s) => (
+                          <button
+                            key={s.label}
+                            type="button"
+                            onClick={() => {
+                              form.setValue("jenis", s.jenis);
+                              form.setValue("poin", s.poin);
+                              form.setValue("keterangan", s.label);
+                            }}
+                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                          >
+                            <ArrowUpRight className="w-3 h-3" />{s.label} ({s.poin})
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <FormField control={form.control} name="keterangan" render={({ field }) => (
                       <FormItem><FormLabel>Keterangan</FormLabel><FormControl><Textarea placeholder="Alasan" {...field} /></FormControl><FormMessage /></FormItem>

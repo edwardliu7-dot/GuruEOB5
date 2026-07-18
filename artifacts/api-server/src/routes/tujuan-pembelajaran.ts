@@ -195,13 +195,85 @@ router.put("/tp/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  // If lingkupMateri didn't change, just update description in-place (tpNumber stays).
+  if (parsed.data.lingkupMateri === existing.lingkupMateri) {
+    const [row] = await db
+      .update(tujuanPembelajaranTable)
+      .set(parsed.data)
+      .where(eq(tujuanPembelajaranTable.id, params.data.id))
+      .returning();
+    if (!row) {
+      res.status(404).json({ error: "TP tidak ditemukan" });
+      return;
+    }
+    res.json(UpdateTujuanPembelajaranResponse.parse(row));
+    return;
+  }
+
+  // lingkupMateri changed — we need to move this TP to the correct position
+  // inside the new LM, keeping the global tpNumber sequence gap-free.
+  //
+  // Algorithm:
+  //  1. Park the TP at a large temp number (999 999) to vacate its slot.
+  //  2. Compact the gap: shift every TP after the old position down by 1.
+  //  3. Find the last tpNumber in the target LM (post-compaction).
+  //  4. Open a slot right after it: shiftTpNumbers from insertAt by 1.
+  //  5. Land the TP at insertAt with the new lingkupMateri.
+  const { subjectId, calendarId, lingkupMateri: newLm, description } = parsed.data;
+  const TEMP_TP = 999_999;
+
+  // Step 1: park
+  await db
+    .update(tujuanPembelajaranTable)
+    .set({ tpNumber: TEMP_TP })
+    .where(eq(tujuanPembelajaranTable.id, params.data.id));
+
+  // Step 2: compact — decrement all TPs that came after the old slot.
+  // Single-pass decrement is safe here because we are filling an existing gap
+  // (the parked TP at TEMP_TP is far above any real number, so no collision).
+  await db
+    .update(tujuanPembelajaranTable)
+    .set({ tpNumber: sql`${tujuanPembelajaranTable.tpNumber} - 1` })
+    .where(
+      and(
+        eq(tujuanPembelajaranTable.subjectId, subjectId),
+        eq(tujuanPembelajaranTable.calendarId, calendarId),
+        gt(tujuanPembelajaranTable.tpNumber, existing.tpNumber),
+      ),
+    );
+
+  // Step 3: where does the target LM end now (after compaction)?
+  // Our parked TP still carries the OLD lingkupMateri, so the query for
+  // newLm naturally excludes it.
+  const [lastInNewLm] = await db
+    .select({ tpNumber: tujuanPembelajaranTable.tpNumber })
+    .from(tujuanPembelajaranTable)
+    .where(
+      and(
+        eq(tujuanPembelajaranTable.subjectId, subjectId),
+        eq(tujuanPembelajaranTable.calendarId, calendarId),
+        eq(tujuanPembelajaranTable.lingkupMateri, newLm),
+      ),
+    )
+    .orderBy(desc(tujuanPembelajaranTable.tpNumber))
+    .limit(1);
+
+  const insertAt = (lastInNewLm?.tpNumber ?? 0) + 1;
+
+  // Step 4: open a slot (shiftTpNumbers also shifts the parked TEMP_TP, but
+  // we unconditionally overwrite it in step 5 so the exact temp value is
+  // irrelevant).
+  await shiftTpNumbers(subjectId, calendarId, insertAt, 1);
+
+  // Step 5: land
   const [row] = await db
     .update(tujuanPembelajaranTable)
-    .set(parsed.data)
+    .set({ lingkupMateri: newLm, description, tpNumber: insertAt })
     .where(eq(tujuanPembelajaranTable.id, params.data.id))
     .returning();
+
   if (!row) {
-    res.status(404).json({ error: "TP tidak ditemukan" });
+    res.status(500).json({ error: "Terjadi kesalahan saat memindahkan TP" });
     return;
   }
   res.json(UpdateTujuanPembelajaranResponse.parse(row));

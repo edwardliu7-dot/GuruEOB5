@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import {
   db,
   studentsTable,
@@ -9,6 +9,7 @@ import {
   attendanceTable,
   gradesTable,
   pointsTable,
+  prosemTable,
   neonDb,
   gurusTable,
   type Guru,
@@ -18,7 +19,9 @@ import {
   GetKurikulumOverviewResponse,
   GetKesiswaanOverviewResponse,
   GetWaliKelasRekapResponse,
-  RoleJurnalResponse,
+  GetKepsekJurnalResponse,
+  GetKurikulumJurnalResponse,
+  GetWaliKelasJurnalResponse,
 } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru, sameSchoolFilter } from "../lib/auth";
 
@@ -282,6 +285,130 @@ router.get("/walikelas/rekap", requireAuth, async (req, res): Promise<void> => {
   });
 
   res.json(GetWaliKelasRekapResponse.parse({ kelas, siswa }));
+});
+
+// ─── Helper: Build RoleJurnalEntry list ──────────────────────────────────────
+async function buildJurnalEntries(
+  journals: { id: string; teacherId: string; subjectId: string; tanggal: string; materi: string; catatan: string | null; [key: string]: unknown }[],
+  teacherIds: string[],
+): Promise<{ id: string; teacherName: string; subjectName: string; kelas: string; tanggal: string; materi: string; catatan: string | null }[]> {
+  if (journals.length === 0) return [];
+
+  // Fetch teacher names from Neon (shared gurus table)
+  const guruRows = teacherIds.length
+    ? await neonDb.select({ id: gurusTable.id, name: gurusTable.name })
+        .from(gurusTable)
+        .where(inArray(gurusTable.id, teacherIds))
+    : [];
+  const teacherNameById = new Map(guruRows.map((g) => [g.id, g.name]));
+
+  // Fetch subject names
+  const subjectIds = [...new Set(journals.map((j: any) => j.subjectId as string))];
+  const subjectRows = subjectIds.length
+    ? await db.select({ id: subjectsTable.id, name: subjectsTable.name }).from(subjectsTable)
+        .where(inArray(subjectsTable.id, subjectIds))
+    : [];
+  const subjectNameById = new Map(subjectRows.map((s) => [s.id, s.name]));
+
+  // Fetch kelas from prosem (first match per subjectId)
+  const prosemRows = subjectIds.length
+    ? await db.select({ subjectId: prosemTable.subjectId, kelas: prosemTable.kelas })
+        .from(prosemTable)
+        .where(inArray(prosemTable.subjectId, subjectIds))
+    : [];
+  const kelasBySubjectId = new Map<string, string>();
+  for (const p of prosemRows) {
+    if (!kelasBySubjectId.has(p.subjectId)) kelasBySubjectId.set(p.subjectId, p.kelas);
+  }
+
+  return journals.map((j: any) => ({
+    id: j.id,
+    teacherName: teacherNameById.get(j.teacherId) ?? j.teacherId,
+    subjectName: subjectNameById.get(j.subjectId) ?? j.subjectId,
+    kelas: kelasBySubjectId.get(j.subjectId) ?? "-",
+    tanggal: j.tanggal,
+    materi: j.materi,
+    catatan: j.catatan ?? null,
+  }));
+}
+
+// ─── Kepala Sekolah: lihat semua jurnal guru ─────────────────────────────────
+router.get("/kepsek/jurnal", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!isKepsek(guru)) {
+    res.status(403).json({ error: "Hanya kepala sekolah yang dapat mengakses halaman ini" });
+    return;
+  }
+
+  const schoolFilter = guru.school ? eq(gurusTable.school, guru.school) : undefined;
+  const guruRows = schoolFilter
+    ? await neonDb.select({ id: gurusTable.id }).from(gurusTable).where(schoolFilter)
+    : await neonDb.select({ id: gurusTable.id }).from(gurusTable);
+  const guruIds = guruRows.map((g) => g.id);
+
+  const journals = guruIds.length
+    ? await db.select().from(journalEntriesTable)
+        .where(inArray(journalEntriesTable.teacherId, guruIds))
+        .orderBy(desc(journalEntriesTable.tanggal))
+    : [];
+
+  const entries = await buildJurnalEntries(journals, guruIds);
+  res.json(GetKepsekJurnalResponse.parse({ entries }));
+});
+
+// ─── Wakasek Kurikulum: lihat semua jurnal guru ──────────────────────────────
+router.get("/kurikulum/jurnal", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!isKepsek(guru) && !isWakasek(guru, "Kurikulum")) {
+    res.status(403).json({ error: "Hanya wakasek kurikulum yang dapat mengakses halaman ini" });
+    return;
+  }
+
+  const schoolFilter = guru.school ? eq(gurusTable.school, guru.school) : undefined;
+  const guruRows = schoolFilter
+    ? await neonDb.select({ id: gurusTable.id }).from(gurusTable).where(schoolFilter)
+    : await neonDb.select({ id: gurusTable.id }).from(gurusTable);
+  const guruIds = guruRows.map((g) => g.id);
+
+  const journals = guruIds.length
+    ? await db.select().from(journalEntriesTable)
+        .where(inArray(journalEntriesTable.teacherId, guruIds))
+        .orderBy(desc(journalEntriesTable.tanggal))
+    : [];
+
+  const entries = await buildJurnalEntries(journals, guruIds);
+  res.json(GetKurikulumJurnalResponse.parse({ entries }));
+});
+
+// ─── Wali Kelas: lihat jurnal untuk kelasnya ─────────────────────────────────
+router.get("/walikelas/jurnal", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!hasRole(guru, "wali_kelas") || !guru.waliKelasKelas) {
+    res.status(403).json({ error: "Hanya wali kelas yang dapat mengakses halaman ini" });
+    return;
+  }
+
+  const kelas = guru.waliKelasKelas;
+
+  // Get subjects that have prosem for this kelas
+  const prosemRows = await db
+    .select({ subjectId: prosemTable.subjectId })
+    .from(prosemTable)
+    .where(eq(prosemTable.kelas, kelas));
+  const subjectIds = [...new Set(prosemRows.map((p) => p.subjectId))];
+
+  const journals = subjectIds.length
+    ? await db.select().from(journalEntriesTable)
+        .where(inArray(journalEntriesTable.subjectId, subjectIds))
+        .orderBy(desc(journalEntriesTable.tanggal))
+    : [];
+
+  const allTeacherIds = [...new Set(journals.map((j) => j.teacherId))];
+  const entries = await buildJurnalEntries(journals, allTeacherIds);
+  res.json(GetWaliKelasJurnalResponse.parse({ entries }));
 });
 
 export default router;

@@ -5,6 +5,8 @@ import {
   useBulkMixedCreateAttendance,
   useUpdateAttendanceRecord,
   useDeleteAttendanceRecord,
+  useGetAttendanceRekap,
+  useBulkDeleteAttendanceByKelas,
   useListSubjects,
   useListStudents,
 } from "@workspace/api-client-react";
@@ -18,9 +20,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarCheck2, Plus, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +68,7 @@ export default function Absensi() {
   const { data: subjects } = useListSubjects();
   const { data: students } = useListStudents();
   const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("riwayat");
 
   const subjectFilter = selectedSubject && selectedSubject !== "all" ? selectedSubject : undefined;
   const { data: attendanceList, isLoading } = useListAttendance(
@@ -71,10 +76,14 @@ export default function Absensi() {
     { query: { queryKey: ["/api/attendance", subjectFilter ?? ""] } }
   );
 
+  const { data: rekapData, isLoading: rekapLoading } = useGetAttendanceRekap();
+
   const bulkCreateAttendance = useBulkCreateAttendance();
   const bulkMixedAttendance = useBulkMixedCreateAttendance();
   const updateAttendance = useUpdateAttendanceRecord();
   const deleteAttendance = useDeleteAttendanceRecord();
+  const bulkDeleteByKelas = useBulkDeleteAttendanceByKelas();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [kelasFilter, setKelasFilter] = useState<string>("all");
   const { toast } = useToast();
@@ -92,7 +101,6 @@ export default function Absensi() {
     [students],
   );
 
-  // Default to first kelas on load
   useEffect(() => {
     if (!bulkKelas && kelasList.length > 0) setBulkKelas(kelasList[0]);
   }, [kelasList, bulkKelas]);
@@ -102,7 +110,6 @@ export default function Absensi() {
     [students, bulkKelas],
   );
 
-  // Reset row state when the visible roster changes
   useEffect(() => {
     setBulkRows((prev) => {
       const next: Record<string, AttendanceStatus> = {};
@@ -121,8 +128,10 @@ export default function Absensi() {
     });
   };
 
-  const invalidateAttendance = () =>
+  const invalidateAttendance = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/attendance/rekap"] });
+  };
 
   const handleBulkSave = async () => {
     if (!bulkSubjectId) {
@@ -149,7 +158,6 @@ export default function Absensi() {
     }
   };
 
-  // ---- Dialog form (same-status bulk) ----
   const handleStatusChange = async (id: string, status: string) => {
     try {
       await updateAttendance.mutateAsync({ id, data: { status: status as any } });
@@ -168,6 +176,19 @@ export default function Absensi() {
       toast({ title: "Berhasil", description: "Catatan kehadiran dihapus" });
     } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+    }
+  };
+
+  const handleHapusAbsensiKelas = async (group: { kelas: string; subjectId: string; tanggal: string; subjectName: string }) => {
+    if (!confirm(`Hapus semua absensi kelas ${group.kelas} mapel ${group.subjectName} tanggal ${group.tanggal}?`)) return;
+    try {
+      const result = await bulkDeleteByKelas.mutateAsync({
+        data: { kelas: group.kelas, subjectId: group.subjectId, tanggal: group.tanggal },
+      });
+      toast({ title: "Berhasil", description: `${result.count} catatan kehadiran dihapus` });
+      invalidateAttendance();
+    } catch {
+      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan saat menghapus" });
     }
   };
 
@@ -197,11 +218,23 @@ export default function Absensi() {
       setIsDialogOpen(false);
       form.reset();
       setKelasFilter("all");
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+      invalidateAttendance();
     } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
     }
   };
+
+  // Group rekap by date for display
+  const rekapByDate = useMemo(() => {
+    if (!rekapData?.groups) return [];
+    const map = new Map<string, typeof rekapData.groups>();
+    for (const g of rekapData.groups) {
+      const list = map.get(g.tanggal) ?? [];
+      list.push(g);
+      map.set(g.tanggal, list);
+    }
+    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [rekapData]);
 
   return (
     <Layout>
@@ -212,7 +245,6 @@ export default function Absensi() {
             <p className="text-muted-foreground mt-1">Kelola kehadiran siswa.</p>
           </div>
           <div className="flex gap-2">
-            {/* Catat Serentak — per-student different statuses */}
             <Button
               variant={isBulkMode ? "secondary" : "outline"}
               onClick={() => setIsBulkMode((v) => !v)}
@@ -221,7 +253,6 @@ export default function Absensi() {
               Catat Serentak
             </Button>
 
-            {/* Quick bulk — same status for selected students */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button><Plus className="w-4 h-4 mr-2" /> Catat Kehadiran</Button>
@@ -397,69 +428,154 @@ export default function Absensi() {
           </div>
         )}
 
-        {/* ---- History table ---- */}
-        <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border bg-gray-50/50 flex gap-4">
-            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-              <SelectTrigger className="w-[250px] bg-white"><SelectValue placeholder="Semua Mata Pelajaran" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Mata Pelajaran</SelectItem>
-                {subjects?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50/50">
-                <TableHead>Nama Siswa</TableHead>
-                <TableHead>Mata Pelajaran</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
-              ) : !attendanceList?.length ? (
-                <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Belum ada data kehadiran.</TableCell></TableRow>
+        {/* ---- Tabs: Riwayat & Rekap ---- */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="riwayat">Riwayat Per Siswa</TabsTrigger>
+            <TabsTrigger value="rekap">Rekap Per Kelas</TabsTrigger>
+          </TabsList>
+
+          {/* ─── Tab: Riwayat ─── */}
+          <TabsContent value="riwayat">
+            <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-border bg-gray-50/50 flex gap-4">
+                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                  <SelectTrigger className="w-[250px] bg-white"><SelectValue placeholder="Semua Mata Pelajaran" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Mata Pelajaran</SelectItem>
+                    {subjects?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/50">
+                    <TableHead>Nama Siswa</TableHead>
+                    <TableHead>Mata Pelajaran</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
+                  ) : !attendanceList?.length ? (
+                    <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Belum ada data kehadiran.</TableCell></TableRow>
+                  ) : (
+                    groupedByDate.map(([tanggal, records]) => (
+                      <>
+                        <TableRow key={`date-${tanggal}`} className="bg-gray-100/80 hover:bg-gray-100/80">
+                          <TableCell colSpan={4} className="font-semibold text-sm py-2">
+                            {format(new Date(tanggal), "EEEE, dd MMMM yyyy", { locale: idLocale })}
+                            <span className="ml-2 font-normal text-muted-foreground">({records.length} siswa)</span>
+                          </TableCell>
+                        </TableRow>
+                        {records.map((a: any) => (
+                          <TableRow key={a.id}>
+                            <TableCell className="font-medium">{students?.find((s: any) => s.id === a.studentId)?.namaLengkap}</TableCell>
+                            <TableCell>{subjects?.find((s: any) => s.id === a.subjectId)?.name}</TableCell>
+                            <TableCell>
+                              <Select value={a.status} onValueChange={(status) => handleStatusChange(a.id, status)}>
+                                <SelectTrigger className="w-[110px] h-8">
+                                  <Badge variant="outline" className={`${statusColors[a.status as AttendanceStatus]} capitalize`}>
+                                    {a.status}
+                                  </Badge>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteAttendance(a.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          {/* ─── Tab: Rekap Per Kelas ─── */}
+          <TabsContent value="rekap">
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Rekapitulasi kehadiran per sesi (tanggal · kelas · mata pelajaran). Klik <strong>Hapus Absensi</strong> untuk menghapus seluruh sesi dan mengulang input dari awal.
+              </p>
+
+              {rekapLoading ? (
+                <div className="space-y-3">
+                  {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+                </div>
+              ) : !rekapByDate.length ? (
+                <div className="bg-white border border-border rounded-xl shadow-sm h-32 flex items-center justify-center text-muted-foreground">
+                  Belum ada data absensi untuk ditampilkan.
+                </div>
               ) : (
-                groupedByDate.map(([tanggal, records]) => (
-                  <>
-                    <TableRow key={`date-${tanggal}`} className="bg-gray-100/80 hover:bg-gray-100/80">
-                      <TableCell colSpan={4} className="font-semibold text-sm py-2">
-                        {format(new Date(tanggal), "EEEE, dd MMMM yyyy")}
-                        <span className="ml-2 font-normal text-muted-foreground">({records.length} siswa)</span>
-                      </TableCell>
-                    </TableRow>
-                    {records.map((a: any) => (
-                      <TableRow key={a.id}>
-                        <TableCell className="font-medium">{students?.find((s: any) => s.id === a.studentId)?.namaLengkap}</TableCell>
-                        <TableCell>{subjects?.find((s: any) => s.id === a.subjectId)?.name}</TableCell>
-                        <TableCell>
-                          <Select value={a.status} onValueChange={(status) => handleStatusChange(a.id, status)}>
-                            <SelectTrigger className="w-[110px] h-8">
-                              <Badge variant="outline" className={`${statusColors[a.status as AttendanceStatus]} capitalize`}>
-                                {a.status}
-                              </Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteAttendance(a.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </>
+                rekapByDate.map(([tanggal, groups]) => (
+                  <div key={tanggal} className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+                    <div className="px-4 py-2.5 bg-gray-50/80 border-b border-border">
+                      <p className="font-semibold text-sm">
+                        {format(new Date(tanggal), "EEEE, dd MMMM yyyy", { locale: idLocale })}
+                      </p>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50/40 text-xs">
+                          <TableHead>Mata Pelajaran</TableHead>
+                          <TableHead>Kelas</TableHead>
+                          <TableHead className="text-center text-emerald-600">Hadir</TableHead>
+                          <TableHead className="text-center text-blue-600">Izin</TableHead>
+                          <TableHead className="text-center text-amber-600">Sakit</TableHead>
+                          <TableHead className="text-center text-rose-600">Alpa</TableHead>
+                          <TableHead className="text-center">Total</TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {groups.map((g) => (
+                          <TableRow key={`${g.tanggal}|${g.kelas}|${g.subjectId}`}>
+                            <TableCell className="font-medium">{g.subjectName}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="text-xs">{g.kelas}</Badge>
+                            </TableCell>
+                            <TableCell className="text-center font-semibold text-emerald-600">{g.hadir}</TableCell>
+                            <TableCell className="text-center font-semibold text-blue-600">{g.izin}</TableCell>
+                            <TableCell className="text-center font-semibold text-amber-600">{g.sakit}</TableCell>
+                            <TableCell className="text-center font-semibold text-rose-600">{g.alpa}</TableCell>
+                            <TableCell className="text-center text-muted-foreground">{g.total}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive border-destructive/30 hover:bg-destructive/5 text-xs"
+                                disabled={bulkDeleteByKelas.isPending}
+                                onClick={() => handleHapusAbsensiKelas({
+                                  kelas: g.kelas,
+                                  subjectId: g.subjectId,
+                                  tanggal: g.tanggal,
+                                  subjectName: g.subjectName,
+                                })}
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Hapus Absensi
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
