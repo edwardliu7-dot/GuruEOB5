@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/temp-register/"
+title = "Temp"
+version = "1.0.0"
+id = "artifacts/temp-register"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/temp-register/" ]
+localPort = 25245
+
+[services.development]
+run = "pnpm --filter @workspace/temp-register run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/temp-register", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/temp-register/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25245"
+BASE_PATH = "/temp-register/"
