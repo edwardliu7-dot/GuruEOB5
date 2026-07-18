@@ -59,7 +59,7 @@ export async function mapRowsToStudents(
   ].join("\n");
 
   const response = await gemini.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -149,7 +149,7 @@ async function runTPExtraction(
   contents: Parameters<typeof gemini.models.generateContent>[0]["contents"],
 ): Promise<MappedTPItem[]> {
   const response = await gemini.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash",
     contents,
     config: {
       responseMimeType: "application/json",
@@ -412,7 +412,7 @@ export async function generateModulAjar(params: {
   ].join("\n");
 
   const response = await gemini.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -496,7 +496,7 @@ export async function generateSoal(params: {
   ].join("\n");
 
   const response = await gemini.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
