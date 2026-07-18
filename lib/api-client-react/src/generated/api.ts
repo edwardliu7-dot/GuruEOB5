@@ -28,6 +28,7 @@ import type {
   AdminDocumentInput,
   AttendanceRecord,
   AttendanceRecordInput,
+  AttendanceRekap,
   AttendanceUpdate,
   BulkCreateAttendanceInput,
   BulkCreatePointsInput,
@@ -37,6 +38,7 @@ import type {
   BulkCreateStudentsResult,
   BulkCreateTPInput,
   BulkCreateTPResult,
+  BulkDeleteAttendanceByKelasInput,
   BulkMixedAttendanceInput,
   BulkMixedPointsInput,
   DashboardSummary,
@@ -79,6 +81,7 @@ import type {
   ProsemItem,
   ProsemItemInput,
   RegisterInput,
+  RoleJurnalResponse,
   SoalOtomatis,
   SoalOtomatisSummary,
   Student,
@@ -789,6 +792,237 @@ export function useGetKesiswaanOverview<TData = Awaited<ReturnType<typeof getKes
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetKesiswaanOverviewQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetKepsekJurnalUrl = () => {
+
+
+
+
+  return `/api/kepsek/jurnal`
+}
+
+/**
+ * @summary Kepala sekolah view of all journal entries in the school
+ */
+export const getKepsekJurnal = async ( options?: RequestInit): Promise<RoleJurnalResponse> => {
+
+  return customFetch<RoleJurnalResponse>(getGetKepsekJurnalUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetKepsekJurnalQueryKey = () => {
+    return [
+    `/api/kepsek/jurnal`
+    ] as const;
+    }
+
+
+export const getGetKepsekJurnalQueryOptions = <TData = Awaited<ReturnType<typeof getKepsekJurnal>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKepsekJurnal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetKepsekJurnalQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getKepsekJurnal>>> = ({ signal }) => getKepsekJurnal({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getKepsekJurnal>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetKepsekJurnalQueryResult = NonNullable<Awaited<ReturnType<typeof getKepsekJurnal>>>
+export type GetKepsekJurnalQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Kepala sekolah view of all journal entries in the school
+ */
+
+export function useGetKepsekJurnal<TData = Awaited<ReturnType<typeof getKepsekJurnal>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKepsekJurnal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetKepsekJurnalQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetKurikulumJurnalUrl = () => {
+
+
+
+
+  return `/api/kurikulum/jurnal`
+}
+
+/**
+ * @summary Kurikulum view of all teacher journal entries
+ */
+export const getKurikulumJurnal = async ( options?: RequestInit): Promise<RoleJurnalResponse> => {
+
+  return customFetch<RoleJurnalResponse>(getGetKurikulumJurnalUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetKurikulumJurnalQueryKey = () => {
+    return [
+    `/api/kurikulum/jurnal`
+    ] as const;
+    }
+
+
+export const getGetKurikulumJurnalQueryOptions = <TData = Awaited<ReturnType<typeof getKurikulumJurnal>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKurikulumJurnal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetKurikulumJurnalQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getKurikulumJurnal>>> = ({ signal }) => getKurikulumJurnal({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getKurikulumJurnal>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetKurikulumJurnalQueryResult = NonNullable<Awaited<ReturnType<typeof getKurikulumJurnal>>>
+export type GetKurikulumJurnalQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Kurikulum view of all teacher journal entries
+ */
+
+export function useGetKurikulumJurnal<TData = Awaited<ReturnType<typeof getKurikulumJurnal>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKurikulumJurnal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetKurikulumJurnalQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetWaliKelasJurnalUrl = () => {
+
+
+
+
+  return `/api/walikelas/jurnal`
+}
+
+/**
+ * @summary Wali kelas view of journal entries for their homeroom class
+ */
+export const getWaliKelasJurnal = async ( options?: RequestInit): Promise<RoleJurnalResponse> => {
+
+  return customFetch<RoleJurnalResponse>(getGetWaliKelasJurnalUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWaliKelasJurnalQueryKey = () => {
+    return [
+    `/api/walikelas/jurnal`
+    ] as const;
+    }
+
+
+export const getGetWaliKelasJurnalQueryOptions = <TData = Awaited<ReturnType<typeof getWaliKelasJurnal>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWaliKelasJurnal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWaliKelasJurnalQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWaliKelasJurnal>>> = ({ signal }) => getWaliKelasJurnal({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWaliKelasJurnal>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWaliKelasJurnalQueryResult = NonNullable<Awaited<ReturnType<typeof getWaliKelasJurnal>>>
+export type GetWaliKelasJurnalQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Wali kelas view of journal entries for their homeroom class
+ */
+
+export function useGetWaliKelasJurnal<TData = Awaited<ReturnType<typeof getWaliKelasJurnal>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWaliKelasJurnal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWaliKelasJurnalQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -3842,6 +4076,154 @@ export const useBulkCreateAttendance = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getBulkCreateAttendanceMutationOptions(options));
+    }
+
+export const getGetAttendanceRekapUrl = () => {
+
+
+
+
+  return `/api/attendance/rekap`
+}
+
+/**
+ * @summary Attendance recap grouped by date, class, and subject (for the calling teacher's own subjects)
+ */
+export const getAttendanceRekap = async ( options?: RequestInit): Promise<AttendanceRekap> => {
+
+  return customFetch<AttendanceRekap>(getGetAttendanceRekapUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAttendanceRekapQueryKey = () => {
+    return [
+    `/api/attendance/rekap`
+    ] as const;
+    }
+
+
+export const getGetAttendanceRekapQueryOptions = <TData = Awaited<ReturnType<typeof getAttendanceRekap>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAttendanceRekap>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAttendanceRekapQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAttendanceRekap>>> = ({ signal }) => getAttendanceRekap({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAttendanceRekap>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAttendanceRekapQueryResult = NonNullable<Awaited<ReturnType<typeof getAttendanceRekap>>>
+export type GetAttendanceRekapQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Attendance recap grouped by date, class, and subject (for the calling teacher's own subjects)
+ */
+
+export function useGetAttendanceRekap<TData = Awaited<ReturnType<typeof getAttendanceRekap>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAttendanceRekap>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAttendanceRekapQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getBulkDeleteAttendanceByKelasUrl = () => {
+
+
+
+
+  return `/api/attendance/bulk-kelas`
+}
+
+/**
+ * @summary Delete all attendance records for a specific class, date, and subject
+ */
+export const bulkDeleteAttendanceByKelas = async (bulkDeleteAttendanceByKelasInput: BulkDeleteAttendanceByKelasInput, options?: RequestInit): Promise<BulkCreateResult> => {
+
+  return customFetch<BulkCreateResult>(getBulkDeleteAttendanceByKelasUrl(),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bulkDeleteAttendanceByKelasInput)
+  }
+);}
+
+
+
+
+
+export const getBulkDeleteAttendanceByKelasMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkDeleteAttendanceByKelas>>, TError,{data: BodyType<BulkDeleteAttendanceByKelasInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkDeleteAttendanceByKelas>>, TError,{data: BodyType<BulkDeleteAttendanceByKelasInput>}, TContext> => {
+
+const mutationKey = ['bulkDeleteAttendanceByKelas'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkDeleteAttendanceByKelas>>, {data: BodyType<BulkDeleteAttendanceByKelasInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkDeleteAttendanceByKelas(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkDeleteAttendanceByKelasMutationResult = NonNullable<Awaited<ReturnType<typeof bulkDeleteAttendanceByKelas>>>
+    export type BulkDeleteAttendanceByKelasMutationBody = BodyType<BulkDeleteAttendanceByKelasInput>
+    export type BulkDeleteAttendanceByKelasMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete all attendance records for a specific class, date, and subject
+ */
+export const useBulkDeleteAttendanceByKelas = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkDeleteAttendanceByKelas>>, TError,{data: BodyType<BulkDeleteAttendanceByKelasInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof bulkDeleteAttendanceByKelas>>,
+        TError,
+        {data: BodyType<BulkDeleteAttendanceByKelasInput>},
+        TContext
+      > => {
+      return useMutation(getBulkDeleteAttendanceByKelasMutationOptions(options));
     }
 
 export const getBulkMixedCreateAttendanceUrl = () => {

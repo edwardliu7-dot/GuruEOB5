@@ -862,6 +862,42 @@ export interface InfoPekanan {
   items: InfoPekananItem[];
 }
 
+export interface AttendanceRekapGroup {
+  tanggal: string;
+  kelas: string;
+  subjectId: string;
+  subjectName: string;
+  hadir: number;
+  izin: number;
+  sakit: number;
+  alpa: number;
+  total: number;
+}
+
+export interface AttendanceRekap {
+  groups: AttendanceRekapGroup[];
+}
+
+export interface BulkDeleteAttendanceByKelasInput {
+  kelas: string;
+  tanggal: string;
+  subjectId: string;
+}
+
+export interface RoleJurnalEntry {
+  id: string;
+  teacherName: string;
+  subjectName: string;
+  kelas: string;
+  tanggal: string;
+  materi: string;
+  catatan?: string | null;
+}
+
+export interface RoleJurnalResponse {
+  entries: RoleJurnalEntry[];
+}
+
 export type ListStudentAccounts200Item = {
   studentId: string;
   namaLengkap: string;

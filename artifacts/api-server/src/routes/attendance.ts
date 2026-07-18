@@ -14,6 +14,9 @@ import {
   UpdateAttendanceRecordResponse,
   DeleteAttendanceRecordParams,
   DeleteAttendanceRecordResponse,
+  GetAttendanceRekapResponse,
+  BulkDeleteAttendanceByKelasBody,
+  BulkDeleteAttendanceByKelasResponse,
 } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru } from "../lib/auth";
 import type { Request } from "express";
@@ -268,6 +271,128 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
     count++;
   }
   res.json(BulkMixedCreateAttendanceResponse.parse({ count }));
+});
+
+/**
+ * Rekap absensi: aggregated by (tanggal, kelas, subject), so a teacher can
+ * see "Sabtu 18 Juli 2026 · Matematika · Kelas 7A → 21 hadir, 2 izin" at a glance.
+ * Only returns data for the calling teacher's own subjects (so they see only the
+ * classes they actually taught, not other teachers' attendance records).
+ */
+router.get("/attendance/rekap", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const allowed = await schoolStudentIds(req);
+  if (allowed === null) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (allowed.size === 0) {
+    res.json(GetAttendanceRekapResponse.parse({ groups: [] }));
+    return;
+  }
+
+  // Fetch all subjects the calling teacher owns.
+  const ownSubjects = await db
+    .select({ id: subjectsTable.id, name: subjectsTable.name })
+    .from(subjectsTable)
+    .where(eq(subjectsTable.teacherId, guru.id));
+
+  if (ownSubjects.length === 0) {
+    res.json(GetAttendanceRekapResponse.parse({ groups: [] }));
+    return;
+  }
+
+  const ownSubjectIds = new Set(ownSubjects.map((s) => s.id));
+  const subjectNameById = new Map(ownSubjects.map((s) => [s.id, s.name]));
+
+  // All students in scope for school, keyed by id → kelas.
+  const studentsInScope = await db
+    .select({ id: studentsTable.id, kelas: studentsTable.kelas })
+    .from(studentsTable)
+    .where(inArray(studentsTable.id, [...allowed]));
+  const kelasById = new Map(studentsInScope.map((s) => [s.id, s.kelas]));
+
+  // All attendance records for own subjects.
+  const conditions: SQL[] = [
+    inArray(attendanceTable.studentId, [...allowed]),
+    inArray(attendanceTable.subjectId, [...ownSubjectIds]),
+  ];
+  const records = await db
+    .select()
+    .from(attendanceTable)
+    .where(and(...conditions));
+
+  // Aggregate: key = tanggal|kelas|subjectId
+  type GroupKey = string;
+  type GroupAcc = { tanggal: string; kelas: string; subjectId: string; hadir: number; izin: number; sakit: number; alpa: number; total: number };
+  const grouped = new Map<GroupKey, GroupAcc>();
+
+  for (const rec of records) {
+    const kelas = kelasById.get(rec.studentId);
+    if (!kelas || !ownSubjectIds.has(rec.subjectId)) continue;
+    const key: GroupKey = `${rec.tanggal}|${kelas}|${rec.subjectId}`;
+    const acc = grouped.get(key) ?? { tanggal: rec.tanggal, kelas, subjectId: rec.subjectId, hadir: 0, izin: 0, sakit: 0, alpa: 0, total: 0 };
+    acc[rec.status as keyof Pick<GroupAcc, "hadir" | "izin" | "sakit" | "alpa">] += 1;
+    acc.total += 1;
+    grouped.set(key, acc);
+  }
+
+  const groups = [...grouped.values()]
+    .map((g) => ({ ...g, subjectName: subjectNameById.get(g.subjectId) ?? g.subjectId }))
+    .sort((a, b) => (a.tanggal < b.tanggal ? 1 : a.tanggal > b.tanggal ? -1 : 0));
+
+  res.json(GetAttendanceRekapResponse.parse({ groups }));
+});
+
+/**
+ * Hapus semua catatan kehadiran untuk satu kelas + mata pelajaran + tanggal.
+ * Berguna ketika guru ingin mengulang input absensi dari awal untuk sesi tertentu.
+ */
+router.delete("/attendance/bulk-kelas", requireAuth, async (req, res): Promise<void> => {
+  const parsed = BulkDeleteAttendanceByKelasBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  if (!(await ownsSubject(parsed.data.subjectId, guru.id))) {
+    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
+    return;
+  }
+
+  const allowed = await schoolStudentIds(req, parsed.data.kelas);
+  if (allowed === null) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (allowed.size === 0) {
+    res.json(BulkDeleteAttendanceByKelasResponse.parse({ count: 0 }));
+    return;
+  }
+
+  const deleted = await db
+    .delete(attendanceTable)
+    .where(
+      and(
+        inArray(attendanceTable.studentId, [...allowed]),
+        eq(attendanceTable.subjectId, parsed.data.subjectId),
+        eq(attendanceTable.tanggal, parsed.data.tanggal),
+      ),
+    )
+    .returning({ id: attendanceTable.id });
+
+  res.json(BulkDeleteAttendanceByKelasResponse.parse({ count: deleted.length }));
 });
 
 export default router;

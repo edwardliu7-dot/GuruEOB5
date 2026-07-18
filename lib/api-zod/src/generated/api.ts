@@ -191,6 +191,54 @@ export const GetKesiswaanOverviewResponse = zod.object({
 
 
 /**
+ * @summary Kepala sekolah view of all journal entries in the school
+ */
+export const GetKepsekJurnalResponse = zod.object({
+  "entries": zod.array(zod.object({
+  "id": zod.string(),
+  "teacherName": zod.string(),
+  "subjectName": zod.string(),
+  "kelas": zod.string(),
+  "tanggal": zod.string(),
+  "materi": zod.string(),
+  "catatan": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary Kurikulum view of all teacher journal entries
+ */
+export const GetKurikulumJurnalResponse = zod.object({
+  "entries": zod.array(zod.object({
+  "id": zod.string(),
+  "teacherName": zod.string(),
+  "subjectName": zod.string(),
+  "kelas": zod.string(),
+  "tanggal": zod.string(),
+  "materi": zod.string(),
+  "catatan": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary Wali kelas view of journal entries for their homeroom class
+ */
+export const GetWaliKelasJurnalResponse = zod.object({
+  "entries": zod.array(zod.object({
+  "id": zod.string(),
+  "teacherName": zod.string(),
+  "subjectName": zod.string(),
+  "kelas": zod.string(),
+  "tanggal": zod.string(),
+  "materi": zod.string(),
+  "catatan": zod.string().nullish()
+}))
+})
+
+
+/**
  * @summary Wali kelas recap for the current teacher's homeroom class
  */
 export const GetWaliKelasRekapResponse = zod.object({
@@ -957,6 +1005,38 @@ export const BulkCreateAttendanceBody = zod.object({
 })
 
 export const BulkCreateAttendanceResponse = zod.object({
+  "count": zod.number()
+})
+
+
+/**
+ * @summary Attendance recap grouped by date, class, and subject (for the calling teacher's own subjects)
+ */
+export const GetAttendanceRekapResponse = zod.object({
+  "groups": zod.array(zod.object({
+  "tanggal": zod.string(),
+  "kelas": zod.string(),
+  "subjectId": zod.string(),
+  "subjectName": zod.string(),
+  "hadir": zod.number(),
+  "izin": zod.number(),
+  "sakit": zod.number(),
+  "alpa": zod.number(),
+  "total": zod.number()
+}))
+})
+
+
+/**
+ * @summary Delete all attendance records for a specific class, date, and subject
+ */
+export const BulkDeleteAttendanceByKelasBody = zod.object({
+  "kelas": zod.string(),
+  "tanggal": zod.string(),
+  "subjectId": zod.string()
+})
+
+export const BulkDeleteAttendanceByKelasResponse = zod.object({
   "count": zod.number()
 })
 

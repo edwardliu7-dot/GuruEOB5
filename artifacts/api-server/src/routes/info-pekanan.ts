@@ -172,6 +172,15 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
   const items: InfoItem[] = [];
   const matchedJournalIds = new Set<string>();
 
+  // A week that hasn't started yet must never show "tertinggal" — the teacher
+  // simply hasn't had the chance to teach those topics yet. We compare dates
+  // as ISO strings (YYYY-MM-DD) which sort lexicographically.
+  const today = new Date().toISOString().slice(0, 10);
+  const isFutureWeek = week.tanggalMulai.slice(0, 10) > today;
+
+  // Normalise kelas for comparison: trim whitespace and compare case-insensitively.
+  const normKelas = (k: string) => k.trim().toLowerCase();
+
   for (const pi of planRows) {
     // Prefer an explicit link to this exact topic (set when the teacher picks
     // it from the Prosem while writing the journal entry). Fall back to the
@@ -179,9 +188,6 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     const linked = weekJournals.find(
       (j) => j.prosemItemId != null && j.prosemItemId === pi.prosemItemId && !matchedJournalIds.has(j.id),
     );
-    // Normalise kelas for comparison: trim whitespace and compare case-insensitively.
-    // This tolerates minor typos from when kelas was a free-text field in Prosem.
-    const normKelas = (k: string) => k.trim().toLowerCase();
     const match =
       linked ??
       weekJournals.find(
@@ -192,6 +198,11 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
           !matchedJournalIds.has(j.id),
       );
     if (match) matchedJournalIds.add(match.id);
+
+    // Future weeks with no journal yet → "belum" (not "tertinggal").
+    // "tertinggal" only applies to weeks that have already passed/started.
+    const status = match ? "sesuai" : isFutureWeek ? "belum" : "tertinggal";
+
     items.push({
       prosemItemId: pi.prosemItemId,
       subjectId: pi.subjectId,
@@ -200,24 +211,29 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
       kd: pi.kd,
       materi: pi.materi,
       jp: pi.jp,
-      status: match ? "sesuai" : "tertinggal",
+      status,
       journalEntryId: match ? match.id : null,
     });
   }
 
-  for (const j of weekJournals) {
-    if (matchedJournalIds.has(j.id)) continue;
-    items.push({
-      prosemItemId: null,
-      subjectId: j.subjectId,
-      subjectName: subjectName.get(j.subjectId) ?? "-",
-      kelas: j.kelas,
-      kd: null,
-      materi: j.materi,
-      jp: null,
-      status: "di_depan",
-      journalEntryId: j.id,
-    });
+  // "di_depan" only makes sense for the current/past week — teaching a topic
+  // from a future week's prosem early is fine but we don't surface it here
+  // to avoid confusion when viewing upcoming weeks.
+  if (!isFutureWeek) {
+    for (const j of weekJournals) {
+      if (matchedJournalIds.has(j.id)) continue;
+      items.push({
+        prosemItemId: null,
+        subjectId: j.subjectId,
+        subjectName: subjectName.get(j.subjectId) ?? "-",
+        kelas: j.kelas,
+        kd: null,
+        materi: j.materi,
+        jp: null,
+        status: "di_depan",
+        journalEntryId: j.id,
+      });
+    }
   }
 
   const payload = {
@@ -228,6 +244,7 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     jenis: week.jenis,
     totalRencana: items.filter((i) => i.prosemItemId !== null).length,
     totalSesuai: items.filter((i) => i.status === "sesuai").length,
+    // "belum" items (future weeks) are excluded from "tertinggal" count.
     totalTertinggal: items.filter((i) => i.status === "tertinggal").length,
     totalDiDepan: items.filter((i) => i.status === "di_depan").length,
     items,

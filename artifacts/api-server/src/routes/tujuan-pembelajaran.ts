@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq, gt, gte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, sql } from "drizzle-orm";
 import mammoth from "mammoth";
 import { db, subjectsTable, tujuanPembelajaranTable } from "@workspace/db";
 import {
@@ -105,7 +105,8 @@ router.get("/tp", requireAuth, async (req, res): Promise<void> => {
         eq(tujuanPembelajaranTable.subjectId, subjectId),
         calendarId ? eq(tujuanPembelajaranTable.calendarId, calendarId) : undefined,
       ),
-    );
+    )
+    .orderBy(asc(tujuanPembelajaranTable.tpNumber));
   res.json(ListTujuanPembelajaranResponse.parse(rows));
 });
 

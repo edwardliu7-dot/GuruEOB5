@@ -28,7 +28,7 @@ import {
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 
-type Status = "sesuai" | "tertinggal" | "di_depan";
+type Status = "sesuai" | "tertinggal" | "di_depan" | "belum";
 
 const statusMeta: Record<
   Status,
@@ -45,6 +45,7 @@ const statusMeta: Record<
     badgeClass: "bg-red-50 text-red-600",
   },
   di_depan: { label: "Di Depan", icon: ArrowUpRight, badgeClass: "bg-blue-50 text-blue-600" },
+  belum: { label: "Belum Dimulai", icon: Info, badgeClass: "bg-gray-100 text-gray-500" },
 };
 
 const JENIS_LABEL: Record<string, string> = {
