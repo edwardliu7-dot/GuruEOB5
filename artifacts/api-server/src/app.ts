@@ -62,6 +62,23 @@ const sessionTableReady = sessionPool
       created_by_name text NOT NULL,
       created_at timestamptz NOT NULL DEFAULT now()
     );
+
+    -- Create feedback table if it doesn't exist yet.
+    CREATE TABLE IF NOT EXISTS feedback (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      teacher_id text NOT NULL,
+      teacher_name text NOT NULL,
+      kategori text NOT NULL,
+      pesan text NOT NULL,
+      screenshot_base64 text,
+      page_url text,
+      is_read boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+    -- Add columns to feedback if they were added after initial table creation.
+    ALTER TABLE feedback ADD COLUMN IF NOT EXISTS screenshot_base64 text;
+    ALTER TABLE feedback ADD COLUMN IF NOT EXISTS page_url text;
+    ALTER TABLE feedback ADD COLUMN IF NOT EXISTS is_read boolean NOT NULL DEFAULT false;
     `,
   )
   .then(() => {

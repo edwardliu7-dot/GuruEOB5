@@ -178,13 +178,16 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     const linked = weekJournals.find(
       (j) => j.prosemItemId != null && j.prosemItemId === pi.prosemItemId && !matchedJournalIds.has(j.id),
     );
+    // Normalise kelas for comparison: trim whitespace and compare case-insensitively.
+    // This tolerates minor typos from when kelas was a free-text field in Prosem.
+    const normKelas = (k: string) => k.trim().toLowerCase();
     const match =
       linked ??
       weekJournals.find(
         (j) =>
           j.prosemItemId == null &&
           j.subjectId === pi.subjectId &&
-          j.kelas === pi.kelas &&
+          normKelas(j.kelas) === normKelas(pi.kelas) &&
           !matchedJournalIds.has(j.id),
       );
     if (match) matchedJournalIds.add(match.id);

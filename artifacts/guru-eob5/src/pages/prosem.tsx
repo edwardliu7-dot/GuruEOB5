@@ -11,13 +11,13 @@ import {
   useUpdateProsemItem,
   useDeleteProsemItem,
   useListTujuanPembelajaran,
+  useGetMe,
 } from "@workspace/api-client-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +73,11 @@ export default function Prosem() {
 
   const { data: calendars, isLoading: calLoading } = useListAcademicCalendars();
   const { data: subjects } = useListSubjects();
+  const { data: me } = useGetMe();
+  // Kelas options: teacher's assigned classes, or all known classes as fallback
+  const FALLBACK_KELAS = ["VII Ibnu Battutah", "VIII Ibnu Sina", "IX Al Khawarizmi"];
+  const kelasOptions: string[] =
+    (me as any)?.kelasDiampu?.length ? (me as any).kelasDiampu : FALLBACK_KELAS;
   const [selectedCalendar, setSelectedCalendar] = useState<string>("");
 
   useEffect(() => {
@@ -277,9 +282,18 @@ export default function Prosem() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Kelas</FormLabel>
-                          <FormControl>
-                            <Input placeholder="X-A" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih Kelas" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {kelasOptions.map((k) => (
+                                <SelectItem key={k} value={k}>{k}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
