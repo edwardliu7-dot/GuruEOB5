@@ -173,6 +173,45 @@ paths:
               schema:
                 $ref: "#/components/schemas/KesiswaanOverview"
 
+  /kepsek/jurnal:
+    get:
+      operationId: getKepsekJurnal
+      tags: [dashboard]
+      summary: Kepala sekolah view of all journal entries in the school
+      responses:
+        "200":
+          description: Journal entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleJurnalResponse"
+
+  /kurikulum/jurnal:
+    get:
+      operationId: getKurikulumJurnal
+      tags: [dashboard]
+      summary: Kurikulum view of all teacher journal entries
+      responses:
+        "200":
+          description: Journal entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleJurnalResponse"
+
+  /walikelas/jurnal:
+    get:
+      operationId: getWaliKelasJurnal
+      tags: [dashboard]
+      summary: Wali kelas view of journal entries for their homeroom class
+      responses:
+        "200":
+          description: Journal entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleJurnalResponse"
+
   /walikelas/rekap:
     get:
       operationId: getWaliKelasRekap
@@ -886,6 +925,38 @@ paths:
       responses:
         "200":
           description: Bulk create result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkCreateResult"
+
+  /attendance/rekap:
+    get:
+      operationId: getAttendanceRekap
+      tags: [attendance]
+      summary: Attendance recap grouped by date, class, and subject (for the calling teacher's own subjects)
+      responses:
+        "200":
+          description: Attendance recap
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceRekap"
+
+  /attendance/bulk-kelas:
+    delete:
+      operationId: bulkDeleteAttendanceByKelas
+      tags: [attendance]
+      summary: Delete all attendance records for a specific class, date, and subject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkDeleteAttendanceByKelasInput"
+      responses:
+        "200":
+          description: Delete result
           content:
             application/json:
               schema:
@@ -2776,4 +2847,76 @@ components:
           items:
             $ref: "#/components/schemas/InfoPekananItem"
       required: [totalRencana, totalSesuai, totalTertinggal, totalDiDepan, items]
+
+    AttendanceRekapGroup:
+      type: object
+      properties:
+        tanggal:
+          type: string
+        kelas:
+          type: string
+        subjectId:
+          type: string
+        subjectName:
+          type: string
+        hadir:
+          type: integer
+        izin:
+          type: integer
+        sakit:
+          type: integer
+        alpa:
+          type: integer
+        total:
+          type: integer
+      required: [tanggal, kelas, subjectId, subjectName, hadir, izin, sakit, alpa, total]
+
+    AttendanceRekap:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttendanceRekapGroup"
+      required: [groups]
+
+    BulkDeleteAttendanceByKelasInput:
+      type: object
+      properties:
+        kelas:
+          type: string
+        tanggal:
+          type: string
+        subjectId:
+          type: string
+      required: [kelas, tanggal, subjectId]
+
+    RoleJurnalEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        teacherName:
+          type: string
+        subjectName:
+          type: string
+        kelas:
+          type: string
+        tanggal:
+          type: string
+        materi:
+          type: string
+        catatan:
+          type: string
+          nullable: true
+      required: [id, teacherName, subjectName, kelas, tanggal, materi]
+
+    RoleJurnalResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleJurnalEntry"
+      required: [entries]
 

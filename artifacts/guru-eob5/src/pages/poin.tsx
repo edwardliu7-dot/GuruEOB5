@@ -473,7 +473,7 @@ export default function Poin() {
                       <TableHead>Kelas</TableHead>
                       <TableHead className="text-emerald-600">Poin Positif</TableHead>
                       <TableHead className="text-rose-600">Poin Negatif</TableHead>
-                      <TableHead>Saldo</TableHead>
+                      <TableHead>Total Poin</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
