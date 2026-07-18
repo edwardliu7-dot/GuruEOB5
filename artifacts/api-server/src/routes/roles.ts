@@ -18,6 +18,7 @@ import {
   GetKurikulumOverviewResponse,
   GetKesiswaanOverviewResponse,
   GetWaliKelasRekapResponse,
+  RoleJurnalResponse,
 } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru, sameSchoolFilter } from "../lib/auth";
 
