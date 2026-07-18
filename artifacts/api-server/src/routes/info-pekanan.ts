@@ -88,12 +88,14 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     .where(eq(subjectsTable.teacherId, teacherId));
   const subjectName = new Map(subjectRows.map((s) => [s.id, s.name]));
 
-  // Fetch journal entries with explicit column selection — prosem_item_id is
-  // intentionally omitted here because the column may not yet exist in the
-  // production DB (schema drift). Matching falls back to subject+kelas heuristic,
-  // which is correct for all existing journal rows (they predate the column).
-  // Once the column is added to production via ALTER TABLE, the journal route
-  // will start populating it and matching will automatically improve.
+  // Fetch journal entries with explicit column selection.
+  // We use CUMULATIVE matching: include all journals written on or before the
+  // selected week's end date. This means:
+  //   - A topic planned for week 3 shows "sesuai" if the teacher taught it in
+  //     week 1, 2, or 3 (early teaching still counts).
+  //   - Avoids the common failure where today falls outside any defined week's
+  //     date range, causing the system to show week 1 with no journals.
+  const weekEnd = week.tanggalSelesai.slice(0, 10);
   let weekJournals: Array<{
     id: string;
     subjectId: string;
@@ -114,9 +116,8 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
       })
       .from(journalEntriesTable)
       .where(eq(journalEntriesTable.teacherId, teacherId));
-    weekJournals = journalRows.filter(
-      (j) => j.tanggal >= week.tanggalMulai && j.tanggal <= week.tanggalSelesai,
-    );
+    // Include all journals up to (and including) the end of the selected week.
+    weekJournals = journalRows.filter((j) => j.tanggal.slice(0, 10) <= weekEnd);
   } catch (journalErr) {
     // Column prosem_item_id doesn't exist yet in the production DB.
     // Fall back to fetching without it so the page still renders.
@@ -132,7 +133,7 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
       .from(journalEntriesTable)
       .where(eq(journalEntriesTable.teacherId, teacherId));
     weekJournals = journalRows
-      .filter((j) => j.tanggal >= week.tanggalMulai && j.tanggal <= week.tanggalSelesai)
+      .filter((j) => j.tanggal.slice(0, 10) <= weekEnd)
       .map((j) => ({ ...j, prosemItemId: null }));
   }
 

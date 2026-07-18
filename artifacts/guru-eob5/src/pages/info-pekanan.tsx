@@ -207,10 +207,22 @@ export default function InfoPekanan() {
       return;
     }
     const today = new Date().toISOString().split("T")[0];
+    // 1. Try to find the week that contains today
     const current = weeks.findIndex(
       (w: any) => w.tanggalMulai <= today && w.tanggalSelesai >= today,
     );
-    setWeekIndex(current >= 0 ? current : 0);
+    if (current >= 0) {
+      setWeekIndex(current);
+      return;
+    }
+    // 2. If today is before the first week, show week 0
+    if (today < (weeks[0] as any).tanggalMulai) {
+      setWeekIndex(0);
+      return;
+    }
+    // 3. If today is after the last week, show the last week
+    // (semester ended / new school year hasn't started yet)
+    setWeekIndex(weeks.length - 1);
   }, [weeks]);
 
   const activeWeek = weeks?.[weekIndex];
