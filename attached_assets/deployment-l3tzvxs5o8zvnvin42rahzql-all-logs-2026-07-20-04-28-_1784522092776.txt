@@ -1,0 +1,589 @@
+2026-Jul-20 01:52:16.786593 Docker 29.6.1 with BuildKit and Buildx detected on deployment server (localhost).
+2026-Jul-20 01:52:16.822998 Starting deployment of edwardliu7-dot/GuruEOB5:main to localhost.
+2026-Jul-20 01:52:17.424289 Preparing container with helper image: docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-20 01:52:17.649694 [DEBUG] [CMD]: docker stop --time=30 l3tzvxs5o8zvnvin42rahzql
+2026-Jul-20 01:52:17.649694 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-20 01:52:17.669967 [DEBUG] Error response from daemon: No such container: l3tzvxs5o8zvnvin42rahzql
+2026-Jul-20 01:52:20.690842 [DEBUG] [CMD]: docker run -d --network 'coolify' --name l3tzvxs5o8zvnvin42rahzql  --rm -v /root/.docker/buildx:/root/.docker/buildx -v /var/run/docker.sock:/var/run/docker.sock docker.io/coollabsio/coolify-helper:1.0.14
+2026-Jul-20 01:52:20.690842 [DEBUG] 3f6a02c8fc62808c84c4579c5d7b2c934c4ce6619e22d8cb96f8eced295fd593
+2026-Jul-20 01:52:25.624925 [DEBUG] [CMD]: docker exec l3tzvxs5o8zvnvin42rahzql bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote '\''https://x-access-token:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''refs/heads/main'\'''
+2026-Jul-20 01:52:25.624925 [DEBUG] 14e618f399b56dd42f4f2070cb74e50b3c372c18	refs/heads/main
+2026-Jul-20 01:52:26.388453 ----------------------------------------
+2026-Jul-20 01:52:26.429787 Importing edwardliu7-dot/GuruEOB5:main (commit sha 14e618f399b56dd42f4f2070cb74e50b3c372c18) to /artifacts/l3tzvxs5o8zvnvin42rahzql.
+2026-Jul-20 01:52:26.751257 [DEBUG] [CMD]: docker exec l3tzvxs5o8zvnvin42rahzql bash -c 'git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 clone --depth=1 --recurse-submodules --shallow-submodules -b '\''main'\'' '\''https:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''/artifacts/l3tzvxs5o8zvnvin42rahzql'\'' && cd '\''/artifacts/l3tzvxs5o8zvnvin42rahzql'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 fetch --depth=1 origin '\''14e618f399b56dd42f4f2070cb74e50b3c372c18'\'' && git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 -c advice.detachedHead=false checkout '\''14e618f399b56dd42f4f2070cb74e50b3c372c18'\'' >/dev/null 2>&1 && cd '\''/artifacts/l3tzvxs5o8zvnvin42rahzql'\'' && if [ -f .gitmodules ]; then git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule update --init --recursive --depth=1; fi && cd '\''/artifacts/l3tzvxs5o8zvnvin42rahzql'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 lfs pull'
+2026-Jul-20 01:<REDACTED>@latest --quiet \
+2026-Jul-20 01:52:35.293928 [DEBUG] && npm install pdfkit --omit=dev --no-package-lock --no-save \
+2026-Jul-20 01:52:35.293928 [DEBUG] --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:52:35.293928 [DEBUG] 
+2026-Jul-20 01:52:35.293928 [DEBUG] ENV NODE_ENV=production
+2026-Jul-20 01:52:35.293928 [DEBUG] ENV PORT=3000
+2026-Jul-20 01:52:35.293928 [DEBUG] 
+2026-Jul-20 01:52:35.293928 [DEBUG] # Only the compiled output is needed to run the app.
+2026-Jul-20 01:52:35.293928 [DEBUG] # (pdfkit node_modules installed above; everything else is bundled by esbuild)
+2026-Jul-20 01:52:35.293928 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Jul-20 01:52:35.293928 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Jul-20 01:52:35.293928 [DEBUG] 
+2026-Jul-20 01:52:35.293928 [DEBUG] EXPOSE 3000
+2026-Jul-20 01:52:35.293928 [DEBUG] 
+2026-Jul-20 01:52:35.293928 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Jul-20 01:52:35.683941 [DEBUG] Creating build-time .env file in /artifacts (outside Docker context).
+2026-Jul-20 01:52:36.126175 ----------------------------------------
+2026-Jul-20 01:52:36.155157 ⚠️ Build-time environment variable warning: NODE_ENV=production
+2026-Jul-20 01:52:36.191345 Affects: Node.js/npm/yarn/bun/pnpm
+2026-Jul-20 01:52:36.220423 Issue: Skips devDependencies installation which are often required for building (webpack, typescript, etc.)
+2026-Jul-20 01:52:36.246216 Recommendation: Uncheck "Available at Buildtime" or use "development" during build
+2026-Jul-20 01:52:36.288692 
+2026-Jul-20 01:52:36.322187 💡 Tips to resolve build issues:
+2026-Jul-20 01:52:36.347728 1. Set these variables as "Runtime only" in the environment variables settings
+2026-Jul-20 01:52:36.371036 2. Use different values for build-time (e.g., NODE_ENV=development for build)
+2026-Jul-20 01:52:36.401858 3. Consider using multi-stage Docker builds to separate build and runtime environments
+2026-Jul-20 01:52:36.708144 [DEBUG] [CMD]: docker exec l3tzvxs5o8zvnvin42rahzql bash -c 'cat /artifacts/l3tzvxs5o8zvnvin42rahzql/Dockerfile'
+2026-Jul-20 01:52:36.708144 [DEBUG] # Multi-stage production build for GuruEOB5.
+2026-Jul-20 01:52:36.708144 [DEBUG] #
+2026-Jul-20 01:52:36.708144 [DEBUG] # Stage 1 ("build") has all the heavy tooling (pnpm, TypeScript, Vite,
+2026-Jul-20 01:52:36.708144 [DEBUG] # esbuild, devDependencies) needed to compile the app.
+2026-Jul-20 01:52:36.708144 [DEBUG] # Stage 2 ("runtime") is a slim image that only contains the compiled
+2026-Jul-20 01:52:36.708144 [DEBUG] # output — no source code, no node_modules, no dev tools. This keeps the
+2026-Jul-20 01:52:36.708144 [DEBUG] # final image small, which matters a lot on a small-RAM VPS: Docker can run
+2026-Jul-20 01:52:36.708144 [DEBUG] # out of memory while exporting a bloated single-stage image.
+2026-Jul-20 01:52:36.708144 [DEBUG] #
+2026-Jul-20 01:52:36.708144 [DEBUG] # esbuild bundles virtually everything into dist/index.mjs.  The one
+2026-Jul-20 01:52:36.708144 [DEBUG] # exception is pdfkit: it loads its built-in .afm font files from disk at
+2026-Jul-20 01:52:36.708144 [DEBUG] # runtime using paths relative to its own package directory, so bundling
+2026-Jul-20 01:52:36.708144 [DEBUG] # breaks those paths. We install pdfkit directly in the runtime stage via a
+2026-Jul-20 01:52:36.708144 [DEBUG] # plain npm install — it's ~5 MB and avoids the RAM-heavy `pnpm deploy` step
+2026-Jul-20 01:52:36.708144 [DEBUG] # that was previously needed to copy external deps.
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] # ---------- Stage 1: build ----------
+2026-Jul-20 01:52:36.708144 [DEBUG] FROM node:22-slim AS build
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] ENV PNPM_HOME="/pnpm"
+2026-Jul-20 01:52:36.708144 [DEBUG] ENV PATH="$PNPM_HOME:$PATH"
+2026-Jul-20 01:52:36.708144 [DEBUG] RUN corepack enable
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] WORKDIR /app
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] # Copy everything (see .dockerignore for what's excluded).
+2026-Jul-20 01:52:36.708144 [DEBUG] COPY . .
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] RUN pnpm install --frozen-lockfile
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] # Needed at build time only, so the frontend build knows its asset base path.
+2026-Jul-20 01:52:36.708144 [DEBUG] ENV NODE_ENV=production
+2026-Jul-20 01:52:36.708144 [DEBUG] ENV PORT=3000
+2026-Jul-20 01:52:36.708144 [DEBUG] ENV BASE_PATH=/
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] # Skip the repo-wide typecheck here: it's a dev/CI concern and its extra
+2026-Jul-20 01:52:36.708144 [DEBUG] # `tsc` processes roughly double the peak memory used during this step,
+2026-Jul-20 01:52:36.708144 [DEBUG] # which matters on a small-RAM VPS. Run `pnpm run build` (with typecheck)
+2026-Jul-20 01:52:36.708144 [DEBUG] # locally or in CI before deploying.
+2026-Jul-20 01:52:36.708144 [DEBUG] RUN pnpm run build:app
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] # ---------- Stage 2: runtime ----------
+2026-Jul-20 01:52:36.708144 [DEBUG] FROM node:22-slim AS runtime
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] WORKDIR /app
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] # Coolify's healthcheck runs `curl`/`wget` inside the container to verify
+2026-Jul-20 01:52:36.708144 [DEBUG] # the app is up. node:22-slim has neither by default, so the check always
+2026-Jul-20 01:52:36.708144 [DEBUG] # fails and Coolify rolls back a perfectly working deployment. Install curl.
+2026-Jul-20 01:52:36.708144 [DEBUG] # Also install pdfkit here: it reads .afm font files from its own package
+2026-Jul-20 01:52:36.708144 [DEBUG] # directory at runtime (path traversal), so esbuild cannot bundle it safely.
+2026-Jul-20 01:52:36.708144 [DEBUG] RUN apt-get update \
+2026-Jul-20 01:52:36.708144 [DEBUG] && apt-get install -y --no-install-recommends curl \
+2026-Jul-20 01:52:36.708144 [DEBUG] && rm -rf /var/lib/apt/lists/* \
+2026-Jul-20 01:52:36.708144 [DEBUG] && npm install -g npm@latest --quiet \
+2026-Jul-20 01:52:36.708144 [DEBUG] && npm install pdfkit --omit=dev --no-package-lock --no-save \
+2026-Jul-20 01:52:36.708144 [DEBUG] --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] ENV NODE_ENV=production
+2026-Jul-20 01:52:36.708144 [DEBUG] ENV PORT=3000
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] # Only the compiled output is needed to run the app.
+2026-Jul-20 01:52:36.708144 [DEBUG] # (pdfkit node_modules installed above; everything else is bundled by esbuild)
+2026-Jul-20 01:52:36.708144 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Jul-20 01:52:36.708144 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] EXPOSE 3000
+2026-Jul-20 01:52:36.708144 [DEBUG] 
+2026-Jul-20 01:52:36.708144 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Jul-20 01:52:36.791237 [DEBUG] Final Dockerfile:
+2026-Jul-20 01:52:37.405184 [DEBUG] [CMD]: docker exec l3tzvxs5o8zvnvin42rahzql bash -c 'cat /artifacts/l3tzvxs5o8zvnvin42rahzql/Dockerfile'
+2026-Jul-20 01:52:37.405184 [DEBUG] # Multi-stage production build for GuruEOB5.
+2026-Jul-20 01:52:37.405184 [DEBUG] #
+2026-Jul-20 01:52:37.405184 [DEBUG] # Stage 1 ("build") has all the heavy tooling (pnpm, TypeScript, Vite,
+2026-Jul-20 01:52:37.405184 [DEBUG] # esbuild, devDependencies) needed to compile the app.
+2026-Jul-20 01:52:37.405184 [DEBUG] # Stage 2 ("runtime") is a slim image that only contains the compiled
+2026-Jul-20 01:52:37.405184 [DEBUG] # output — no source code, no node_modules, no dev tools. This keeps the
+2026-Jul-20 01:52:37.405184 [DEBUG] # final image small, which matters a lot on a small-RAM VPS: Docker can run
+2026-Jul-20 01:52:37.405184 [DEBUG] # out of memory while exporting a bloated single-stage image.
+2026-Jul-20 01:52:37.405184 [DEBUG] #
+2026-Jul-20 01:52:37.405184 [DEBUG] # esbuild bundles virtually everything into dist/index.mjs.  The one
+2026-Jul-20 01:52:37.405184 [DEBUG] # exception is pdfkit: it loads its built-in .afm font files from disk at
+2026-Jul-20 01:52:37.405184 [DEBUG] # runtime using paths relative to its own package directory, so bundling
+2026-Jul-20 01:52:37.405184 [DEBUG] # breaks those paths. We install pdfkit directly in the runtime stage via a
+2026-Jul-20 01:52:37.405184 [DEBUG] # plain npm install — it's ~5 MB and avoids the RAM-heavy `pnpm deploy` step
+2026-Jul-20 01:52:37.405184 [DEBUG] # that was previously needed to copy external deps.
+2026-Jul-20 01:52:37.405184 [DEBUG] 
+2026-Jul-20 01:52:37.405184 [DEBUG] # ---------- Stage 1: build ----------
+2026-Jul-20 01:52:37.405184 [DEBUG] FROM node:22-slim AS build
+2026-Jul-20 01:52:37.405184 [DEBUG] ARG NODE_ENV=production
+2026-Jul-20 01:52:37.405184 [DEBUG] ARG NEON_DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-20 01:52:37.405184 [DEBUG] ARG DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-20 01:52:37.405184 [DEBUG] ARG COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io
+2026-Jul-20 01:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-20 01:52:37.405184 [DEBUG] ARG DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Jul-20 01:52:37.405184 [DEBUG] ARG COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io
+2026-Jul-20 01:<REDACTED>@latest --quiet \
+2026-Jul-20 01:52:37.405184 [DEBUG] && npm install pdfkit --omit=dev --no-package-lock --no-save \
+2026-Jul-20 01:52:37.405184 [DEBUG] --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:52:37.405184 [DEBUG] 
+2026-Jul-20 01:52:37.405184 [DEBUG] ENV NODE_ENV=production
+2026-Jul-20 01:52:37.405184 [DEBUG] ENV PORT=3000
+2026-Jul-20 01:52:37.405184 [DEBUG] 
+2026-Jul-20 01:52:37.405184 [DEBUG] # Only the compiled output is needed to run the app.
+2026-Jul-20 01:52:37.405184 [DEBUG] # (pdfkit node_modules installed above; everything else is bundled by esbuild)
+2026-Jul-20 01:52:37.405184 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Jul-20 01:52:37.405184 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Jul-20 01:52:37.405184 [DEBUG] 
+2026-Jul-20 01:52:37.405184 [DEBUG] EXPOSE 3000
+2026-Jul-20 01:52:37.405184 [DEBUG] 
+2026-Jul-20 01:52:37.405184 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Jul-20 01:52:37.428917 ----------------------------------------
+2026-Jul-20 01:52:37.463932 Building docker image started.
+2026-Jul-20 01:52:37.493249 To check the current progress, click on Show Debug Logs.
+2026-Jul-20 01:52:38.288253 [DEBUG] [CMD]: docker exec l3tzvxs5o8zvnvin42rahzql bash -c 'cat /artifacts/build.sh'
+2026-Jul-20 01:52:38.288253 [DEBUG] cd /artifacts/l3tzvxs5o8zvnvin42rahzql && set -a && source /artifacts/build-time.env && set +a && DOCKER_BUILDKIT=1 docker build  --add-host coolify:10.0.1.7 --add-host coolify-db:10.0.1.9 --add-host coolify-realtime:10.0.1.8 --add-host coolify-redis:10.0.1.11 --add-host llfsfaj7n7vzkp3n08i500fv:10.0.1.3 --add-host llfsfaj7n7vzkp3n08i500fv-proxy:10.0.1.5 --network host -f /artifacts/l3tzvxs5o8zvnvin42rahzql/Dockerfile --progress plain -t sfptjjfqgqidt4736qzont0l:14e618f399b56dd42f4f2070cb74e50b3c372c18 --build-arg COOLIFY_URL --build-arg COOLIFY_FQDN --build-arg COOLIFY_BRANCH --build-arg COOLIFY_RESOURCE_UUID --build-arg NODE_ENV --build-arg NEON_DATABASE_URL --build-arg DATABASE_URL --build-arg COOLIFY_BUILD_SECRETS_HASH=3ee830dfd2a966cc1c09118affddbfe6544ef71af47a0e0c1d1263a34b9286a7 --build-arg 'COOLIFY_URL' --build-arg 'COOLIFY_FQDN' --build-arg 'COOLIFY_BRANCH' --build-arg 'COOLIFY_RESOURCE_UUID' /artifacts/l3tzvxs5o8zvnvin42rahzql
+2026-Jul-20 01:52:42.253156 [DEBUG] [CMD]: docker exec l3tzvxs5o8zvnvin42rahzql bash -c 'bash /artifacts/build.sh'
+2026-Jul-20 01:52:42.253156 [DEBUG] #0 building with "default" instance using docker driver
+2026-Jul-20 01:52:42.253156 [DEBUG] 
+2026-Jul-20 01:52:42.253156 [DEBUG] #1 [internal] load build definition from Dockerfile
+2026-Jul-20 01:52:42.765701 [DEBUG] #1 transferring dockerfile:
+2026-Jul-20 01:52:42.920897 [DEBUG] #1 transferring dockerfile: 3.73kB done
+2026-Jul-20 01:52:43.071045 [DEBUG] #1 DONE 1.0s
+2026-Jul-20 01:52:43.320637 [DEBUG] #2 [internal] load metadata for docker.io/library/node:22-slim
+2026-Jul-20 01:52:45.119297 [DEBUG] #2 DONE 2.0s
+2026-Jul-20 01:52:45.272395 [DEBUG] #3 [internal] load .dockerignore
+2026-Jul-20 01:52:45.682450 [DEBUG] #3 transferring context:
+2026-Jul-20 01:52:45.838794 [DEBUG] #3 transferring context: 148B done
+2026-Jul-20 01:52:46.641792 [DEBUG] #3 DONE 1.5s
+2026-Jul-20 01:52:46.961259 [DEBUG] #4 [internal] load build context
+2026-Jul-20 01:52:46.961259 [DEBUG] #4 DONE 0.0s
+2026-Jul-20 01:52:46.961259 [DEBUG] 
+2026-Jul-20 01:52:46.961259 [DEBUG] #5 [build 1/6] FROM docker.io/library/node:22-slim@sha256:6c74791e557ce11fc957704f6d4fe134a7bc8d6f5ca4403205b2966bd488f6b3
+2026-Jul-20 01:52:46.961259 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:6c74791e557ce11fc957704f6d4fe134a7bc8d6f5ca4403205b2966bd488f6b3
+2026-Jul-20 01:52:47.848012 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:6c74791e557ce11fc957704f6d4fe134a7bc8d6f5ca4403205b2966bd488f6b3 1.0s done
+2026-Jul-20 01:52:48.036580 [DEBUG] #5 DONE 1.1s
+2026-Jul-20 01:52:48.036580 [DEBUG] 
+2026-Jul-20 01:52:48.036580 [DEBUG] #6 [runtime 2/5] WORKDIR /app
+2026-Jul-20 01:52:48.036580 [DEBUG] #6 CACHED
+2026-Jul-20 01:52:48.036580 [DEBUG] 
+2026-Jul-20 01:52:48.036580 [DEBUG] #7 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:52:48.879597 [DEBUG] #7 0.994 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+2026-Jul-20 01:<REDACTED>@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:52:48.993285 [DEBUG] #7 1.040 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+2026-Jul-20 01:<REDACTED>@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:52:49.226386 [DEBUG] #7 1.183 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+2026-Jul-20 01:<REDACTED>@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 3.662 Reading package lists...
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 4.932 Reading package lists...
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 7.266 Building dependency tree...
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.097 Reading state information...
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.660 The following additional packages will be installed:
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.663   libbrotli1 libcurl4 libgssapi-krb5-2 libk5crypto3 libkeyutils1 libkrb5-3
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.665   libkrb5support0 libldap-2.5-0 libnghttp2-14 libpsl5 librtmp1 libsasl2-2
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.670   libsasl2-modules-db libssh2-1 libssl3
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.677 Suggested packages:
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.677   krb5-doc krb5-user
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.677 Recommended packages:
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.677   ca-certificates krb5-locales libldap-common publicsuffix libsasl2-modules
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.986 The following NEW packages will be installed:
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.987   curl libbrotli1 libcurl4 libgssapi-krb5-2 libk5crypto3 libkeyutils1
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.989   libkrb5-3 libkrb5support0 libldap-2.5-0 libnghttp2-14 libpsl5 librtmp1
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 8.990   libsasl2-2 libsasl2-modules-db libssh2-1 libssl3
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 9.062 0 upgraded, 16 newly installed, 0 to remove and 0 not upgraded.
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 9.062 Need to get 4242 kB of archives.
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 9.062 After this operation, 12.0 MB of additional disk space will be used.
+2026-Jul-20 01:52:57.414577 [DEBUG] #7 9.062 Get:1 http://deb.debian.org/debian bookworm/main amd64 libbrotli1 amd64 1.0.9-2+b6 [275 kB]
+2026-Jul-20 01:<REDACTED>@11.15.1   │
+2026-Jul-20 01:53:00.374085 [DEBUG] #11 8.009    │                                               │
+2026-Jul-20 01:53:00.374085 [DEBUG] #11 8.009    ╰───────────────────────────────────────────────╯
+2026-Jul-20 01:53:00.374085 [DEBUG] #11 8.009
+2026-Jul-20 01:53:00.561069 [DEBUG] #11 8.336 Progress: resolved 673, reused 0, downloaded 11, added 0
+2026-Jul-20 01:53:01.453659 [DEBUG] #11 9.338 Progress: resolved 673, reused 0, downloaded 23, added 4
+2026-Jul-20 01:53:02.459368 [DEBUG] #11 10.34 Progress: resolved 673, reused 0, downloaded 43, added 8
+2026-Jul-20 01:53:03.741190 [DEBUG] #11 11.47 Progress: resolved 673, reused 0, downloaded 44, added 8
+2026-Jul-20 01:53:04.601172 [DEBUG] #11 12.48 Progress: resolved 673, reused 0, downloaded 115, added 32
+2026-Jul-20 01:53:05.372360 [DEBUG] #11 ...
+2026-Jul-20 01:53:05.372360 [DEBUG] 
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 10.95 Selecting previously unselected package libbrotli1:amd64.
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 10.95 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6096 files and directories currently installed.)
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 11.09 Preparing to unpack .../00-libbrotli1_1.0.9-2+b6_amd64.deb ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 11.31 Unpacking libbrotli1:amd64 (1.0.9-2+b6) ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 13.02 Selecting previously unselected package libkrb5support0:amd64.
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 13.02 Preparing to unpack .../01-libkrb5support0_1.20.1-2+deb12u5_amd64.deb ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 13.10 Unpacking libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 13.87 Selecting previously unselected package libk5crypto3:amd64.
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 13.87 Preparing to unpack .../02-libk5crypto3_1.20.1-2+deb12u5_amd64.deb ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 13.98 Unpacking libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 14.62 Selecting previously unselected package libkeyutils1:amd64.
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 14.63 Preparing to unpack .../03-libkeyutils1_1.6.3-2_amd64.deb ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 14.69 Unpacking libkeyutils1:amd64 (1.6.3-2) ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 15.67 Selecting previously unselected package libssl3:amd64.
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 15.67 Preparing to unpack .../04-libssl3_3.0.20-1~deb12u2_amd64.deb ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 16.05 Unpacking libssl3:amd64 (3.0.20-1~deb12u2) ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 17.25 Selecting previously unselected package libkrb5-3:amd64.
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 17.25 Preparing to unpack .../05-libkrb5-3_1.20.1-2+deb12u5_amd64.deb ...
+2026-Jul-20 01:53:05.372360 [DEBUG] #7 17.33 Unpacking libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-20 01:53:05.818110 [DEBUG] #7 ...
+2026-Jul-20 01:53:05.818110 [DEBUG] 
+2026-Jul-20 01:53:05.818110 [DEBUG] #11 [build 5/6] RUN pnpm install --frozen-lockfile
+2026-Jul-20 01:53:05.818110 [DEBUG] #11 13.70 Progress: resolved 673, reused 0, downloaded 130, added 36
+2026-Jul-20 01:53:07.119358 [DEBUG] #11 15.00 Progress: resolved 673, reused 0, downloaded 131, added 36
+2026-Jul-20 01:53:08.128879 [DEBUG] #11 16.01 Progress: resolved 673, reused 0, downloaded 138, added 38
+2026-Jul-20 01:53:09.131033 [DEBUG] #11 17.01 Progress: resolved 673, reused 0, downloaded 144, added 40
+2026-Jul-20 01:53:10.128681 [DEBUG] #11 18.01 Progress: resolved 673, reused 0, downloaded 147, added 40
+2026-Jul-20 01:53:11.281955 [DEBUG] #11 19.02 Progress: resolved 673, reused 0, downloaded 153, added 42
+2026-Jul-20 01:53:12.133237 [DEBUG] #11 20.02 Progress: resolved 673, reused 0, downloaded 157, added 43
+2026-Jul-20 01:53:13.137281 [DEBUG] #11 21.02 Progress: resolved 673, reused 0, downloaded 164, added 44
+2026-Jul-20 01:53:13.584091 [DEBUG] #11 ...
+2026-Jul-20 01:53:13.584091 [DEBUG] 
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 18.20 Selecting previously unselected package libgssapi-krb5-2:amd64.
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 18.21 Preparing to unpack .../06-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 18.25 Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 18.65 Selecting previously unselected package libsasl2-modules-db:amd64.
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 18.66 Preparing to unpack .../07-libsasl2-modules-db_2.1.28+dfsg-10_amd64.deb ...
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 18.71 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 20.42 Selecting previously unselected package libsasl2-2:amd64.
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 20.42 Preparing to unpack .../08-libsasl2-2_2.1.28+dfsg-10_amd64.deb ...
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 21.43 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 21.88 Selecting previously unselected package libldap-2.5-0:amd64.
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 21.88 Preparing to unpack .../09-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 21.98 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 23.18 Selecting previously unselected package libnghttp2-14:amd64.
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 23.18 Preparing to unpack .../10-libnghttp2-14_1.52.0-1+deb12u3_amd64.deb ...
+2026-Jul-20 01:53:13.584091 [DEBUG] #7 23.50 Unpacking libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+2026-Jul-20 01:53:14.133624 [DEBUG] #7 ...
+2026-Jul-20 01:53:14.133624 [DEBUG] 
+2026-Jul-20 01:53:14.133624 [DEBUG] #11 [build 5/6] RUN pnpm install --frozen-lockfile
+2026-Jul-20 01:53:14.133624 [DEBUG] #11 22.02 Progress: resolved 673, reused 0, downloaded 191, added 54
+2026-Jul-20 01:53:15.134343 [DEBUG] #11 23.02 Progress: resolved 673, reused 0, downloaded 207, added 61
+2026-Jul-20 01:53:18.311468 [DEBUG] #11 24.17 Progress: resolved 673, reused 0, downloaded 225, added 66
+2026-Jul-20 01:53:18.311468 [DEBUG] #11 25.17 Progress: resolved 673, reused 0, downloaded 240, added 70
+2026-Jul-20 01:53:18.311468 [DEBUG] #11 26.18 Progress: resolved 673, reused 0, downloaded 297, added 89
+2026-Jul-20 01:53:19.984007 [DEBUG] #11 27.18 Progress: resolved 673, reused 0, downloaded 359, added 142
+2026-Jul-20 01:53:20.296066 [DEBUG] #11 28.18 Progress: resolved 673, reused 0, downloaded 403, added 161
+2026-Jul-20 01:53:21.297858 [DEBUG] #11 29.18 Progress: resolved 673, reused 0, downloaded 431, added 169
+2026-Jul-20 01:53:22.320155 [DEBUG] 
+2026-Jul-20 01:53:22.538420 [DEBUG] #11 30.42 Progress: resolved 673, reused 0, downloaded 432, added 169
+2026-Jul-20 01:53:23.640897 [DEBUG] #11 31.52 Progress: resolved 673, reused 0, downloaded 454, added 175
+2026-Jul-20 01:53:24.067371 [DEBUG] #11 ...
+2026-Jul-20 01:53:24.067371 [DEBUG] 
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 26.49 Selecting previously unselected package libpsl5:amd64.
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 26.50 Preparing to unpack .../11-libpsl5_0.21.2-1_amd64.deb ...
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 26.70 Unpacking libpsl5:amd64 (0.21.2-1) ...
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 34.91 Selecting previously unselected package librtmp1:amd64.
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 34.91 Preparing to unpack .../12-librtmp1_2.4+20151223.gitfa8646d.1-2+b2_amd64.deb ...
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 34.98 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 35.43 Selecting previously unselected package libssh2-1:amd64.
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 35.44 Preparing to unpack .../13-libssh2-1_1.10.0-3+b1_amd64.deb ...
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 35.48 Unpacking libssh2-1:amd64 (1.10.0-3+b1) ...
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 35.96 Selecting previously unselected package libcurl4:amd64.
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 35.96 Preparing to unpack .../14-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
+2026-Jul-20 01:53:24.067371 [DEBUG] #7 36.01 Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) ...
+2026-Jul-20 01:53:24.540411 [DEBUG] #7 36.65 Selecting previously unselected package curl.
+2026-Jul-20 01:53:24.540411 [DEBUG] #7 36.65 Preparing to unpack .../15-curl_7.88.1-10+deb12u15_amd64.deb ...
+2026-Jul-20 01:53:24.790843 [DEBUG] #7 ...
+2026-Jul-20 01:53:24.790843 [DEBUG] 
+2026-Jul-20 01:53:24.790843 [DEBUG] #11 [build 5/6] RUN pnpm install --frozen-lockfile
+2026-Jul-20 01:53:24.790843 [DEBUG] #11 32.52 Progress: resolved 673, reused 0, downloaded 455, added 175
+2026-Jul-20 01:53:30.443195 [DEBUG] #11 ...
+2026-Jul-20 01:53:30.443195 [DEBUG] 
+2026-Jul-20 01:53:30.443195 [DEBUG] #7 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:53:30.443195 [DEBUG] #7 36.96 Unpacking curl (7.88.1-10+deb12u15) ...
+2026-Jul-20 01:53:30.443195 [DEBUG] #7 41.18 Setting up libkeyutils1:amd64 (1.6.3-2) ...
+2026-Jul-20 01:53:30.443195 [DEBUG] #7 41.37 Setting up libpsl5:amd64 (0.21.2-1) ...
+2026-Jul-20 01:53:30.443195 [DEBUG] #7 41.54 Setting up libbrotli1:amd64 (1.0.9-2+b6) ...
+2026-Jul-20 01:53:30.443195 [DEBUG] #7 41.68 Setting up libssl3:amd64 (3.0.20-1~deb12u2) ...
+2026-Jul-20 01:53:30.443195 [DEBUG] #7 42.34 Setting up libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+2026-Jul-20 01:53:30.443195 [DEBUG] #7 42.56 Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-20 01:53:30.635051 [DEBUG] #7 42.75 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-20 01:53:32.935705 [DEBUG] #7 45.05 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+2026-Jul-20 01:53:34.735528 [DEBUG] #7 ...
+2026-Jul-20 01:53:34.735528 [DEBUG] 
+2026-Jul-20 01:53:34.735528 [DEBUG] #11 [build 5/6] RUN pnpm install --frozen-lockfile
+2026-Jul-20 01:53:34.735528 [DEBUG] #11 38.33 Progress: resolved 673, reused 0, downloaded 456, added 175
+2026-Jul-20 01:53:34.735528 [DEBUG] #11 39.33 Progress: resolved 673, reused 0, downloaded 463, added 178
+2026-Jul-20 01:53:34.735528 [DEBUG] #11 40.33 Progress: resolved 673, reused 0, downloaded 464, added 178
+2026-Jul-20 01:53:34.735528 [DEBUG] #11 41.42 Progress: resolved 673, reused 0, downloaded 465, added 178
+2026-Jul-20 01:53:35.711362 [DEBUG] #11 43.60 Progress: resolved 673, reused 0, downloaded 466, added 178
+2026-Jul-20 01:53:36.712070 [DEBUG] #11 44.60 Progress: resolved 673, reused 0, downloaded 469, added 179
+2026-Jul-20 01:53:37.717806 [DEBUG] #11 45.60 Progress: resolved 673, reused 0, downloaded 470, added 179
+2026-Jul-20 01:53:38.716362 [DEBUG] #11 46.60 Progress: resolved 673, reused 0, downloaded 478, added 182
+2026-Jul-20 01:53:39.716385 [DEBUG] #11 47.60 Progress: resolved 673, reused 0, downloaded 483, added 183
+2026-Jul-20 01:53:43.242408 [DEBUG] #11 48.60 Progress: resolved 673, reused 0, downloaded 517, added 192
+2026-Jul-20 01:53:43.242408 [DEBUG] #11 49.60 Progress: resolved 673, reused 0, downloaded 541, added 201
+2026-Jul-20 01:53:45.698386 [DEBUG] #11 51.59 Progress: resolved 673, reused 0, downloaded 542, added 201
+2026-Jul-20 01:53:45.698386 [DEBUG] #11 52.59 Progress: resolved 673, reused 0, downloaded 558, added 207
+2026-Jul-20 01:53:45.698386 [DEBUG] #11 ...
+2026-Jul-20 01:53:45.698386 [DEBUG] 
+2026-Jul-20 01:53:45.698386 [DEBUG] #7 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:53:45.698386 [DEBUG] #7 47.18 Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-20 01:53:45.698386 [DEBUG] #7 49.16 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10) ...
+2026-Jul-20 01:53:45.698386 [DEBUG] #7 50.61 Setting up libssh2-1:amd64 (1.10.0-3+b1) ...
+2026-Jul-20 01:53:45.698386 [DEBUG] #7 51.20 Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-20 01:53:45.788388 [DEBUG] #7 ...
+2026-Jul-20 01:53:45.788388 [DEBUG] 
+2026-Jul-20 01:53:45.788388 [DEBUG] #11 [build 5/6] RUN pnpm install --frozen-lockfile
+2026-Jul-20 01:53:45.788388 [DEBUG] #11 53.60 Progress: resolved 673, reused 0, downloaded 562, added 207
+2026-Jul-20 01:53:46.711784 [DEBUG] #11 54.60 Progress: resolved 673, reused 0, downloaded 563, added 207
+2026-Jul-20 01:53:46.836229 [DEBUG] 
+2026-Jul-20 01:53:47.712851 [DEBUG] #11 55.60 Progress: resolved 673, reused 0, downloaded 615, added 223
+2026-Jul-20 01:53:48.714772 [DEBUG] #11 56.60 Progress: resolved 673, reused 0, downloaded 658, added 237
+2026-Jul-20 01:53:49.720617 [DEBUG] #11 57.60 Progress: resolved 673, reused 0, downloaded 673, added 272
+2026-Jul-20 01:53:50.714819 [DEBUG] #11 58.60 Progress: resolved 673, reused 0, downloaded 673, added 455
+2026-Jul-20 01:53:51.722979 [DEBUG] #11 59.60 Progress: resolved 673, reused 0, downloaded 673, added 464
+2026-Jul-20 01:53:52.727486 [DEBUG] #11 60.61 Progress: resolved 673, reused 0, downloaded 673, added 507
+2026-Jul-20 01:53:53.727796 [DEBUG] #11 61.61 Progress: resolved 673, reused 0, downloaded 673, added 659
+2026-Jul-20 01:53:54.294874 [DEBUG] #11 61.67 Progress: resolved 673, reused 0, downloaded 673, added 673, done
+2026-Jul-20 01:53:56.205336 [DEBUG] #11 64.09 .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-Jul-20 01:53:56.922772 [DEBUG] #11 64.10 .../esbuild@0.28.1/node_modules/esbuild postinstall$ node install.js
+2026-Jul-20 01:53:56.922772 [DEBUG] #11 64.11 .../esbuild@0.18.20/node_modules/esbuild postinstall$ node install.js
+2026-Jul-20 01:53:56.922772 [DEBUG] #11 ...
+2026-Jul-20 01:53:56.922772 [DEBUG] 
+2026-Jul-20 01:53:56.922772 [DEBUG] #7 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:53:56.922772 [DEBUG] #7 58.33 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+2026-Jul-20 01:53:56.922772 [DEBUG] #7 61.15 Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+2026-Jul-20 01:53:56.922772 [DEBUG] #7 62.17 Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
+2026-Jul-20 01:53:56.922772 [DEBUG] #7 63.12 Setting up curl (7.88.1-10+deb12u15) ...
+2026-Jul-20 01:53:56.922772 [DEBUG] #7 64.53 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+2026-Jul-20 01:53:56.922772 [DEBUG] #7 ...
+2026-Jul-20 01:53:56.922772 [DEBUG] 
+2026-Jul-20 01:53:56.922772 [DEBUG] #11 [build 5/6] RUN pnpm install --frozen-lockfile
+2026-Jul-20 01:53:56.922772 [DEBUG] #11 64.33 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Jul-20 01:53:58.825972 [DEBUG] #11 65.07 .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-Jul-20 01:53:58.825972 [DEBUG] #11 65.19 .../esbuild@0.28.1/node_modules/esbuild postinstall: Done
+2026-Jul-20 01:53:58.825972 [DEBUG] #11 65.22 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Jul-20 01:53:58.825972 [DEBUG] #11 65.23 .../esbuild@0.18.20/node_modules/esbuild postinstall: Done
+2026-Jul-20 01:54:03.051796 [DEBUG] #11 70.94
+2026-Jul-20 01:54:03.088093 [DEBUG] #11 70.94 dependencies:
+2026-Jul-20 01:54:03.088093 [DEBUG] #11 70.94 + @replit/connectors-sdk 0.4.1
+2026-Jul-20 01:54:03.088093 [DEBUG] #11 70.94
+2026-Jul-20 01:54:03.088093 [DEBUG] #11 70.94 devDependencies:
+2026-Jul-20 01:54:03.088093 [DEBUG] #11 70.94 + prettier 3.9.4
+2026-Jul-20 01:54:03.088093 [DEBUG] #11 70.94 + typescript 5.9.3
+2026-Jul-20 01:54:03.088093 [DEBUG] #11 70.94
+2026-Jul-20 01:54:03.373442 [DEBUG] #11 71.26 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Jul-20 01:54:03.520487 [DEBUG] #11 71.40 . preinstall: Done
+2026-Jul-20 01:54:03.557481 [DEBUG] 
+2026-Jul-20 01:54:04.533281 [DEBUG] #11 72.41 Done in 1m 6.8s using pnpm v10.26.1
+2026-Jul-20 01:54:06.184870 [DEBUG] #11 DONE 74.1s
+2026-Jul-20 01:54:06.184870 [DEBUG] 
+2026-Jul-20 01:54:06.184870 [DEBUG] #7 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:54:06.367675 [DEBUG] #7 ...
+2026-Jul-20 01:54:06.367675 [DEBUG] 
+2026-Jul-20 01:54:06.367675 [DEBUG] #12 [build 6/6] RUN pnpm run build:app
+2026-Jul-20 01:54:12.585569 [DEBUG] #12 6.220
+2026-Jul-20 01:54:12.585569 [DEBUG] #12 6.220 > workspace@0.0.0 build:app /app
+2026-Jul-20 01:54:12.585569 [DEBUG] #12 6.220 > pnpm -r --workspace-concurrency=1 --if-present --filter '!@workspace/mockup-sandbox' run build
+2026-Jul-20 01:54:12.585569 [DEBUG] #12 6.220
+2026-Jul-20 01:54:13.917577 [DEBUG] #12 7.551 Scope: 8 of 10 workspace projects
+2026-Jul-20 01:54:14.106203 [DEBUG] #12 7.588
+2026-Jul-20 01:54:14.106203 [DEBUG] #12 7.588 > @workspace/api-server@0.0.0 build /app/artifacts/api-server
+2026-Jul-20 01:54:14.106203 [DEBUG] #12 7.588 > node ./build.mjs
+2026-Jul-20 01:54:14.106203 [DEBUG] #12 7.588
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/index.mjs                       4.3mb ⚠️
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/pino-worker.mjs               153.4kb
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/pino-file.mjs                 142.0kb
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/pino-pretty.mjs               114.6kb
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/thread-stream-worker.mjs        7.3kb
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/index.mjs.map                   8.1mb
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/pino-worker.mjs.map           256.9kb
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/pino-file.mjs.map             229.0kb
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/pino-pretty.mjs.map           204.0kb
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54   dist/thread-stream-worker.mjs.map   12.0kb
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54
+2026-Jul-20 01:54:16.906515 [DEBUG] #12 10.54 ⚡ Done in 2650ms
+2026-Jul-20 01:54:17.082846 [DEBUG] #12 10.56
+2026-Jul-20 01:54:17.082846 [DEBUG] #12 10.56 > @workspace/guru-eob5@0.0.0 build /app/artifacts/guru-eob5
+2026-Jul-20 01:54:17.082846 [DEBUG] #12 10.56 > vite build --config vite.config.ts
+2026-Jul-20 01:54:17.082846 [DEBUG] #12 10.56
+2026-Jul-20 01:54:18.695772 [DEBUG] #12 12.33 vite v7.3.6 building client environment for production...
+2026-Jul-20 01:54:18.936759 [DEBUG] #12 12.57 transforming...
+2026-Jul-20 01:54:22.035293 [DEBUG] #12 15.67 src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-20 01:54:23.879305 [DEBUG] #12 17.51 src/components/ui/progress.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-20 01:54:24.077150 [DEBUG] #12 17.60 src/components/ui/select.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-20 01:54:24.077150 [DEBUG] #12 17.71 src/components/ui/label.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-20 01:54:24.234683 [DEBUG] #12 17.72 src/components/ui/dropdown-menu.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-20 01:54:34.810029 [DEBUG] #12 28.44 src/components/ui/avatar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-20 01:54:35.011271 [DEBUG] #12 28.64 src/components/ui/sidebar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-20 01:54:36.774154 [DEBUG] #12 30.41 src/components/ui/sheet.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-20 01:55:03.258308 [DEBUG] #12 56.89 ✓ 3339 modules transformed.
+2026-Jul-20 01:55:06.518449 [DEBUG] #12 60.15 rendering chunks...
+2026-Jul-20 01:55:06.743033 [DEBUG] #12 60.23 computing gzip size...
+2026-Jul-20 01:55:06.859891 [DEBUG] #12 60.39 dist/public/index.html                     1.36 kB │ gzip:   0.54 kB
+2026-Jul-20 01:55:06.859891 [DEBUG] #12 60.39 dist/public/assets/logo-C8q4zXk9.png      73.99 kB
+2026-Jul-20 01:55:06.859891 [DEBUG] #12 60.39 dist/public/assets/index-DxkT8Rla.css    114.95 kB │ gzip:  18.93 kB
+2026-Jul-20 01:55:06.859891 [DEBUG] #12 60.39 dist/public/assets/index-DMVudp9F.js   2,672.48 kB │ gzip: 770.81 kB
+2026-Jul-20 01:55:06.859891 [DEBUG] #12 60.39 ✓ built in 47.97s
+2026-Jul-20 01:55:06.859891 [DEBUG] #12 60.39
+2026-Jul-20 01:55:06.859891 [DEBUG] #12 60.39 (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-Jul-20 01:55:06.859891 [DEBUG] #12 60.39 - Using dynamic import() to code-split the application
+2026-Jul-20 01:55:06.859891 [DEBUG] #12 60.39 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-Jul-20 01:<REDACTED>@workspace/temp-register@0.0.0 build /app/artifacts/temp-register
+2026-Jul-20 01:55:07.034496 [DEBUG] #12 60.60 > vite build --config vite.config.ts
+2026-Jul-20 01:55:07.034496 [DEBUG] #12 60.60
+2026-Jul-20 01:55:08.245466 [DEBUG] #12 61.88 vite v7.3.6 building client environment for production...
+2026-Jul-20 01:55:08.873257 [DEBUG] #12 62.05 transforming...
+2026-Jul-20 01:55:10.286144 [DEBUG] #12 63.92 src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Jul-20 01:55:17.349033 [DEBUG] #12 70.98 ✓ 1766 modules transformed.
+2026-Jul-20 01:55:17.925845 [DEBUG] #12 71.56 rendering chunks...
+2026-Jul-20 01:55:18.149061 [DEBUG] #12 71.60 computing gzip size...
+2026-Jul-20 01:55:18.149061 [DEBUG] #12 71.63 dist/public/index.html                   1.34 kB │ gzip:   0.54 kB
+2026-Jul-20 01:55:18.149061 [DEBUG] #12 71.63 dist/public/assets/index-D_2ym2bF.css   91.38 kB │ gzip:  14.96 kB
+2026-Jul-20 01:55:18.149061 [DEBUG] #12 71.63 dist/public/assets/index-vFBd7-8X.js   311.50 kB │ gzip: 100.39 kB
+2026-Jul-20 01:55:18.149061 [DEBUG] #12 71.63 ✓ built in 9.71s
+2026-Jul-20 01:55:18.768318 [DEBUG] #12 DONE 72.4s
+2026-Jul-20 01:55:18.768318 [DEBUG] 
+2026-Jul-20 01:55:18.768318 [DEBUG] #7 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Jul-20 01:56:09.426510 [DEBUG] #7 201.5
+2026-Jul-20 01:56:09.426510 [DEBUG] #7 201.5 removed 65 packages, and changed 92 packages in 2m
+2026-Jul-20 01:56:09.426510 [DEBUG] #7 201.5
+2026-Jul-20 01:56:09.426510 [DEBUG] #7 201.5 15 packages are looking for funding
+2026-Jul-20 01:56:09.426510 [DEBUG] #7 201.5   run `npm fund` for details
+2026-Jul-20 01:56:15.382045 [DEBUG] #7 207.5
+2026-Jul-20 01:56:15.382045 [DEBUG] #7 207.5 added 22 packages in 5s
+2026-Jul-20 01:56:15.382045 [DEBUG] #7 207.5
+2026-Jul-20 01:56:15.382045 [DEBUG] #7 207.5 3 packages are looking for funding
+2026-Jul-20 01:56:15.382045 [DEBUG] #7 207.5   run `npm fund` for details
+2026-Jul-20 01:56:18.306442 [DEBUG] #7 DONE 210.4s
+2026-Jul-20 01:56:18.544385 [DEBUG] #13 [runtime 4/5] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Jul-20 01:56:20.335607 [DEBUG] #13 DONE 1.9s
+2026-Jul-20 01:56:20.540219 [DEBUG] #14 [runtime 5/5] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Jul-20 01:56:23.478876 [DEBUG] #14 DONE 3.1s
+2026-Jul-20 01:56:23.581771 [DEBUG] #15 exporting to image
+2026-Jul-20 01:56:23.732698 [DEBUG] #15 exporting layers
+2026-Jul-20 01:56:36.543064 [DEBUG] #15 exporting layers 13.0s done
+2026-Jul-20 01:56:36.697873 [DEBUG] #15 exporting manifest sha256:b20b8baf61ca3dd13922ab96cd2f52040d8a78877cf6f71771c2eaf5d8a5061e
+2026-Jul-20 01:56:36.881692 [DEBUG] #15 exporting manifest sha256:b20b8baf61ca3dd13922ab96cd2f52040d8a78877cf6f71771c2eaf5d8a5061e 0.3s done
+2026-Jul-20 01:56:36.881692 [DEBUG] #15 exporting config sha256:e8d74aeb62cee9c1925d17fe8dba0ac6743cb736a0b45bcad73fdd7afd797315
+2026-Jul-20 01:56:37.232470 [DEBUG] #15 exporting config sha256:e8d74aeb62cee9c1925d17fe8dba0ac6743cb736a0b45bcad73fdd7afd797315 0.4s done
+2026-Jul-20 01:56:37.582496 [DEBUG] #15 exporting attestation manifest sha256:e5a266857fd935fb6609a991d35b52c3a8acc9cb119ac6bd8e60da6114e2a783
+2026-Jul-20 01:56:38.278403 [DEBUG] #15 exporting attestation manifest sha256:e5a266857fd935fb6609a991d35b52c3a8acc9cb119ac6bd8e60da6114e2a783 0.7s done
+2026-Jul-20 01:56:38.278403 [DEBUG] #15 exporting manifest list sha256:fdcd92e1fa367c21e73c2b958649e95c3ffbe52ff91f60f177531687551f5f36
+2026-Jul-20 01:56:38.542901 [DEBUG] #15 exporting manifest list sha256:fdcd92e1fa367c21e73c2b958649e95c3ffbe52ff91f60f177531687551f5f36 0.3s done
+2026-Jul-20 01:56:38.542901 [DEBUG] #15 naming to docker.io/library/sfptjjfqgqidt4736qzont0l:14e618f399b56dd42f4f2070cb74e50b3c372c18
+2026-Jul-20 01:56:38.762983 [DEBUG] #15 naming to docker.io/library/sfptjjfqgqidt4736qzont0l:14e618f399b56dd42f4f2070cb74e50b3c372c18 0.1s done
+2026-Jul-20 01:56:38.762983 [DEBUG] #15 unpacking to docker.io/library/sfptjjfqgqidt4736qzont0l:14e618f399b56dd42f4f2070cb74e50b3c372c18
+2026-Jul-20 01:56:44.497235 [DEBUG] #15 unpacking to docker.io/library/sfptjjfqgqidt4736qzont0l:14e618f399b56dd42f4f2070cb74e50b3c372c18 5.9s done
+2026-Jul-20 01:56:44.625550 [DEBUG] #15 DONE 21.0s
+2026-Jul-20 01:56:47.664850 Building docker image completed.
+2026-Jul-20 01:56:47.845707 [DEBUG] Creating .env file with runtime variables for container.
+2026-Jul-20 01:56:48.381275 ----------------------------------------
+2026-Jul-20 01:56:48.427419 Rolling update started.
+2026-Jul-20 01:56:50.515498 [DEBUG] [CMD]: docker exec l3tzvxs5o8zvnvin42rahzql bash -c 'COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io COOLIFY_FQDN=sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io COOLIFY_BRANCH='\''main'\'' COOLIFY_RESOURCE_UUID=sfptjjfqgqidt4736qzont0l  docker compose --project-name sfptjjfqgqidt4736qzont0l --project-directory /artifacts/l3tzvxs5o8zvnvin42rahzql -f /artifacts/l3tzvxs5o8zvnvin42rahzql/docker-compose.yaml up --build -d'
+2026-Jul-20 01:56:50.515498 [DEBUG] time="2026-07-20T01:56:50Z" level=warning msg="Found orphan containers ([sfptjjfqgqidt4736qzont0l-080144313593]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+2026-Jul-20 01:56:50.515498 [DEBUG] Container sfptjjfqgqidt4736qzont0l-015211717219  Creating
+2026-Jul-20 01:56:56.279390 [DEBUG] sfptjjfqgqidt4736qzont0l-015211717219 Your kernel does not support memory swappiness capabilities or the cgroup is not mounted. Memory swappiness discarded.
+2026-Jul-20 01:56:56.301743 [DEBUG] Container sfptjjfqgqidt4736qzont0l-015211717219  Created
+2026-Jul-20 01:56:56.331437 [DEBUG] Container sfptjjfqgqidt4736qzont0l-015211717219  Starting
+2026-Jul-20 01:56:58.386295 [DEBUG] Container sfptjjfqgqidt4736qzont0l-015211717219  Started
+2026-Jul-20 01:56:58.421712 New container started.
+2026-Jul-20 01:56:58.468747 Waiting for healthcheck to pass on the new container.
+2026-Jul-20 01:56:58.520118 Healthcheck URL (inside the container): GET: http://localhost:8080/
+2026-Jul-20 01:56:58.575426 Waiting for the start period (5 seconds) before starting healthcheck.
+2026-Jul-20 01:57:08.411286 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-015211717219
+2026-Jul-20 01:57:08.411286 [DEBUG] "unhealthy"
+2026-Jul-20 01:57:12.314803 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-015211717219
+2026-Jul-20 01:57:12.314803 [DEBUG] []
+2026-Jul-20 01:57:12.348255 Attempt 1 of 10 | Healthcheck status: "unhealthy"
+2026-Jul-20 01:57:12.407970 New container is unhealthy.
+2026-Jul-20 01:57:12.450058 ----------------------------------------
+2026-Jul-20 01:57:12.489309 Container logs:
+2026-Jul-20 01:57:16.472132 [CMD]: docker logs -n 100 sfptjjfqgqidt4736qzont0l-015211717219
+2026-Jul-20 01:57:16.472132 node:internal/modules/cjs/loader:1430
+2026-Jul-20 01:57:16.472132 const err = new Error(message);
+2026-Jul-20 01:57:16.472132 ^
+2026-Jul-20 01:57:16.472132 
+2026-Jul-20 01:57:16.472132 Error: Cannot find module 'pdf-parse'
+2026-Jul-20 01:57:16.472132 Require stack:
+2026-Jul-20 01:57:16.472132 - /app/artifacts/api-server/dist/index.mjs
+2026-Jul-20 01:57:16.472132 at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-Jul-20 01:57:16.472132 at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-Jul-20 01:57:16.472132 at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-Jul-20 01:57:16.472132 at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-Jul-20 01:57:16.472132 at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-Jul-20 01:57:16.472132 at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-Jul-20 01:57:16.472132 at require (node:internal/modules/helpers:147:16)
+2026-Jul-20 01:57:16.472132 at file:///app/artifacts/api-server/dist/index.mjs:92833:16
+2026-Jul-20 01:57:16.472132 at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+2026-Jul-20 01:57:16.472132 at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26) {
+2026-Jul-20 01:57:16.472132 code: 'MODULE_NOT_FOUND',
+2026-Jul-20 01:57:16.472132 requireStack: [ '/app/artifacts/api-server/dist/index.mjs' ]
+2026-Jul-20 01:57:16.472132 }
+2026-Jul-20 01:57:16.472132 
+2026-Jul-20 01:57:16.472132 Node.js v22.23.1
+2026-Jul-20 01:57:16.472132 node:internal/modules/cjs/loader:1430
+2026-Jul-20 01:57:16.472132 const err = new Error(message);
+2026-Jul-20 01:57:16.472132 ^
+2026-Jul-20 01:57:16.472132 
+2026-Jul-20 01:57:16.472132 Error: Cannot find module 'pdf-parse'
+2026-Jul-20 01:57:16.472132 Require stack:
+2026-Jul-20 01:57:16.472132 - /app/artifacts/api-server/dist/index.mjs
+2026-Jul-20 01:57:16.472132 at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-Jul-20 01:57:16.472132 at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-Jul-20 01:57:16.472132 at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-Jul-20 01:57:16.472132 at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-Jul-20 01:57:16.472132 at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-Jul-20 01:57:16.472132 at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-Jul-20 01:57:16.472132 at require (node:internal/modules/helpers:147:16)
+2026-Jul-20 01:57:16.472132 at file:///app/artifacts/api-server/dist/index.mjs:92833:16
+2026-Jul-20 01:57:16.472132 at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+2026-Jul-20 01:57:16.472132 at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26) {
+2026-Jul-20 01:57:16.472132 code: 'MODULE_NOT_FOUND',
+2026-Jul-20 01:57:16.472132 requireStack: [ '/app/artifacts/api-server/dist/index.mjs' ]
+2026-Jul-20 01:57:16.472132 }
+2026-Jul-20 01:57:16.472132 
+2026-Jul-20 01:57:16.472132 Node.js v22.23.1
+2026-Jul-20 01:57:16.472132 node:internal/modules/cjs/loader:1430
+2026-Jul-20 01:57:16.472132 const err = new Error(message);
+2026-Jul-20 01:57:16.472132 ^
+2026-Jul-20 01:57:16.472132 
+2026-Jul-20 01:57:16.472132 Error: Cannot find module 'pdf-parse'
+2026-Jul-20 01:57:16.472132 Require stack:
+2026-Jul-20 01:57:16.472132 - /app/artifacts/api-server/dist/index.mjs
+2026-Jul-20 01:57:16.472132 at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-Jul-20 01:57:16.472132 at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-Jul-20 01:57:16.472132 at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-Jul-20 01:57:16.472132 at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-Jul-20 01:57:16.472132 at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-Jul-20 01:57:16.472132 at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-Jul-20 01:57:16.472132 at require (node:internal/modules/helpers:147:16)
+2026-Jul-20 01:57:16.472132 at file:///app/artifacts/api-server/dist/index.mjs:92833:16
+2026-Jul-20 01:57:16.472132 at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+2026-Jul-20 01:57:16.472132 at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26) {
+2026-Jul-20 01:57:16.472132 code: 'MODULE_NOT_FOUND',
+2026-Jul-20 01:57:16.472132 requireStack: [ '/app/artifacts/api-server/dist/index.mjs' ]
+2026-Jul-20 01:57:16.472132 }
+2026-Jul-20 01:57:16.472132 
+2026-Jul-20 01:57:16.472132 Node.js v22.23.1
+2026-Jul-20 01:57:16.520481 ----------------------------------------
+2026-Jul-20 01:57:16.587832 Removing old containers.
+2026-Jul-20 01:57:17.993034 ----------------------------------------
+2026-Jul-20 01:57:18.074548 WARNING: Dockerfile or Docker Image based deployment detected. The healthcheck needs a curl or wget command to check the health of the application. Please make sure that it is available in the image or turn off healthcheck on Coolify's UI.
+2026-Jul-20 01:57:18.165113 ----------------------------------------
+2026-Jul-20 01:57:18.235776 New container is not healthy, rolling back to the old container.
+2026-Jul-20 01:57:18.968276 [DEBUG] [CMD]: docker stop --time=30 sfptjjfqgqidt4736qzont0l-015211717219
+2026-Jul-20 01:57:18.968276 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-20 01:57:22.570299 [DEBUG] sfptjjfqgqidt4736qzont0l-015211717219
+2026-Jul-20 01:57:23.380212 [DEBUG] [CMD]: docker rm -f sfptjjfqgqidt4736qzont0l-015211717219
+2026-Jul-20 01:57:23.380212 [DEBUG] sfptjjfqgqidt4736qzont0l-015211717219
+2026-Jul-20 01:57:23.427479 Rolling update completed.
+2026-Jul-20 01:57:24.089862 Gracefully shutting down build container: l3tzvxs5o8zvnvin42rahzql
+2026-Jul-20 01:57:24.290784 [DEBUG] [CMD]: docker stop --time=30 l3tzvxs5o8zvnvin42rahzql
+2026-Jul-20 01:57:24.290784 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Jul-20 01:57:26.257734 [DEBUG] l3tzvxs5o8zvnvin42rahzql

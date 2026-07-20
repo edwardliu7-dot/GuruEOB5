@@ -47,13 +47,14 @@ WORKDIR /app
 # Coolify's healthcheck runs `curl`/`wget` inside the container to verify
 # the app is up. node:22-slim has neither by default, so the check always
 # fails and Coolify rolls back a perfectly working deployment. Install curl.
-# Also install pdfkit here: it reads .afm font files from its own package
-# directory at runtime (path traversal), so esbuild cannot bundle it safely.
+# Also install pdfkit and pdf-parse here: both load files from disk at runtime
+# (pdfkit uses path traversal for .afm fonts; pdf-parse v2 has no default ESM
+# export), so esbuild cannot bundle them safely.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends curl \
   && rm -rf /var/lib/apt/lists/* \
   && npm install -g npm@latest --quiet \
-  && npm install pdfkit --omit=dev --no-package-lock --no-save \
+  && npm install pdfkit pdf-parse --omit=dev --no-package-lock --no-save \
      --prefix /app 2>&1 | tail -5
 
 ENV NODE_ENV=production
