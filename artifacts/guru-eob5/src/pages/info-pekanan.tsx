@@ -85,10 +85,57 @@ function StatusPill({ status }: { status: Status }) {
   );
 }
 
-function LessonCard({ item }: { item: any }) {
-  const status = item.status as Status;
-  const hasPlan = item.prosemItemId != null;
-  const hasReal = item.journalEntryId != null;
+// Priority order for worst-status aggregation
+const STATUS_PRIORITY: Record<Status, number> = {
+  tertinggal: 0,
+  belum: 1,
+  di_depan: 2,
+  sesuai: 3,
+};
+
+interface GroupedItem {
+  subjectName: string;
+  kelas: string;
+  rows: any[]; // original items
+  worstStatus: Status;
+  hasPlan: boolean;
+  hasReal: boolean;
+}
+
+function groupItems(items: any[]): GroupedItem[] {
+  const map = new Map<string, GroupedItem>();
+  for (const item of items) {
+    const key = `${item.subjectName ?? ""}|||${item.kelas ?? ""}`;
+    const existing = map.get(key);
+    const status = item.status as Status;
+    if (existing) {
+      existing.rows.push(item);
+      if (STATUS_PRIORITY[status] < STATUS_PRIORITY[existing.worstStatus]) {
+        existing.worstStatus = status;
+      }
+      if (item.prosemItemId != null) existing.hasPlan = true;
+      if (item.journalEntryId != null) existing.hasReal = true;
+    } else {
+      map.set(key, {
+        subjectName: item.subjectName ?? "-",
+        kelas: item.kelas ?? "-",
+        rows: [item],
+        worstStatus: status,
+        hasPlan: item.prosemItemId != null,
+        hasReal: item.journalEntryId != null,
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
+function LessonCard({ group }: { group: GroupedItem }) {
+  const planRows = group.rows.filter((r) => r.prosemItemId != null);
+  const realRows = group.rows.filter((r) => r.journalEntryId != null);
+
+  // Collect unique JP values for display
+  const jpTotal = group.rows.reduce((sum: number, r: any) => sum + (r.jp ?? 0), 0);
+
   return (
     <div className="rounded-xl border border-border bg-white p-5">
       <div className="flex items-start justify-between gap-3">
@@ -97,17 +144,16 @@ function LessonCard({ item }: { item: any }) {
             <BookOpen className="h-5 w-5" />
           </div>
           <div>
-            <div className="font-semibold">{item.subjectName}</div>
+            <div className="font-semibold">{group.subjectName}</div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="rounded bg-muted px-1.5 py-0.5 font-medium text-foreground">
-                Kelas {item.kelas}
+                Kelas {group.kelas}
               </span>
-              {item.kd && <span>CP {item.kd}</span>}
-              {item.jp != null && <span>· {item.jp} JP</span>}
+              {jpTotal > 0 && <span>· {jpTotal} JP</span>}
             </div>
           </div>
         </div>
-        <StatusPill status={status} />
+        <StatusPill status={group.worstStatus} />
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
@@ -115,8 +161,17 @@ function LessonCard({ item }: { item: any }) {
           <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-accent">
             Rencana · Prosem
           </div>
-          {hasPlan ? (
-            <div className="text-sm leading-snug">{item.materi}</div>
+          {group.hasPlan ? (
+            <ul className="space-y-1">
+              {planRows.map((r, i) => (
+                <li key={r.prosemItemId ?? i} className="text-sm leading-snug">
+                  {planRows.length > 1 && (
+                    <span className="mr-1 text-xs text-muted-foreground">{i + 1}.</span>
+                  )}
+                  {r.materi}
+                </li>
+              ))}
+            </ul>
           ) : (
             <div className="text-sm italic text-muted-foreground">
               Tidak ada rencana di prosem
@@ -127,10 +182,17 @@ function LessonCard({ item }: { item: any }) {
           <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-primary">
             Realisasi · Jurnal
           </div>
-          {hasReal ? (
-            <div className="text-sm leading-snug">
-              {hasPlan ? "Jurnal terisi pekan ini" : item.materi}
-            </div>
+          {group.hasReal ? (
+            <ul className="space-y-1">
+              {realRows.map((r, i) => (
+                <li key={r.journalEntryId ?? i} className="text-sm leading-snug">
+                  {realRows.length > 1 && (
+                    <span className="mr-1 text-xs text-muted-foreground">{i + 1}.</span>
+                  )}
+                  {group.hasPlan ? "Jurnal terisi pekan ini" : r.materi}
+                </li>
+              ))}
+            </ul>
           ) : (
             <div className="text-sm italic text-red-500">Belum ada jurnal pekan ini</div>
           )}
@@ -148,21 +210,14 @@ function buildWhatsAppText(
 ): string {
   if (!items.length) return "";
 
-  // Group by subject name, preserving insertion order
-  const bySubject = new Map<string, { kelas: string; materi: string }[]>();
-  for (const item of items) {
-    const key = item.subjectName ?? "-";
-    const arr = bySubject.get(key) ?? [];
-    arr.push({ kelas: item.kelas, materi: item.materi });
-    bySubject.set(key, arr);
-  }
+  const groups = groupItems(items);
 
   const lines: string[] = ["Bismillah", "Info pekanan"];
   if (pekanKe != null) {
     let weekLine = `Pekan ke-${pekanKe}`;
     if (tanggalMulai && tanggalSelesai) {
       const fmt = (d: string) => {
-        const [y, m, day] = d.split("-");
+        const [, m, day] = d.split("-");
         const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
         return `${parseInt(day)} ${months[parseInt(m) - 1]}`;
       };
@@ -172,13 +227,17 @@ function buildWhatsAppText(
   }
 
   let first = true;
-  for (const [subject, classItems] of bySubject) {
-    if (!first) lines.push(""); // blank line between subjects
+  for (const g of groups) {
+    if (!first) lines.push("");
     first = false;
-    lines.push(subject);
-    for (const ci of classItems) {
-      lines.push(`G. ${ci.kelas}`);
-      lines.push(ci.materi);
+    lines.push(g.subjectName);
+    lines.push(`G. ${g.kelas}`);
+    // Combine all materi for this subject+kelas
+    const materiList = g.rows.map((r) => r.materi).filter(Boolean);
+    if (materiList.length === 1) {
+      lines.push(materiList[0]);
+    } else {
+      materiList.forEach((m, i) => lines.push(`${i + 1}. ${m}`));
     }
   }
 
@@ -375,8 +434,8 @@ export default function InfoPekanan() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {info.items.map((it: any, i: number) => (
-                    <LessonCard key={it.prosemItemId ?? it.journalEntryId ?? i} item={it} />
+                  {groupItems(info.items).map((g, i) => (
+                    <LessonCard key={`${g.subjectName}|||${g.kelas}|||${i}`} group={g} />
                   ))}
                 </div>
               )}
