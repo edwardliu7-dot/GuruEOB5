@@ -95,6 +95,23 @@ interface VerifyWeekGroup {
   items: VerifyItem[];
 }
 
+// ---- Manual tambah materi types ----
+interface ManualCPEntry {
+  id: string;
+  tpKey: string; // e.g. "TP 1"
+  jp: string;
+}
+
+interface ManualWeekGroup {
+  weekId: string;
+  pekanKe: number;
+  jenis: string;
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  isLibur: boolean;
+  cps: ManualCPEntry[];
+}
+
 // ---- Week type helpers ----
 const isKBMWeek = (jenis: string) => jenis.toLowerCase() === "kbm";
 const isExamWeek = (jenis: string) => {
@@ -290,6 +307,11 @@ export default function Prosem() {
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
 
+  // ---- Manual tambah materi state ----
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualGroups, setManualGroups] = useState<ManualWeekGroup[]>([]);
+  const [manualLoading, setManualLoading] = useState(false);
+
   const subjectName = (id: string) => subjects?.find((s: any) => s.id === id)?.name ?? "-";
   const weekLabel = (id: string) => {
     const w = weeks?.find((x: any) => x.id === id);
@@ -392,6 +414,136 @@ export default function Prosem() {
       },
     },
   );
+
+  // ---- Manual dialog helpers ----
+  const openManualDialog = () => {
+    if (!weeks?.length) return;
+    const sorted = [...(weeks as any[])].sort((a: any, b: any) => a.pekanKe - b.pekanKe);
+    const existingItems = (items as any[]) ?? [];
+
+    const groups: ManualWeekGroup[] = sorted.map((w: any) => {
+      const weekItems = existingItems.filter((it: any) => it.weekId === w.id);
+      const isLiburWeek = weekItems.length === 1 && weekItems[0].materi === "Libur";
+
+      let cps: ManualCPEntry[] = [];
+      if (!isLiburWeek && weekItems.length > 0 && isKBMWeek(w.jenis ?? "")) {
+        cps = weekItems.map((it: any) => ({
+          id: nextId(),
+          tpKey: it.kd ?? "",
+          jp: it.jp != null ? String(it.jp) : "",
+        }));
+      } else if (isKBMWeek(w.jenis ?? "") && weekItems.length === 0) {
+        cps = [{ id: nextId(), tpKey: "", jp: "" }];
+      }
+
+      return {
+        weekId: w.id,
+        pekanKe: w.pekanKe,
+        jenis: w.jenis ?? "KBM",
+        tanggalMulai: w.tanggalMulai,
+        tanggalSelesai: w.tanggalSelesai,
+        isLibur: isLiburWeek,
+        cps,
+      };
+    });
+
+    setManualGroups(groups);
+    setManualOpen(true);
+  };
+
+  const updateManualGroup = (weekId: string, updater: (g: ManualWeekGroup) => ManualWeekGroup) => {
+    setManualGroups((prev) => prev.map((g) => (g.weekId === weekId ? updater(g) : g)));
+  };
+
+  const toggleManualLibur = (weekId: string, isLibur: boolean) => {
+    updateManualGroup(weekId, (g) => ({
+      ...g,
+      isLibur,
+      cps: isLibur ? [] : [{ id: nextId(), tpKey: "", jp: "" }],
+    }));
+  };
+
+  const addCPToWeek = (weekId: string) => {
+    updateManualGroup(weekId, (g) => {
+      if (g.cps.length >= 3) return g;
+      return { ...g, cps: [...g.cps, { id: nextId(), tpKey: "", jp: "" }] };
+    });
+  };
+
+  const removeCPFromWeek = (weekId: string, cpId: string) => {
+    updateManualGroup(weekId, (g) => ({ ...g, cps: g.cps.filter((c) => c.id !== cpId) }));
+  };
+
+  const updateCP = (weekId: string, cpId: string, field: keyof ManualCPEntry, value: string) => {
+    updateManualGroup(weekId, (g) => ({
+      ...g,
+      cps: g.cps.map((c) => (c.id === cpId ? { ...c, [field]: value } : c)),
+    }));
+  };
+
+  const handleManualSave = async () => {
+    if (!openProsemId) return;
+    setManualLoading(true);
+    try {
+      const existingItems = (items as any[]) ?? [];
+      const newItems: { weekId: string; kd?: string; materi: string; jp?: number; catatan?: string }[] = [];
+
+      // Collect IDs to delete (existing items for KBM weeks we're touching)
+      const idsToDelete: string[] = [];
+      for (const group of manualGroups) {
+        if (!isKBMWeek(group.jenis)) continue;
+        const weekExisting = existingItems.filter((it: any) => it.weekId === group.weekId);
+        weekExisting.forEach((it: any) => idsToDelete.push(it.id));
+
+        if (group.isLibur) {
+          newItems.push({ weekId: group.weekId, materi: "Libur", catatan: "Libur" });
+        } else {
+          group.cps.forEach((cp) => {
+            if (!cp.tpKey) return;
+            const tp = (tpList as any[] | undefined)?.find((t: any) => `TP ${t.tpNumber}` === cp.tpKey);
+            newItems.push({
+              weekId: group.weekId,
+              kd: cp.tpKey,
+              materi: tp?.description ?? cp.tpKey,
+              jp: cp.jp ? Number(cp.jp) : undefined,
+            });
+          });
+        }
+      }
+
+      // Delete existing items for touched weeks
+      for (const id of idsToDelete) {
+        await fetch(`/api/prosem-items/${id}`, { method: "DELETE", credentials: "include" });
+      }
+
+      // Bulk insert new items
+      if (newItems.length > 0) {
+        const res = await fetch("/api/prosem-items/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ prosemId: openProsemId, items: newItems }),
+        });
+        if (!res.ok) throw new Error("Gagal menyimpan");
+      }
+
+      const saved = newItems.filter((it) => it.materi !== "Libur").length;
+      toast({ title: "Berhasil", description: `${saved} materi berhasil disimpan.` });
+      setManualOpen(false);
+      setManualGroups([]);
+      invalidateItems();
+    } catch {
+      toast({ variant: "destructive", title: "Gagal menyimpan", description: "Terjadi kesalahan" });
+    } finally {
+      setManualLoading(false);
+    }
+  };
+
+  const manualFilledCount = manualGroups.reduce((acc, g) => {
+    if (!isKBMWeek(g.jenis)) return acc;
+    if (g.isLibur) return acc;
+    return acc + g.cps.filter((c) => c.tpKey).length;
+  }, 0);
 
   // ---- Download Template ----
   const handleDownloadTemplate = () => {
@@ -877,7 +1029,7 @@ export default function Prosem() {
                 />
 
                 {/* Tambah Manual */}
-                <Button variant="outline" onClick={openNewItem} disabled={!weeks?.length}>
+                <Button variant="outline" onClick={openManualDialog} disabled={!weeks?.length}>
                   <Plus className="w-4 h-4 mr-2" /> Tambah Materi
                 </Button>
               </div>
@@ -914,7 +1066,7 @@ export default function Prosem() {
                   ) : !items?.length ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                        Belum ada materi. Tambah manual atau gunakan Impor AI.
+                        Belum ada materi. Klik "Tambah Materi" untuk mengisi materi tiap pekan.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -950,7 +1102,198 @@ export default function Prosem() {
         )}
       </div>
 
-      {/* ---- Dialog: Tambah/Edit Materi Manual ---- */}
+      {/* ---- Dialog: Tambah Materi (week-by-week) ---- */}
+      <Dialog
+        open={manualOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setManualOpen(false);
+            setManualGroups([]);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-4 h-4 text-primary" />
+              Tambah Materi — {manualGroups.length} pekan
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground -mt-1">
+            Pilih CP untuk setiap pekan KBM. Satu pekan bisa memuat 1–3 CP. Isi Jam Pelajaran secara manual.
+          </p>
+
+          {/* Scrollable week list */}
+          <div className="border rounded-lg overflow-y-auto flex-1 divide-y divide-gray-100">
+            {manualGroups.map((group) => {
+              const exam = isExamWeek(group.jenis);
+              const kbm = isKBMWeek(group.jenis);
+              const calLibur = !kbm && !exam;
+
+              return (
+                <div
+                  key={group.weekId}
+                  className={cn(
+                    "text-sm",
+                    exam && "bg-red-50/40",
+                    calLibur && "bg-gray-50/60",
+                    kbm && group.isLibur && "bg-orange-50/40",
+                  )}
+                >
+                  {/* Week header row */}
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <span className="font-semibold w-16 shrink-0">P.{group.pekanKe}</span>
+                    <span className="text-xs text-muted-foreground w-28 shrink-0">
+                      {fmtDate(group.tanggalMulai)} – {fmtDate(group.tanggalSelesai)}
+                    </span>
+                    <JenisBadge jenis={group.jenis} />
+
+                    {/* Right side */}
+                    {(exam || calLibur) && (
+                      <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+                        <Lock className="w-3 h-3" /> Tidak ada KBM
+                      </span>
+                    )}
+                    {kbm && group.isLibur && (
+                      <button
+                        type="button"
+                        className="ml-auto text-xs text-orange-600 hover:underline"
+                        onClick={() => toggleManualLibur(group.weekId, false)}
+                      >
+                        Batalkan Libur
+                      </button>
+                    )}
+                    {kbm && !group.isLibur && group.cps.length === 0 && (
+                      <button
+                        type="button"
+                        className="ml-auto text-xs text-orange-500 hover:underline"
+                        onClick={() => toggleManualLibur(group.weekId, true)}
+                      >
+                        Tandai Libur
+                      </button>
+                    )}
+                  </div>
+
+                  {/* KBM libur state */}
+                  {kbm && group.isLibur && (
+                    <div className="px-3 pb-2">
+                      <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                        <CalendarOff className="w-3 h-3" /> Libur / Tidak ada KBM
+                      </span>
+                    </div>
+                  )}
+
+                  {/* KBM CP entries */}
+                  {kbm && !group.isLibur && (
+                    <div className="px-3 pb-2 space-y-1.5">
+                      {group.cps.map((cp, idx) => (
+                        <div key={cp.id} className="flex items-center gap-1.5">
+                          <span className="text-xs text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
+                          {/* CP dropdown */}
+                          <div className="flex-1 min-w-0">
+                            <Select
+                              value={cp.tpKey || "__none__"}
+                              onValueChange={(v) =>
+                                updateCP(group.weekId, cp.id, "tpKey", v === "__none__" ? "" : v)
+                              }
+                            >
+                              <SelectTrigger className="h-7 text-xs">
+                                <SelectValue placeholder="Pilih CP…" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-64 overflow-y-auto">
+                                <SelectItem value="__none__">— Pilih CP —</SelectItem>
+                                {(tpList as any[] | undefined)?.map((tp: any) => (
+                                  <SelectItem key={tp.id} value={`TP ${tp.tpNumber}`}>
+                                    LM {tp.lingkupMateri} · TP {tp.tpNumber} — {tp.description}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {/* JP input */}
+                          <Input
+                            className="h-7 text-xs w-14 shrink-0"
+                            type="number"
+                            min={0}
+                            placeholder="JP"
+                            title="Jam Pelajaran"
+                            value={cp.jp}
+                            onChange={(e) => updateCP(group.weekId, cp.id, "jp", e.target.value)}
+                          />
+                          {/* Remove CP */}
+                          <button
+                            type="button"
+                            className="text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => removeCPFromWeek(group.weekId, cp.id)}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+
+                      {/* Add CP button (max 3) */}
+                      {group.cps.length < 3 && (
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
+                          onClick={() => addCPToWeek(group.weekId)}
+                        >
+                          <Plus className="w-3 h-3" /> Tambah CP
+                          {group.cps.length === 0 && (
+                            <span className="ml-1 text-orange-500">
+                              (atau{" "}
+                              <span
+                                className="underline cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleManualLibur(group.weekId, true);
+                                }}
+                              >
+                                tandai Libur
+                              </span>
+                              )
+                            </span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {manualGroups.length === 0 && (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                Tidak ada data pekan.
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 pt-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setManualOpen(false);
+                setManualGroups([]);
+              }}
+              disabled={manualLoading}
+            >
+              Batal
+            </Button>
+            <Button onClick={handleManualSave} disabled={manualLoading || manualFilledCount === 0}>
+              {manualLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan…
+                </>
+              ) : (
+                `Simpan ${manualFilledCount} CP`
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Dialog: Edit Materi (single item) ---- */}
       <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
         <DialogContent>
           <DialogHeader>
