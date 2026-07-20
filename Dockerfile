@@ -37,6 +37,11 @@ ENV BASE_PATH=/
 # `tsc` processes roughly double the peak memory used during this step,
 # which matters on a small-RAM VPS. Run `pnpm run build` (with typecheck)
 # locally or in CI before deploying.
+#
+# Cap Node.js heap at 768 MB so the Vite build does not get OOM-killed on a
+# RAM-constrained VPS.  768 MB leaves headroom for the OS and Docker overhead
+# on a 2 GB machine while still giving Vite plenty of room to bundle.
+ENV NODE_OPTIONS="--max-old-space-size=768"
 RUN pnpm run build:app
 
 # ---------- Stage 2: runtime ----------

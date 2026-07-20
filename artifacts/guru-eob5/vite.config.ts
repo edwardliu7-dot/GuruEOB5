@@ -31,7 +31,8 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    runtimeErrorOverlay(),
+    // Dev-only overlay — skip in production to reduce build overhead.
+    ...(process.env.NODE_ENV !== "production" ? [runtimeErrorOverlay()] : []),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
@@ -57,6 +58,9 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Disable sourcemaps in production — they roughly double Rollup's peak
+    // memory usage and are not needed at runtime on the VPS.
+    sourcemap: false,
   },
   server: {
     port,
