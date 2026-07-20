@@ -52,10 +52,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Pencil, ChevronLeft, Download, Sparkles, Loader2, X, Lock, CalendarOff } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronLeft, Download, Sparkles, Loader2, X, Lock, CalendarOff, Table2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { ProsemDisdikView } from "@/components/prosem-disdik-view";
 
 const prosemSchema = z.object({
   subjectId: z.string().min(1, "Mata pelajaran harus dipilih"),
@@ -317,6 +318,7 @@ export default function Prosem() {
   const [manualOpen, setManualOpen] = useState(false);
   const [manualGroups, setManualGroups] = useState<ManualWeekGroup[]>([]);
   const [manualLoading, setManualLoading] = useState(false);
+  const [disdikOpen, setDisdikOpen] = useState(false);
 
   const subjectName = (id: string) => subjects?.find((s: any) => s.id === id)?.name ?? "-";
   const weekLabel = (id: string) => {
@@ -410,6 +412,22 @@ export default function Prosem() {
   };
 
   const openProsem = prosemList?.find((p: any) => p.id === openProsemId);
+  const selectedCalendarData = calendars?.find((c: any) => c.id === selectedCalendar) as
+    | { tahunAjaran: string; semester: string }
+    | undefined;
+
+  // ---- Completeness check: every KBM week has at least one non-libur item ----
+  const kbmWeeks = (weeks as any[] | undefined)?.filter((w: any) => isKBMWeek(w.jenis)) ?? [];
+  const kbmWeekIds = new Set(kbmWeeks.map((w: any) => w.id));
+  const filledKbmWeekIds = new Set(
+    (items as any[] | undefined)
+      ?.filter((it: any) => kbmWeekIds.has(it.weekId) && it.materi?.toLowerCase() !== "libur")
+      .map((it: any) => it.weekId) ?? [],
+  );
+  const prosemIsComplete =
+    kbmWeeks.length > 0 &&
+    (items as any[] | undefined) != null &&
+    kbmWeeks.every((w: any) => filledKbmWeekIds.has(w.id));
 
   const { data: tpList } = useListTujuanPembelajaran(
     { subjectId: openProsem?.subjectId || undefined, calendarId: selectedCalendar || undefined },
@@ -1113,6 +1131,18 @@ export default function Prosem() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {/* Lihat Format Disdik */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDisdikOpen(true)}
+                  disabled={!items?.length}
+                  title={prosemIsComplete ? "Lihat prosem format disdik" : "Isi semua pekan KBM terlebih dahulu untuk melihat format disdik lengkap"}
+                >
+                  <Table2 className="w-4 h-4 mr-1.5" />
+                  {prosemIsComplete ? "Lihat Disdik" : "Preview Disdik"}
+                </Button>
+
                 {/* Download Template */}
                 <Button variant="ghost" size="sm" onClick={handleDownloadTemplate} title="Download format Excel">
                   <Download className="w-4 h-4 mr-1.5" /> Format
@@ -1760,6 +1790,18 @@ export default function Prosem() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ---- Disdik View Dialog ---- */}
+      <ProsemDisdikView
+        open={disdikOpen}
+        onClose={() => setDisdikOpen(false)}
+        prosem={openProsem ?? null}
+        items={(items as any[]) ?? []}
+        weeks={(weeks as any[]) ?? []}
+        subjectName={openProsem ? subjectName(openProsem.subjectId) : ""}
+        tahunAjaran={selectedCalendarData?.tahunAjaran ?? ""}
+        semester={selectedCalendarData?.semester ?? ""}
+      />
     </Layout>
   );
 }
