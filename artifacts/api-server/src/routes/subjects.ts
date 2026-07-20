@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db, subjectsTable, type Guru } from "@workspace/db";
 import {
   ListSubjectsResponse,
@@ -20,10 +20,13 @@ async function syncSubjectFolders(guru: Guru): Promise<void> {
   const kelasDiampu = guru.kelasDiampu ?? [];
   if (mapel.length === 0 || kelasDiampu.length === 0) return;
 
+  // Fetch ALL rows for this teacher — including soft-deleted ones — so we never
+  // recreate a subject the teacher intentionally deleted.
   const existing = await db
     .select({ name: subjectsTable.name })
     .from(subjectsTable)
     .where(eq(subjectsTable.teacherId, guru.id));
+
   const existingNames = new Set(existing.map((s) => s.name));
 
   const missing: { name: string; teacherId: string }[] = [];
@@ -50,10 +53,11 @@ router.get("/subjects", requireAuth, async (req, res): Promise<void> => {
 
   await syncSubjectFolders(guru);
 
+  // Only return subjects that have NOT been soft-deleted.
   const subjects = await db
     .select()
     .from(subjectsTable)
-    .where(eq(subjectsTable.teacherId, guru.id));
+    .where(and(eq(subjectsTable.teacherId, guru.id), isNull(subjectsTable.deletedAt)));
   res.json(ListSubjectsResponse.parse(subjects));
 });
 
@@ -98,11 +102,17 @@ router.patch("/subjects/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   // Never trust a client-supplied teacherId -- keep ownership bound to the caller,
-  // and only allow updating subjects the caller already owns.
+  // and only allow updating subjects the caller already owns (and haven't deleted).
   const [subject] = await db
     .update(subjectsTable)
     .set({ ...parsed.data, teacherId: guru.id })
-    .where(and(eq(subjectsTable.id, params.data.id), eq(subjectsTable.teacherId, guru.id)))
+    .where(
+      and(
+        eq(subjectsTable.id, params.data.id),
+        eq(subjectsTable.teacherId, guru.id),
+        isNull(subjectsTable.deletedAt),
+      ),
+    )
     .returning();
 
   if (!subject) {
@@ -126,9 +136,17 @@ router.delete("/subjects/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  // Soft-delete: set deleted_at so syncSubjectFolders never recreates this subject.
   const [subject] = await db
-    .delete(subjectsTable)
-    .where(and(eq(subjectsTable.id, params.data.id), eq(subjectsTable.teacherId, guru.id)))
+    .update(subjectsTable)
+    .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(subjectsTable.id, params.data.id),
+        eq(subjectsTable.teacherId, guru.id),
+        isNull(subjectsTable.deletedAt),
+      ),
+    )
     .returning();
 
   if (!subject) {

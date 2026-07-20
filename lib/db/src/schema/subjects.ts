@@ -9,6 +9,7 @@ export const subjectsTable = pgTable(
     name: text("name").notNull(),
     teacherId: text("teacher_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [uniqueIndex("subjects_teacher_name_unique").on(t.teacherId, t.name)],
 );
