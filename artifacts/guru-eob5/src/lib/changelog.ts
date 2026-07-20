@@ -20,6 +20,25 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: "20260720",
+    date: "20 Juli 2026",
+    title: "Tema, Font & Prosem",
+    items: [
+      {
+        tag: "Baru",
+        text: "Pengaturan Tampilan: pilih dari 5 tema warna (Navy, Tosca, Senja, Indigo, Gelap) dan 5 pilihan font — preferensi tersimpan per akun.",
+      },
+      {
+        tag: "Peningkatan",
+        text: "Tambah Materi Prosem: form baru per-pekan dengan input CP & JP per minggu, mendukung hingga 3 CP sekaligus dalam satu pekan.",
+      },
+      {
+        tag: "Peningkatan",
+        text: "Impor AI Prosem: mendukung semua format file (Excel, PDF, Word, gambar, teks) — hasil impor langsung terbuka di form untuk dikonfirmasi sebelum disimpan.",
+      },
+    ],
+  },
+  {
     id: "20250720",
     date: "20 Juli 2025",
     title: "Info Pekanan & Prosem",
