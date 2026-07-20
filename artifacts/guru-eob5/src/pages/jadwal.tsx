@@ -229,16 +229,20 @@ function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void })
 
   const previewMutation = useImportJadwalPreview();
   const bulkMutation = useBulkCreateJadwal();
+  const { data: subjects } = useListSubjects();
 
   const [step, setStep] = useState<ImportStep>("upload");
   const [items, setItems] = useState<JadwalImportPreviewItem[]>([]);
-  // track which unmatched rows the user has excluded
+  // track which matched rows the user has excluded
   const [excluded, setExcluded] = useState<Set<number>>(new Set());
+  // track user-selected subject for unmatched rows (index → subjectId)
+  const [overrides, setOverrides] = useState<Map<number, string>>(new Map());
 
   function resetState() {
     setStep("upload");
     setItems([]);
     setExcluded(new Set());
+    setOverrides(new Map());
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -283,14 +287,22 @@ function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void })
 
   async function handleSave() {
     const toSave = items
-      .filter((item, idx) => item.matched && item.subjectId && !excluded.has(idx))
-      .map((item) => ({
-        subjectId: item.subjectId!,
-        kelas: item.kelas,
-        hari: item.hari,
-        jamMulai: item.jamMulai,
-        jamSelesai: item.jamSelesai,
-      }));
+      .filter((item, idx) => {
+        if (excluded.has(idx)) return false;
+        if (item.matched && item.subjectId) return true;
+        return overrides.has(idx); // unmatched but user picked a subject
+      })
+      .map((item, _, arr) => {
+        const idx = items.indexOf(item);
+        const subjectId = item.subjectId ?? overrides.get(idx)!;
+        return {
+          subjectId,
+          kelas: item.kelas,
+          hari: item.hari,
+          jamMulai: item.jamMulai,
+          jamSelesai: item.jamSelesai,
+        };
+      });
 
     if (toSave.length === 0) {
       toast({ title: "Tidak ada data untuk disimpan", variant: "destructive" });
@@ -317,8 +329,10 @@ function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void })
     });
   }
 
-  const matchedCount = items.filter((item, idx) => item.matched && !excluded.has(idx)).length;
-  const unmatchedCount = items.filter((item) => !item.matched).length;
+  const matchedCount = items.filter((item, idx) =>
+    !excluded.has(idx) && (item.matched || overrides.has(idx))
+  ).length;
+  const unmatchedCount = items.filter((item, idx) => !item.matched && !overrides.has(idx)).length;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
@@ -379,7 +393,7 @@ function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void })
               {unmatchedCount > 0 && (
                 <span className="flex items-center gap-1.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300 px-3 py-1 font-medium">
                   <AlertCircle className="h-3.5 w-3.5" />
-                  {unmatchedCount} tidak cocok — tidak akan disimpan
+                  {unmatchedCount} belum dipilih mapelnya
                 </span>
               )}
             </div>
@@ -436,7 +450,27 @@ function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void })
                           {item.matched ? (
                             <span className="text-xs font-medium text-foreground">{item.subjectName}</span>
                           ) : (
-                            <span className="text-xs text-orange-600 italic">Tidak ditemukan</span>
+                            <Select
+                              value={overrides.get(idx) ?? ""}
+                              onValueChange={(val) =>
+                                setOverrides((prev) => {
+                                  const next = new Map(prev);
+                                  if (val) next.set(idx, val); else next.delete(idx);
+                                  return next;
+                                })
+                              }
+                            >
+                              <SelectTrigger className="h-7 text-xs w-44">
+                                <SelectValue placeholder="Pilih mapel…" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(subjects ?? []).map((s) => (
+                                  <SelectItem key={s.id} value={s.id} className="text-xs">
+                                    {s.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           )}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
