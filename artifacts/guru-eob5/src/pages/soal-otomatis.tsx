@@ -7,7 +7,8 @@ import {
   useDeleteSoalOtomatis,
   getGetSoalOtomatisQueryKey,
 } from "@workspace/api-client-react";
-import { useState } from "react";
+import { useState, Component } from "react";
+import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,11 +17,47 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Download, Trash2, Loader2, ListChecks, Clock } from "lucide-react";
+import { Sparkles, Download, Trash2, Loader2, ListChecks, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SoalOtomatis } from "@workspace/api-client-react";
+
+function safeFormat(value: unknown, fmt: string): string {
+  try {
+    if (!value) return "-";
+    const d = new Date(value as string);
+    if (isNaN(d.getTime())) return "-";
+    return format(d, fmt);
+  } catch {
+    return "-";
+  }
+}
+
+class PreviewErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; message: string }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+  static getDerivedStateFromError(error: unknown) {
+    return { hasError: true, message: String(error) };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3 text-muted-foreground">
+          <AlertTriangle className="w-10 h-10 text-destructive/60" />
+          <p className="font-medium text-destructive">Gagal menampilkan preview</p>
+          <p className="text-xs max-w-sm">{this.state.message}</p>
+          <Button variant="outline" size="sm" onClick={() => this.setState({ hasError: false, message: "" })}>
+            Coba lagi
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const formSchema = z.object({
   subjectId: z.string().min(1, "Mata pelajaran harus dipilih"),
@@ -35,7 +72,15 @@ type FormValues = z.infer<typeof formSchema>;
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
 function SoalPreview({ soal }: { soal: SoalOtomatis }) {
-  const content = soal.content as any;
+  const content = (soal.content ?? {}) as any;
+  if (!content || typeof content !== "object" || Array.isArray(content)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-2 text-muted-foreground">
+        <AlertTriangle className="w-8 h-8 text-amber-500" />
+        <p>Konten soal tidak dapat ditampilkan.</p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-5 text-sm">
       <h2 className="text-xl font-bold font-serif text-center">{content.judul}</h2>
@@ -266,7 +311,7 @@ export default function SoalOtomatisPage() {
                       <div className="min-w-0">
                         <p className="font-medium text-sm truncate">{h.materi}</p>
                         <p className="text-xs text-muted-foreground">
-                          {h.jumlahSoal} soal &middot; {h.jenisSoal === "pilihan_ganda" ? "PG" : "Esai"} &middot; {format(new Date(h.createdAt), "dd MMM yyyy")}
+                          {h.jumlahSoal} soal &middot; {h.jenisSoal === "pilihan_ganda" ? "PG" : "Esai"} &middot; {safeFormat(h.createdAt, "dd MMM yyyy")}
                         </p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
@@ -306,7 +351,9 @@ export default function SoalOtomatisPage() {
                     Unduh .docx
                   </Button>
                 </div>
-                <SoalPreview soal={selectedSoal} />
+                <PreviewErrorBoundary>
+                  <SoalPreview soal={selectedSoal} />
+                </PreviewErrorBoundary>
               </>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground py-20">

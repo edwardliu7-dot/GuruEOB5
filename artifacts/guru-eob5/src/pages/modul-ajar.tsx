@@ -7,7 +7,8 @@ import {
   useDeleteModulAjar,
   getGetModulAjarQueryKey,
 } from "@workspace/api-client-react";
-import { useState } from "react";
+import { useState, Component } from "react";
+import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,11 +17,49 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Download, Trash2, Loader2, FileText, Clock } from "lucide-react";
+import { Sparkles, Download, Trash2, Loader2, FileText, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ModulAjar } from "@workspace/api-client-react";
+
+/** Safe date formatter — never throws even on null/undefined/invalid dates */
+function safeFormat(value: unknown, fmt: string): string {
+  try {
+    if (!value) return "-";
+    const d = new Date(value as string);
+    if (isNaN(d.getTime())) return "-";
+    return format(d, fmt);
+  } catch {
+    return "-";
+  }
+}
+
+/** Error boundary that shows a friendly message instead of crashing the whole page */
+class PreviewErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; message: string }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+  static getDerivedStateFromError(error: unknown) {
+    return { hasError: true, message: String(error) };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3 text-muted-foreground">
+          <AlertTriangle className="w-10 h-10 text-destructive/60" />
+          <p className="font-medium text-destructive">Gagal menampilkan preview</p>
+          <p className="text-xs max-w-sm">{this.state.message}</p>
+          <Button variant="outline" size="sm" onClick={() => this.setState({ hasError: false, message: "" })}>
+            Coba lagi
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const formSchema = z.object({
   subjectId: z.string().min(1, "Mata pelajaran harus dipilih"),
@@ -32,10 +71,19 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 function ModulPreview({ modul }: { modul: ModulAjar }) {
-  const content = modul.content as any;
-  const iu = content.informasiUmum ?? {};
-  const ki = content.komponenInti ?? {};
-  const lp = content.lampiran ?? {};
+  const content = (modul.content ?? {}) as any;
+  // Guard: if content is not a plain object (e.g. null, string, etc.) show fallback
+  if (!content || typeof content !== "object" || Array.isArray(content)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-2 text-muted-foreground">
+        <AlertTriangle className="w-8 h-8 text-amber-500" />
+        <p>Konten modul ajar tidak dapat ditampilkan.</p>
+      </div>
+    );
+  }
+  const iu = (content.informasiUmum ?? {}) as any;
+  const ki = (content.komponenInti ?? {}) as any;
+  const lp = (content.lampiran ?? {}) as any;
 
   return (
     <div className="space-y-6 text-sm">
@@ -288,7 +336,7 @@ export default function ModulAjarPage() {
                     >
                       <div className="min-w-0">
                         <p className="font-medium text-sm truncate">{h.materi}</p>
-                        <p className="text-xs text-muted-foreground">{format(new Date(h.createdAt), "dd MMM yyyy HH:mm")}</p>
+                        <p className="text-xs text-muted-foreground">{safeFormat(h.createdAt, "dd MMM yyyy HH:mm")}</p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <Button
@@ -327,7 +375,9 @@ export default function ModulAjarPage() {
                     Unduh .docx
                   </Button>
                 </div>
-                <ModulPreview modul={selectedModul} />
+                <PreviewErrorBoundary>
+                  <ModulPreview modul={selectedModul} />
+                </PreviewErrorBoundary>
               </>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground py-20">
