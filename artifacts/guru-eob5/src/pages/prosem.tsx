@@ -52,9 +52,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Pencil, ChevronLeft, Download, Sparkles, Loader2, X } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronLeft, Download, Sparkles, Loader2, X, Lock, CalendarOff } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 const prosemSchema = z.object({
   subjectId: z.string().min(1, "Mata pelajaran harus dipilih"),
@@ -69,15 +70,162 @@ const itemSchema = z.object({
   catatan: z.string().optional(),
 });
 
-// ---- Types for AI import verify ----
+// ---- Types ----
+interface MateriEntry {
+  bab: string;
+  materi: string;
+  weekSlot?: number; // 1-based col slot (1=July wk1 … 24=Dec wk4), only if marked
+}
+
 interface VerifyItem {
-  id: string; // ephemeral key
-  weekId: string;
+  id: string;
   bab: string;
   materi: string;
   jp: string;
   catatan: string;
 }
+
+interface VerifyWeekGroup {
+  weekId: string;
+  pekanKe: number;
+  jenis: string;
+  tanggalMulai: string;
+  tanggalSelesai: string;
+  isLibur: boolean; // user toggles this for KBM weeks
+  items: VerifyItem[];
+}
+
+// ---- Week type helpers ----
+const isKBMWeek = (jenis: string) => jenis.toLowerCase() === "kbm";
+const isExamWeek = (jenis: string) => {
+  const n = jenis.toUpperCase().replace(/\s+/g, "");
+  return n === "STS" || n === "SAS";
+};
+const isEditableWeek = (jenis: string) => isKBMWeek(jenis);
+
+// ---- Date formatter ----
+const fmtDate = (s: string) => {
+  try {
+    return new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+  } catch {
+    return s;
+  }
+};
+
+// ---- Client-side Excel parser ----
+function parseExcelStructure(rows: string[][]): {
+  materiList: MateriEntry[];
+  hasMarks: boolean;
+} {
+  // Find month-header row and week-number row
+  let weekRow = -1;
+  for (let r = 0; r < Math.min(rows.length, 10); r++) {
+    const joined = rows[r].join("").toLowerCase();
+    if (joined.includes("juli") || joined.includes("agustus") || joined.includes("september")) {
+      // Next row should be the 1,2,3,4 repeating week-number row
+      if (r + 1 < rows.length) {
+        const candidate = rows[r + 1];
+        const nums = candidate.slice(3).map(Number).filter((v) => v >= 1 && v <= 4);
+        if (nums.length >= 4) {
+          weekRow = r + 1;
+          break;
+        }
+      }
+    }
+  }
+
+  const dataStart = weekRow >= 0 ? weekRow + 1 : 5;
+  const EXAM_VALS = new Set(["STS", "SAS", "S T S", "S A S", "STSS", "SASS"]);
+
+  const materiList: MateriEntry[] = [];
+  let hasMarks = false;
+  let currentBab = "";
+
+  for (let r = dataStart; r < rows.length; r++) {
+    const row = rows[r];
+    const materi = row[2]?.trim() ?? "";
+    if (!materi) continue;
+
+    // Update current bab from col 1 when filled
+    if (row[1]?.trim()) currentBab = row[1].trim();
+
+    // Check week columns (col 3 onwards) for explicit marks
+    let weekSlot: number | undefined;
+    for (let c = 3; c < row.length; c++) {
+      const val = row[c]?.trim() ?? "";
+      if (!val) continue;
+      const normalized = val.toUpperCase().replace(/\s+/g, "");
+      // Skip STS/SAS markers — they're not materi marks
+      if (EXAM_VALS.has(normalized)) continue;
+      // Any other non-empty value = a materi mark
+      weekSlot = c - 3 + 1; // 1-based slot (col 3 = slot 1)
+      hasMarks = true;
+      break;
+    }
+
+    materiList.push({ bab: currentBab, materi, weekSlot });
+  }
+
+  return { materiList, hasMarks };
+}
+
+// ---- Build week groups from AI/deterministic result ----
+function buildVerifyGroups(
+  aiItems: { pekanKe: number; bab: string; materi: string; jp?: number }[],
+  allWeeks: { id: string; pekanKe: number; jenis: string; tanggalMulai: string; tanggalSelesai: string }[],
+): VerifyWeekGroup[] {
+  const sorted = [...allWeeks].sort((a, b) => a.pekanKe - b.pekanKe);
+
+  // Group items by pekanKe
+  const byPekan = new Map<number, VerifyItem[]>();
+  aiItems.forEach((item, idx) => {
+    const arr = byPekan.get(item.pekanKe) ?? [];
+    arr.push({
+      id: `ai-${idx}`,
+      bab: item.bab ?? "",
+      materi: item.materi ?? "",
+      jp: item.jp != null ? String(item.jp) : "2",
+      catatan: item.bab ?? "",
+    });
+    byPekan.set(item.pekanKe, arr);
+  });
+
+  return sorted.map((w) => ({
+    weekId: w.id,
+    pekanKe: w.pekanKe,
+    jenis: w.jenis,
+    tanggalMulai: w.tanggalMulai,
+    tanggalSelesai: w.tanggalSelesai,
+    isLibur: false,
+    items: byPekan.get(w.pekanKe) ?? [],
+  }));
+}
+
+// ---- Jenis badge ----
+function JenisBadge({ jenis }: { jenis: string }) {
+  const n = jenis.toUpperCase().replace(/\s+/g, "");
+  if (n === "KBM")
+    return (
+      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-700">
+        KBM
+      </span>
+    );
+  if (n === "STS" || n === "SAS")
+    return (
+      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-100 text-red-700">
+        {jenis}
+      </span>
+    );
+  return (
+    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+      {jenis}
+    </span>
+  );
+}
+
+// ---- Counter helper ----
+let _nextId = 0;
+const nextId = () => `new-${++_nextId}`;
 
 export default function Prosem() {
   const { toast } = useToast();
@@ -135,12 +283,10 @@ export default function Prosem() {
 
   // ---- AI import state ----
   const importFileRef = useRef<HTMLInputElement>(null);
-  const [importSheets, setImportSheets] = useState<
-    { name: string; rows: string[][] }[]
-  >([]);
+  const [importSheets, setImportSheets] = useState<{ name: string; rows: string[][] }[]>([]);
   const [sheetPickerOpen, setSheetPickerOpen] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
-  const [verifyItems, setVerifyItems] = useState<VerifyItem[]>([]);
+  const [verifyGroups, setVerifyGroups] = useState<VerifyWeekGroup[]>([]);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
 
@@ -280,7 +426,6 @@ export default function Prosem() {
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // reset input so same file can be re-picked
     e.target.value = "";
 
     const reader = new FileReader();
@@ -307,62 +452,92 @@ export default function Prosem() {
           return;
         }
         if (parsed.length === 1) {
-          // Single sheet → go straight to AI
-          runImportAI(parsed[0].rows);
+          runImport(parsed[0].rows);
         } else {
-          // Multiple sheets → ask user to pick
           setImportSheets(parsed);
           setSheetPickerOpen(true);
         }
       } catch {
-        toast({ variant: "destructive", title: "Gagal membaca file", description: "Pastikan file berformat .xlsx atau .xls yang valid." });
+        toast({
+          variant: "destructive",
+          title: "Gagal membaca file",
+          description: "Pastikan file berformat .xlsx atau .xls yang valid.",
+        });
       }
     };
     reader.readAsArrayBuffer(file);
   };
 
-  const runImportAI = async (rows: string[][]) => {
+  const runImport = async (rows: string[][]) => {
     if (!openProsemId || !weeks?.length) return;
+
+    const { materiList, hasMarks } = parseExcelStructure(rows);
+
+    if (!materiList.length) {
+      toast({
+        variant: "destructive",
+        title: "Tidak ada data",
+        description: "Tidak ditemukan materi dalam sheet ini.",
+      });
+      return;
+    }
+
+    const allWeeks = weeks as any[];
+
+    if (!hasMarks) {
+      // --- Deterministic distribution: 1 materi → 1 KBM week, sequential ---
+      const kbmWeeks = allWeeks
+        .filter((w) => w.jenis?.toLowerCase() === "kbm")
+        .sort((a, b) => a.pekanKe - b.pekanKe);
+
+      const aiItems = materiList.map((item, idx) => ({
+        pekanKe:
+          kbmWeeks[Math.min(idx, Math.max(kbmWeeks.length - 1, 0))]?.pekanKe ??
+          allWeeks[0]?.pekanKe ??
+          1,
+        bab: item.bab,
+        materi: item.materi,
+        jp: 2,
+      }));
+
+      const groups = buildVerifyGroups(aiItems, allWeeks);
+      setVerifyGroups(groups);
+      setVerifyOpen(true);
+      return;
+    }
+
+    // --- AI path: file has explicit marks, call backend AI ---
     setImportLoading(true);
     try {
+      const weeksPayload = allWeeks.map((w) => ({
+        id: w.id,
+        pekanKe: w.pekanKe,
+        jenis: w.jenis ?? "KBM",
+      }));
+
       const res = await fetch("/api/prosem/import-ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          rows,
-          weeks: weeks.map((w: any) => ({ id: w.id, pekanKe: w.pekanKe })),
-          prosemId: openProsemId,
-        }),
+        body: JSON.stringify({ materiList, hasMarks: true, weeks: weeksPayload, prosemId: openProsemId }),
       });
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error((err as any).error ?? "Gagal menganalisis file");
       }
+
       const { items: aiItems } = (await res.json()) as {
         items: { pekanKe: number; bab: string; materi: string; jp?: number }[];
       };
 
       if (!aiItems?.length) {
-        toast({ variant: "destructive", title: "Tidak ada data", description: "AI tidak menemukan materi dalam file ini." });
+        toast({ variant: "destructive", title: "Tidak ada data", description: "AI tidak menemukan materi." });
         return;
       }
 
-      // Map pekanKe → weekId
-      const weekByPekan = new Map((weeks as any[]).map((w) => [w.pekanKe, w.id]));
-
-      const mapped: VerifyItem[] = aiItems
-        .map((item, idx) => ({
-          id: String(idx),
-          weekId: weekByPekan.get(item.pekanKe) ?? (weeks as any[])[0]?.id ?? "",
-          bab: item.bab ?? "",
-          materi: item.materi ?? "",
-          jp: item.jp != null ? String(item.jp) : "",
-          catatan: item.bab ? `${item.bab}` : "",
-        }))
-        .filter((it) => it.materi.trim() !== "");
-
-      setVerifyItems(mapped);
+      const groups = buildVerifyGroups(aiItems, allWeeks);
+      setVerifyGroups(groups);
       setVerifyOpen(true);
     } catch (err) {
       toast({
@@ -375,51 +550,125 @@ export default function Prosem() {
     }
   };
 
+  // ---- Verify dialog helpers ----
+  const updateGroup = (weekId: string, updater: (g: VerifyWeekGroup) => VerifyWeekGroup) => {
+    setVerifyGroups((prev) => prev.map((g) => (g.weekId === weekId ? updater(g) : g)));
+  };
+
+  const toggleLibur = (weekId: string, isLibur: boolean) => {
+    updateGroup(weekId, (g) => ({ ...g, isLibur }));
+  };
+
+  const addItemToWeek = (weekId: string) => {
+    updateGroup(weekId, (g) => ({
+      ...g,
+      items: [...g.items, { id: nextId(), bab: "", materi: "", jp: "2", catatan: "" }],
+    }));
+  };
+
+  const updateWeekItem = (
+    weekId: string,
+    itemId: string,
+    field: keyof VerifyItem,
+    value: string,
+  ) => {
+    updateGroup(weekId, (g) => ({
+      ...g,
+      items: g.items.map((it) => (it.id === itemId ? { ...it, [field]: value } : it)),
+    }));
+  };
+
+  const removeWeekItem = (weekId: string, itemId: string) => {
+    updateGroup(weekId, (g) => ({
+      ...g,
+      items: g.items.filter((it) => it.id !== itemId),
+    }));
+  };
+
+  // ---- Bulk save ----
   const handleBulkSave = async () => {
     if (!openProsemId) return;
-    const validItems = verifyItems.filter((it) => it.weekId && it.materi.trim());
-    if (!validItems.length) {
-      toast({ variant: "destructive", title: "Tidak ada materi valid" });
+
+    // Validate: all KBM weeks must have materi or be marked libur
+    const unfilled = verifyGroups.filter(
+      (g) =>
+        isKBMWeek(g.jenis) &&
+        !g.isLibur &&
+        g.items.filter((it) => it.materi.trim()).length === 0,
+    );
+    if (unfilled.length > 0) {
+      toast({
+        variant: "destructive",
+        title: `${unfilled.length} pekan KBM masih kosong`,
+        description: "Isi materi atau tandai sebagai Libur untuk setiap pekan KBM.",
+      });
       return;
     }
+
     setBulkLoading(true);
     try {
+      const allItems: {
+        weekId: string;
+        materi: string;
+        jp?: number;
+        catatan?: string;
+      }[] = [];
+
+      for (const group of verifyGroups) {
+        if (!isKBMWeek(group.jenis)) continue; // skip non-KBM
+
+        if (group.isLibur) {
+          allItems.push({ weekId: group.weekId, materi: "Libur", catatan: "Libur" });
+        } else {
+          group.items
+            .filter((it) => it.materi.trim())
+            .forEach((it) => {
+              allItems.push({
+                weekId: group.weekId,
+                materi: it.materi,
+                jp: it.jp ? Number(it.jp) : undefined,
+                catatan: it.catatan || it.bab || undefined,
+              });
+            });
+        }
+      }
+
+      if (!allItems.length) {
+        toast({ variant: "destructive", title: "Tidak ada materi valid" });
+        return;
+      }
+
       const res = await fetch("/api/prosem-items/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          prosemId: openProsemId,
-          items: validItems.map((it) => ({
-            weekId: it.weekId,
-            materi: it.materi,
-            jp: it.jp ? Number(it.jp) : undefined,
-            catatan: it.catatan || undefined,
-          })),
-        }),
+        body: JSON.stringify({ prosemId: openProsemId, items: allItems }),
       });
       if (!res.ok) throw new Error("Gagal menyimpan");
       const { inserted } = (await res.json()) as { inserted: number };
       toast({ title: "Berhasil", description: `${inserted} materi berhasil diimpor.` });
       setVerifyOpen(false);
-      setVerifyItems([]);
+      setVerifyGroups([]);
       invalidateItems();
     } catch {
-      toast({ variant: "destructive", title: "Gagal menyimpan", description: "Terjadi kesalahan saat menyimpan." });
+      toast({
+        variant: "destructive",
+        title: "Gagal menyimpan",
+        description: "Terjadi kesalahan saat menyimpan.",
+      });
     } finally {
       setBulkLoading(false);
     }
   };
 
-  const updateVerifyItem = (id: string, field: keyof VerifyItem, value: string) => {
-    setVerifyItems((prev) => prev.map((it) => (it.id === id ? { ...it, [field]: value } : it)));
-  };
-
-  const removeVerifyItem = (id: string) => {
-    setVerifyItems((prev) => prev.filter((it) => it.id !== id));
-  };
-
   const noCalendar = !calLoading && !calendars?.length;
+
+  // Count KBM items for save button label
+  const kbmItemCount = verifyGroups.reduce((acc, g) => {
+    if (!isKBMWeek(g.jenis)) return acc;
+    if (g.isLibur) return acc + 1;
+    return acc + g.items.filter((it) => it.materi.trim()).length;
+  }, 0);
 
   return (
     <Layout>
@@ -722,11 +971,14 @@ export default function Prosem() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="max-h-60 overflow-y-auto">
-                        {weeks?.map((w: any) => (
-                          <SelectItem key={w.id} value={w.id}>
-                            Pekan {w.pekanKe}
-                          </SelectItem>
-                        ))}
+                        {(weeks as any[] ?? [])
+                          .filter((w: any) => isKBMWeek(w.jenis ?? ""))
+                          .map((w: any) => (
+                            <SelectItem key={w.id} value={w.id}>
+                              Pekan {w.pekanKe}
+                              {w.tanggalMulai ? ` · ${fmtDate(w.tanggalMulai)}` : ""}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -847,7 +1099,7 @@ export default function Prosem() {
                 onClick={() => {
                   setSheetPickerOpen(false);
                   setImportSheets([]);
-                  runImportAI(sheet.rows);
+                  runImport(sheet.rows);
                 }}
               >
                 {sheet.name}
@@ -855,124 +1107,193 @@ export default function Prosem() {
             ))}
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setSheetPickerOpen(false); setImportSheets([]); }}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSheetPickerOpen(false);
+                setImportSheets([]);
+              }}
+            >
               Batal
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ---- Dialog: Verifikasi Hasil Impor AI ---- */}
+      {/* ---- Dialog: Verifikasi Impor — Week-centric ---- */}
       <Dialog
         open={verifyOpen}
         onOpenChange={(open) => {
-          if (!open) { setVerifyOpen(false); setVerifyItems([]); }
+          if (!open) {
+            setVerifyOpen(false);
+            setVerifyGroups([]);
+          }
         }}
       >
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-violet-500" />
-              Verifikasi Impor AI — {verifyItems.length} materi
+              Verifikasi Impor — {verifyGroups.length} pekan
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground -mt-1">
-            Periksa dan edit hasilnya sebelum disimpan. Klik × untuk menghapus baris yang tidak diperlukan.
+            Setiap pekan KBM harus diisi materi atau ditandai Libur. Pekan STS/SAS/nonaktif
+            tidak dapat menerima materi.
           </p>
 
-          <div className="overflow-x-auto -mx-1">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-gray-50 text-muted-foreground">
-                  <th className="text-left font-medium px-2 py-2 w-28">Pekan</th>
-                  <th className="text-left font-medium px-2 py-2">Materi</th>
-                  <th className="text-left font-medium px-2 py-2 w-16">JP</th>
-                  <th className="text-left font-medium px-2 py-2">Catatan/Bab</th>
-                  <th className="w-8" />
-                </tr>
-              </thead>
-              <tbody>
-                {verifyItems.map((it) => (
-                  <tr key={it.id} className="border-t border-gray-100">
-                    <td className="px-1 py-1.5">
-                      <Select
-                        value={it.weekId}
-                        onValueChange={(v) => updateVerifyItem(it.id, "weekId", v)}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-48 overflow-y-auto">
-                          {(weeks as any[] ?? []).map((w: any) => (
-                            <SelectItem key={w.id} value={w.id}>
-                              Pekan {w.pekanKe}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="px-1 py-1.5">
-                      <Input
-                        className="h-8 text-xs"
-                        value={it.materi}
-                        onChange={(e) => updateVerifyItem(it.id, "materi", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-1 py-1.5">
-                      <Input
-                        className="h-8 text-xs w-14"
-                        type="number"
-                        min={0}
-                        value={it.jp}
-                        onChange={(e) => updateVerifyItem(it.id, "jp", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-1 py-1.5">
-                      <Input
-                        className="h-8 text-xs"
-                        value={it.catatan}
-                        placeholder="Bab / keterangan"
-                        onChange={(e) => updateVerifyItem(it.id, "catatan", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-1 py-1.5 text-center">
+          {/* Week list */}
+          <div className="border rounded-lg overflow-hidden divide-y divide-gray-100">
+            {verifyGroups.map((group) => {
+              const exam = isExamWeek(group.jenis);
+              const kbm = isKBMWeek(group.jenis);
+              const calLibur = !kbm && !exam; // already a non-KBM, non-exam week in calendar
+
+              return (
+                <div
+                  key={group.weekId}
+                  className={cn(
+                    "text-sm",
+                    exam && "bg-red-50/40",
+                    calLibur && "bg-gray-50/60",
+                    kbm && group.isLibur && "bg-orange-50/40",
+                  )}
+                >
+                  {/* Week header */}
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <span className="font-semibold w-16 shrink-0">P.{group.pekanKe}</span>
+                    <span className="text-xs text-muted-foreground w-28 shrink-0">
+                      {fmtDate(group.tanggalMulai)} – {fmtDate(group.tanggalSelesai)}
+                    </span>
+                    <JenisBadge jenis={group.jenis} />
+
+                    {/* Right actions */}
+                    {exam && (
+                      <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+                        <Lock className="w-3 h-3" /> Tidak ada KBM
+                      </span>
+                    )}
+                    {calLibur && (
+                      <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+                        <CalendarOff className="w-3 h-3" /> Tidak ada KBM
+                      </span>
+                    )}
+                    {kbm && group.isLibur && (
                       <button
                         type="button"
-                        className="text-muted-foreground hover:text-destructive transition-colors"
-                        onClick={() => removeVerifyItem(it.id)}
+                        className="ml-auto text-xs text-orange-600 hover:underline"
+                        onClick={() => toggleLibur(group.weekId, false)}
                       >
-                        <X className="w-4 h-4" />
+                        Batalkan Libur
                       </button>
-                    </td>
-                  </tr>
-                ))}
-                {verifyItems.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
-                      Semua baris dihapus.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                    )}
+                    {kbm && !group.isLibur && group.items.length === 0 && (
+                      <button
+                        type="button"
+                        className="ml-auto text-xs text-orange-500 hover:underline"
+                        onClick={() => toggleLibur(group.weekId, true)}
+                      >
+                        Tandai Libur
+                      </button>
+                    )}
+                  </div>
+
+                  {/* KBM week — libur state */}
+                  {kbm && group.isLibur && (
+                    <div className="px-3 pb-2">
+                      <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                        <CalendarOff className="w-3 h-3" /> Libur / Tidak ada KBM
+                      </span>
+                    </div>
+                  )}
+
+                  {/* KBM week — editable items */}
+                  {kbm && !group.isLibur && (
+                    <div className="px-3 pb-2 space-y-1">
+                      {group.items.map((item) => (
+                        <div key={item.id} className="flex items-center gap-1.5">
+                          <Input
+                            className="h-7 text-xs flex-1 min-w-0"
+                            placeholder="Materi / topik"
+                            value={item.materi}
+                            onChange={(e) =>
+                              updateWeekItem(group.weekId, item.id, "materi", e.target.value)
+                            }
+                          />
+                          <Input
+                            className="h-7 text-xs w-12 shrink-0"
+                            type="number"
+                            min={0}
+                            placeholder="JP"
+                            title="Jam Pelajaran"
+                            value={item.jp}
+                            onChange={(e) =>
+                              updateWeekItem(group.weekId, item.id, "jp", e.target.value)
+                            }
+                          />
+                          <button
+                            type="button"
+                            className="text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => removeWeekItem(group.weekId, item.id)}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+
+                      {/* Empty state hint */}
+                      {group.items.length === 0 && (
+                        <p className="text-xs text-amber-600 italic">
+                          Pekan ini kosong — tambah materi atau{" "}
+                          <button
+                            type="button"
+                            className="underline"
+                            onClick={() => toggleLibur(group.weekId, true)}
+                          >
+                            tandai Libur
+                          </button>
+                        </p>
+                      )}
+
+                      {/* Add materi button */}
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
+                        onClick={() => addItemToWeek(group.weekId)}
+                      >
+                        <Plus className="w-3 h-3" /> Tambah materi
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {verifyGroups.length === 0 && (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                Tidak ada data pekan.
+              </div>
+            )}
           </div>
 
           <DialogFooter className="gap-2">
             <Button
               variant="ghost"
-              onClick={() => { setVerifyOpen(false); setVerifyItems([]); }}
+              onClick={() => {
+                setVerifyOpen(false);
+                setVerifyGroups([]);
+              }}
               disabled={bulkLoading}
             >
               Batal
             </Button>
-            <Button
-              onClick={handleBulkSave}
-              disabled={bulkLoading || verifyItems.length === 0}
-            >
+            <Button onClick={handleBulkSave} disabled={bulkLoading || kbmItemCount === 0}>
               {bulkLoading ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan…</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan…
+                </>
               ) : (
-                `Simpan ${verifyItems.length} Materi`
+                `Simpan ${kbmItemCount} Entri`
               )}
             </Button>
           </DialogFooter>

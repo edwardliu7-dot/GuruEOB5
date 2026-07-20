@@ -224,37 +224,45 @@ export interface MappedProsemItem {
   jp?: number;
 }
 
-export async function mapRowsToProsemItems(
-  rows: string[][],
-  availableWeeks: number[],
+/**
+ * Used when the Excel file HAS explicit week-column marks.
+ * materiList items include a weekSlot (1-24: slot 1=July wk1 … 24=Dec wk4).
+ * AI maps each slot to the closest matching calendar pekanKe.
+ */
+export async function mapMarkedToProsemItems(
+  materiList: { bab: string; materi: string; weekSlot: number }[],
+  availableWeeks: { pekanKe: number; jenis: string }[],
 ): Promise<MappedProsemItem[]> {
+  // Build month/week context
+  const months = ["Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  const slotLabels = Array.from({ length: 24 }, (_, i) => {
+    const monthIdx = Math.floor(i / 4);
+    const weekInMonth = (i % 4) + 1;
+    return `slot ${i + 1} = ${months[monthIdx]} minggu ke-${weekInMonth}`;
+  });
+
+  const kbmWeeks = availableWeeks.filter(
+    (w) => w.jenis.toLowerCase() === "kbm",
+  );
+
   const prompt = [
-    "Kamu adalah asisten yang membaca dokumen Program Semester (Prosem) guru Indonesia dan menghasilkan daftar materi per pekan.",
+    "Kamu adalah asisten yang memetakan materi Program Semester ke pekan kalender akademik.",
     "",
-    "Format dokumen Prosem yang umum:",
-    "- Baris awal berisi judul, tahun ajaran, nama sekolah, dan mapel",
-    "- Baris header berisi nama bulan (Juli, Agustus, September, Oktober, November, Desember)",
-    "- Baris berikutnya berisi nomor pekan 1-4 per bulan (kolom berulang)",
-    "- Baris data berisi: No, Bab/Chapter, Materi/Topik, lalu kolom-kolom pekan",
-    "- 'S T S' = Sumatif Tengah Semester (ujian pertengahan -- ABAIKAN sebagai materi)",
-    "- 'S A S' = Sumatif Akhir Semester (ujian akhir -- ABAIKAN sebagai materi)",
+    "Spreadsheet memiliki 24 kolom pekan (6 bulan × 4 minggu). Pemetaan slot:",
+    slotLabels.join("; "),
     "",
-    `Pekan yang tersedia di kalender akademik ini (nomor pekan urut, mulai dari 1): ${JSON.stringify(availableWeeks)}`,
-    `Total pekan tersedia: ${availableWeeks.length}`,
+    `Pekan KBM yang tersedia: ${JSON.stringify(kbmWeeks.map((w) => w.pekanKe))}`,
     "",
-    "Tugasmu:",
-    "1. Ekstrak semua bab dan topik materi dari baris data. Abaikan header, judul, S T S, dan S A S.",
-    "2. Jika spreadsheet SUDAH punya penanda pekan di kolom tertentu (ada nilai non-null seperti centang, 'v', 'x', atau angka), gunakan posisi kolom tersebut untuk menentukan pekan ke berapa (kolom 4=pekan1 Juli, 5=pekan2 Juli, ..., 27=pekan4 Desember).",
-    "3. Jika tidak ada penanda pekan eksplisit, distribusikan materi ke pekan-pekan yang tersedia secara berurutan dan merata (satu pekan bisa berisi 1-3 topik, gabungkan jika berdekatan).",
-    "4. Perkirakan JP (Jam Pelajaran) yang wajar per materi: biasanya 2 JP untuk topik singkat, 4 JP untuk topik sedang, 6 JP untuk topik panjang.",
-    "5. Nomor pekanKe harus TEPAT sama dengan salah satu dari availableWeeks yang diberikan.",
-    "6. Boleh ada beberapa item dengan pekanKe yang sama (artinya satu pekan membahas beberapa topik).",
-    "7. bab diisi dengan nama BAB/Chapter/Elemen dari dokumen (bukan nomor).",
+    "Setiap materi memiliki weekSlot (kolom yang ditandai). Tugasmu:",
+    "1. Setiap item materi menghasilkan TEPAT SATU prosem item (tidak boleh digabung).",
+    "2. Petakan weekSlot ke pekanKe kalender terdekat dari daftar KBM yang tersedia.",
+    "3. jp diisi 2 (default); naikkan ke 4 jika topik panjang.",
+    "4. bab diisi nama BAB/Chapter.",
     "",
     'Kembalikan JSON: { "items": [ { "pekanKe": number, "bab": "string", "materi": "string", "jp": number }, ... ] }',
     "",
-    "Data spreadsheet (baris-baris raw dari file):",
-    JSON.stringify(rows),
+    "Data materi:",
+    JSON.stringify(materiList),
   ].join("\n");
 
   const result = await callJson<{ items?: unknown }>([{ role: "user", content: prompt }]);

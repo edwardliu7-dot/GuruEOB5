@@ -17,7 +17,7 @@ import {
   DeleteProsemItemResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../lib/auth";
-import { mapRowsToProsemItems } from "../lib/gemini";
+import { mapMarkedToProsemItems } from "../lib/gemini";
 
 const router: IRouter = Router();
 
@@ -169,17 +169,20 @@ router.delete("/prosem-items/:id", requireAuth, async (req, res): Promise<void> 
 });
 
 // POST /api/prosem/import-ai
-// Accepts parsed spreadsheet rows + available weeks, returns AI-mapped items
+// Accepts structured materi list (parsed client-side) + available weeks.
+// If hasMarks=true (week columns were marked in spreadsheet) → call AI.
+// If hasMarks=false → deterministic sequential distribution to KBM weeks.
 router.post("/prosem/import-ai", requireAuth, async (req, res): Promise<void> => {
   const teacherId = req.session.teacherId as string;
-  const { rows, weeks, prosemId } = req.body as {
-    rows: string[][];
-    weeks: { id: string; pekanKe: number }[];
+  const { materiList, hasMarks, weeks, prosemId } = req.body as {
+    materiList: { bab: string; materi: string; weekSlot?: number }[];
+    hasMarks: boolean;
+    weeks: { id: string; pekanKe: number; jenis: string }[];
     prosemId: string;
   };
 
-  if (!Array.isArray(rows) || !Array.isArray(weeks) || !prosemId) {
-    res.status(400).json({ error: "rows, weeks, dan prosemId wajib diisi" });
+  if (!Array.isArray(materiList) || !Array.isArray(weeks) || !prosemId) {
+    res.status(400).json({ error: "materiList, weeks, dan prosemId wajib diisi" });
     return;
   }
 
@@ -189,8 +192,32 @@ router.post("/prosem/import-ai", requireAuth, async (req, res): Promise<void> =>
   }
 
   try {
-    const availableWeeks = weeks.map((w) => w.pekanKe);
-    const items = await mapRowsToProsemItems(rows, availableWeeks);
+    let items: { pekanKe: number; bab: string; materi: string; jp?: number }[];
+
+    if (hasMarks) {
+      // AI maps explicit week-column marks to calendar pekanKe
+      const marked = materiList.filter(
+        (m): m is { bab: string; materi: string; weekSlot: number } =>
+          typeof m.weekSlot === "number",
+      );
+      items = await mapMarkedToProsemItems(marked, weeks);
+    } else {
+      // Deterministic sequential distribution: 1 materi → 1 KBM week
+      const kbmWeeks = weeks
+        .filter((w) => w.jenis.toLowerCase() === "kbm")
+        .sort((a, b) => a.pekanKe - b.pekanKe);
+
+      items = materiList.map((item, idx) => ({
+        pekanKe:
+          kbmWeeks[Math.min(idx, kbmWeeks.length - 1)]?.pekanKe ??
+          weeks[0]?.pekanKe ??
+          1,
+        bab: item.bab,
+        materi: item.materi,
+        jp: 2,
+      }));
+    }
+
     res.json({ items });
   } catch (err) {
     res.status(422).json({
