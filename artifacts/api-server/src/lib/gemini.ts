@@ -27,11 +27,13 @@ const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 async function callJson<T>(
   messages: Groq.Chat.ChatCompletionMessageParam[],
   model: string = TEXT_MODEL,
+  maxTokens?: number,
 ): Promise<T> {
   const response = await getGroq().chat.completions.create({
     model,
     messages,
     response_format: { type: "json_object" },
+    ...(maxTokens ? { max_tokens: maxTokens } : {}),
   });
   const text = response.choices[0]?.message?.content;
   if (!text) {
@@ -418,7 +420,9 @@ export async function extractJadwalFromPDF(pdfText: string): Promise<JadwalExtra
     pdfText,
   ].join("\n");
 
-  const result = await callJson<{ entries?: unknown }>([{ role: "user", content: prompt }]);
+  // Use a high token limit — a full school schedule can have hundreds of entries
+  // and the default Groq limit silently truncates afternoon slots.
+  const result = await callJson<{ entries?: unknown }>([{ role: "user", content: prompt }], TEXT_MODEL, 8000);
   if (!result.entries || !Array.isArray(result.entries)) {
     throw new Error("AI tidak menemukan jadwal dalam dokumen");
   }
