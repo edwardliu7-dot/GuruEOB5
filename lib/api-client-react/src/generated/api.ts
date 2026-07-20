@@ -95,6 +95,7 @@ import type {
   TPImportAnalyzeInput,
   TPImportAnalyzeResult,
   Teacher,
+  TeacherProgress,
   TujuanPembelajaran,
   TujuanPembelajaranInput,
   UpdateTeacherInput,
@@ -1628,6 +1629,83 @@ export function useListTeachers<TData = Awaited<ReturnType<typeof listTeachers>>
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListTeachersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListTeachersProgressUrl = () => {
+
+
+
+
+  return `/api/teachers/progress`
+}
+
+/**
+ * @summary Per-teacher progress stats (jurnal bulan ini, dokumen, kelengkapan) — school admin only
+ */
+export const listTeachersProgress = async ( options?: RequestInit): Promise<TeacherProgress[]> => {
+
+  return customFetch<TeacherProgress[]>(getListTeachersProgressUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTeachersProgressQueryKey = () => {
+    return [
+    `/api/teachers/progress`
+    ] as const;
+    }
+
+
+export const getListTeachersProgressQueryOptions = <TData = Awaited<ReturnType<typeof listTeachersProgress>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTeachersProgress>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTeachersProgressQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeachersProgress>>> = ({ signal }) => listTeachersProgress({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTeachersProgress>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTeachersProgressQueryResult = NonNullable<Awaited<ReturnType<typeof listTeachersProgress>>>
+export type ListTeachersProgressQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Per-teacher progress stats (jurnal bulan ini, dokumen, kelengkapan) — school admin only
+ */
+
+export function useListTeachersProgress<TData = Awaited<ReturnType<typeof listTeachersProgress>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTeachersProgress>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTeachersProgressQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

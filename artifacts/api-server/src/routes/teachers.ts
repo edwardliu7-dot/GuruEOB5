@@ -1,8 +1,9 @@
 import { Router, type IRouter } from "express";
-import { and, eq } from "drizzle-orm";
-import { neonDb, gurusTable } from "@workspace/db";
+import { and, count, eq, gte, inArray } from "drizzle-orm";
+import { neonDb, gurusTable, db, subjectsTable, documentsTable, journalEntriesTable } from "@workspace/db";
 import {
   ListTeachersResponse,
+  ListTeachersProgressResponse,
   GetTeacherParams,
   GetTeacherResponse,
   UpdateTeacherParams,
@@ -14,6 +15,62 @@ import {
 import { requireAuth, requireSchoolAdmin, getCurrentGuru, guruToTeacher, sameSchoolFilter, isSchoolAdmin } from "../lib/auth";
 
 const router: IRouter = Router();
+
+const DOCS_PER_SUBJECT = 5;
+
+router.get("/teachers/progress", requireAuth, requireSchoolAdmin, async (req, res): Promise<void> => {
+  const current = await getCurrentGuru(req);
+  if (!current) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  const monthStartStr = monthStart.toISOString().slice(0, 10);
+
+  const schoolWhere = current.school ? eq(gurusTable.school, current.school) : undefined;
+  const gurus = schoolWhere
+    ? await neonDb.select().from(gurusTable).where(schoolWhere)
+    : await neonDb.select().from(gurusTable);
+
+  const guruIds = gurus.map((g) => g.id);
+
+  if (guruIds.length === 0) {
+    res.json(ListTeachersProgressResponse.parse([]));
+    return;
+  }
+
+  const [subjects, documents, journals] = await Promise.all([
+    db.select({ id: subjectsTable.id, teacherId: subjectsTable.teacherId }).from(subjectsTable)
+      .where(inArray(subjectsTable.teacherId, guruIds)),
+    db.select({ subjectId: documentsTable.subjectId }).from(documentsTable),
+    db.select({ teacherId: journalEntriesTable.teacherId })
+      .from(journalEntriesTable)
+      .where(and(gte(journalEntriesTable.tanggal, monthStartStr), inArray(journalEntriesTable.teacherId, guruIds))),
+  ]);
+
+  const docsBySubject = new Map<string, number>();
+  for (const d of documents) {
+    docsBySubject.set(d.subjectId, (docsBySubject.get(d.subjectId) ?? 0) + 1);
+  }
+
+  const journalsByTeacher = new Map<string, number>();
+  for (const j of journals) {
+    journalsByTeacher.set(j.teacherId, (journalsByTeacher.get(j.teacherId) ?? 0) + 1);
+  }
+
+  const result = gurus.map((g) => {
+    const guruSubjects = subjects.filter((s) => s.teacherId === g.id);
+    const dokumenSelesai = guruSubjects.reduce((sum, s) => sum + (docsBySubject.get(s.id) ?? 0), 0);
+    const dokumenTotal = guruSubjects.length * DOCS_PER_SUBJECT;
+    const jurnalBulanIni = journalsByTeacher.get(g.id) ?? 0;
+    const kelengkapanPersen = dokumenTotal > 0 ? Math.min(100, Math.round((dokumenSelesai / dokumenTotal) * 100)) : 0;
+    return { teacherId: g.id, jurnalBulanIni, dokumenTotal, dokumenSelesai, kelengkapanPersen };
+  });
+
+  res.json(ListTeachersProgressResponse.parse(result));
+});
 
 router.get("/teachers", requireAuth, requireSchoolAdmin, async (req, res): Promise<void> => {
   const current = await getCurrentGuru(req);

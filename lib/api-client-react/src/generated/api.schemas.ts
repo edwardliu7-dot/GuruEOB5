@@ -13,6 +13,14 @@ export interface SuccessResponse {
   success: boolean;
 }
 
+export interface TeacherProgress {
+  teacherId: string;
+  jurnalBulanIni: number;
+  dokumenTotal: number;
+  dokumenSelesai: number;
+  kelengkapanPersen: number;
+}
+
 export type TeacherJabatanItem = typeof TeacherJabatanItem[keyof typeof TeacherJabatanItem];
 
 

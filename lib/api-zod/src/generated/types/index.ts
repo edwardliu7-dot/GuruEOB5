@@ -117,6 +117,7 @@ export * from './subjectInput';
 export * from './successResponse';
 export * from './teacher';
 export * from './teacherJabatanItem';
+export * from './teacherProgress';
 export * from './tPImportAnalyzeInput';
 export * from './tPImportAnalyzeResult';
 export * from './tPImportAnalyzeResultItemsItem';

@@ -357,6 +357,21 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Teacher"
+  /teachers/progress:
+    get:
+      operationId: listTeachersProgress
+      tags: [teachers]
+      summary: Per-teacher progress stats (jurnal bulan ini, dokumen, kelengkapan) — school admin only
+      responses:
+        "200":
+          description: Progress stats per teacher
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeacherProgress"
+
   /teachers/{id}:
     get:
       operationId: getTeacher
@@ -1622,6 +1637,21 @@ components:
           type: boolean
       required:
         - success
+
+    TeacherProgress:
+      type: object
+      properties:
+        teacherId:
+          type: string
+        jurnalBulanIni:
+          type: integer
+        dokumenTotal:
+          type: integer
+        dokumenSelesai:
+          type: integer
+        kelengkapanPersen:
+          type: number
+      required: [teacherId, jurnalBulanIni, dokumenTotal, dokumenSelesai, kelengkapanPersen]
 
     Teacher:
       type: object

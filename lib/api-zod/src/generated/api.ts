@@ -358,6 +358,19 @@ export const ListTeachersResponse = zod.array(ListTeachersResponseItem)
 
 
 /**
+ * @summary Per-teacher progress stats (jurnal bulan ini, dokumen, kelengkapan) — school admin only
+ */
+export const ListTeachersProgressResponseItem = zod.object({
+  "teacherId": zod.string(),
+  "jurnalBulanIni": zod.number(),
+  "dokumenTotal": zod.number(),
+  "dokumenSelesai": zod.number(),
+  "kelengkapanPersen": zod.number()
+})
+export const ListTeachersProgressResponse = zod.array(ListTeachersProgressResponseItem)
+
+
+/**
  * @summary Get a teacher by id
  */
 export const GetTeacherParams = zod.object({
