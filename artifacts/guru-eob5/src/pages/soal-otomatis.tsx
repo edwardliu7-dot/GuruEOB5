@@ -71,6 +71,12 @@ type FormValues = z.infer<typeof formSchema>;
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
+function toArr(val: unknown): any[] {
+  if (Array.isArray(val)) return val;
+  if (val == null) return [];
+  return [val];
+}
+
 function SoalPreview({ soal }: { soal: SoalOtomatis }) {
   const content = (soal.content ?? {}) as any;
   if (!content || typeof content !== "object" || Array.isArray(content)) {
@@ -86,24 +92,24 @@ function SoalPreview({ soal }: { soal: SoalOtomatis }) {
       <h2 className="text-xl font-bold font-serif text-center">{content.judul}</h2>
       <p className="italic text-muted-foreground text-center">{content.petunjukPengerjaan}</p>
       <div className="space-y-4">
-        {(content.soal ?? []).map((q: any) => (
-          <div key={q.nomor} className="border border-border rounded-md p-4">
-            <p className="font-medium mb-2">{q.nomor}. {q.pertanyaan}</p>
-            {q.tipe === "pilihan_ganda" ? (
+        {toArr(content.soal).map((q: any, idx: number) => (
+          <div key={q?.nomor ?? idx} className="border border-border rounded-md p-4">
+            <p className="font-medium mb-2">{q?.nomor ?? idx + 1}. {q?.pertanyaan}</p>
+            {q?.tipe === "pilihan_ganda" ? (
               <ul className="space-y-1 pl-2">
-                {(q.pilihan ?? []).map((opt: string, i: number) => (
-                  <li key={i} className={opt === q.jawabanBenar ? "font-semibold text-emerald-700" : ""}>
+                {toArr(q?.pilihan).map((opt: string, i: number) => (
+                  <li key={i} className={opt === q?.jawabanBenar ? "font-semibold text-emerald-700" : ""}>
                     {LETTERS[i] ?? i + 1}. {opt}
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="text-muted-foreground">
-                <span className="font-medium text-foreground">Kunci Jawaban: </span>{q.jawabanBenar}
+                <span className="font-medium text-foreground">Kunci Jawaban: </span>{q?.jawabanBenar}
               </p>
             )}
-            {q.pembahasan && (
-              <p className="mt-2 text-xs text-muted-foreground"><span className="font-medium">Pembahasan: </span>{q.pembahasan}</p>
+            {q?.pembahasan && (
+              <p className="mt-2 text-xs text-muted-foreground"><span className="font-medium">Pembahasan: </span>{q?.pembahasan}</p>
             )}
           </div>
         ))}

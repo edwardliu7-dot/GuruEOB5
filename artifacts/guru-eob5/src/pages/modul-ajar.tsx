@@ -70,6 +70,14 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+/** Safely coerce an unknown value to an array — prevents `.map is not a function` crashes */
+function toArr(val: unknown): any[] {
+  if (Array.isArray(val)) return val;
+  if (val == null) return [];
+  // AI sometimes returns a single item instead of an array
+  return [val];
+}
+
 function ModulPreview({ modul }: { modul: ModulAjar }) {
   const content = (modul.content ?? {}) as any;
   // Guard: if content is not a plain object (e.g. null, string, etc.) show fallback
@@ -81,9 +89,9 @@ function ModulPreview({ modul }: { modul: ModulAjar }) {
       </div>
     );
   }
-  const iu = (content.informasiUmum ?? {}) as any;
-  const ki = (content.komponenInti ?? {}) as any;
-  const lp = (content.lampiran ?? {}) as any;
+  const iu = (typeof content.informasiUmum === "object" && content.informasiUmum ? content.informasiUmum : {}) as any;
+  const ki = (typeof content.komponenInti === "object" && content.komponenInti ? content.komponenInti : {}) as any;
+  const lp = (typeof content.lampiran === "object" && content.lampiran ? content.lampiran : {}) as any;
 
   return (
     <div className="space-y-6 text-sm">
@@ -107,26 +115,26 @@ function ModulPreview({ modul }: { modul: ModulAjar }) {
         <h3 className="font-semibold text-primary mb-2">B. Komponen Inti</h3>
         <p className="font-medium mt-2">1. Tujuan Pembelajaran</p>
         <ul className="list-disc pl-5">
-          {(ki.tujuanPembelajaran ?? []).map((t: string, i: number) => <li key={i}>{t}</li>)}
+          {toArr(ki.tujuanPembelajaran).map((t: string, i: number) => <li key={i}>{t}</li>)}
         </ul>
         <p className="font-medium mt-3">2. Kriteria Ketercapaian Tujuan Pembelajaran</p>
         <ul className="list-disc pl-5">
-          {(ki.kriteriaKetercapaianTujuanPembelajaran ?? []).map((t: string, i: number) => <li key={i}>{t}</li>)}
+          {toArr(ki.kriteriaKetercapaianTujuanPembelajaran).map((t: string, i: number) => <li key={i}>{t}</li>)}
         </ul>
         <p className="font-medium mt-3">3. Pemahaman Bermakna</p>
         <p>{ki.pemahamanBermakna}</p>
         <p className="font-medium mt-3">4. Pertanyaan Pemantik</p>
         <ul className="list-disc pl-5">
-          {(ki.pertanyaanPemantik ?? []).map((t: string, i: number) => <li key={i}>{t}</li>)}
+          {toArr(ki.pertanyaanPemantik).map((t: string, i: number) => <li key={i}>{t}</li>)}
         </ul>
         <p className="font-medium mt-3">5. Kegiatan Pembelajaran</p>
         <div className="space-y-3">
-          {(ki.kegiatanPembelajaran ?? []).map((k: any) => (
-            <div key={k.pertemuanKe} className="border border-border rounded-md p-3 bg-gray-50/50">
-              <p className="font-medium mb-1">Pertemuan ke-{k.pertemuanKe}</p>
-              <p><span className="text-muted-foreground">Pendahuluan: </span>{k.pendahuluan}</p>
-              <p><span className="text-muted-foreground">Kegiatan Inti: </span>{k.kegiatanInti}</p>
-              <p><span className="text-muted-foreground">Penutup: </span>{k.penutup}</p>
+          {toArr(ki.kegiatanPembelajaran).map((k: any, idx: number) => (
+            <div key={k?.pertemuanKe ?? idx} className="border border-border rounded-md p-3 bg-gray-50/50">
+              <p className="font-medium mb-1">Pertemuan ke-{k?.pertemuanKe ?? idx + 1}</p>
+              <p><span className="text-muted-foreground">Pendahuluan: </span>{k?.pendahuluan}</p>
+              <p><span className="text-muted-foreground">Kegiatan Inti: </span>{k?.kegiatanInti}</p>
+              <p><span className="text-muted-foreground">Penutup: </span>{k?.penutup}</p>
             </div>
           ))}
         </div>
@@ -134,6 +142,14 @@ function ModulPreview({ modul }: { modul: ModulAjar }) {
         <p><span className="text-muted-foreground">Diagnostik: </span>{ki.asesmen?.asesmenDiagnostik}</p>
         <p><span className="text-muted-foreground">Formatif: </span>{ki.asesmen?.asesmenFormatif}</p>
         <p><span className="text-muted-foreground">Sumatif: </span>{ki.asesmen?.asesmenSumatif}</p>
+        <p className="font-medium mt-3">7. Refleksi Guru</p>
+        <ul className="list-disc pl-5">
+          {toArr(ki.refleksiGuru).map((t: string, i: number) => <li key={i}>{t}</li>)}
+        </ul>
+        <p className="font-medium mt-3">8. Refleksi Peserta Didik</p>
+        <ul className="list-disc pl-5">
+          {toArr(ki.refleksiPesertaDidik).map((t: string, i: number) => <li key={i}>{t}</li>)}
+        </ul>
       </section>
 
       <section>
@@ -149,13 +165,13 @@ function ModulPreview({ modul }: { modul: ModulAjar }) {
         <p>{lp.remedial}</p>
         <p className="font-medium mt-3">Glosarium</p>
         <ul className="list-disc pl-5">
-          {(lp.glosarium ?? []).map((g: any, i: number) => (
-            <li key={i}><span className="font-medium">{g.istilah}:</span> {g.definisi}</li>
+          {toArr(lp.glosarium).map((g: any, i: number) => (
+            <li key={i}><span className="font-medium">{g?.istilah}:</span> {g?.definisi}</li>
           ))}
         </ul>
         <p className="font-medium mt-3">Daftar Pustaka</p>
         <ul className="list-disc pl-5">
-          {(lp.daftarPustaka ?? []).map((t: string, i: number) => <li key={i}>{t}</li>)}
+          {toArr(lp.daftarPustaka).map((t: string, i: number) => <li key={i}>{t}</li>)}
         </ul>
       </section>
     </div>
