@@ -380,6 +380,47 @@ export async function extractProsemFromFile(
 }
 
 // -----------------------------------------------------------------------
+// Jadwal Pelajaran — extract structured schedule from PDF text
+// -----------------------------------------------------------------------
+
+export interface JadwalExtractedEntry {
+  kelas: string;
+  hari: string;
+  jamMulai: string;   // "HH:MM"
+  jamSelesai: string; // "HH:MM"
+  mapel: string;      // raw subject name from PDF
+}
+
+export async function extractJadwalFromPDF(pdfText: string): Promise<JadwalExtractedEntry[]> {
+  const prompt = [
+    "Kamu adalah asisten yang mengekstrak jadwal pelajaran sekolah dari teks PDF Indonesia.",
+    "",
+    "Teks PDF berisi jadwal pelajaran dengan format tabel: baris = waktu (HH:MM - HH:MM), kolom = hari (Senin, Selasa, Rabu, Kamis, Jumat, Sabtu).",
+    "Jadwal bisa mencakup beberapa kelas (VII, VIII, IX, dsb).",
+    "",
+    "Tugasmu:",
+    "1. Untuk setiap sel yang berisi nama mata pelajaran AKADEMIS, buat satu entri.",
+    "2. GABUNGKAN slot waktu yang berurutan untuk mata pelajaran yang SAMA pada hari dan kelas yang sama menjadi satu entri dengan jamMulai dari slot pertama dan jamSelesai dari slot terakhir.",
+    "3. SKIP slot-slot berikut (bukan mata pelajaran akademis): UPACARA, IKRAR, MENTORING BLP, PRAMUKA, 'English Programs', 'Arabic Programs', 'SNACK TIME', ISHOMA, 'Jumat', 'Tadribul Khitobah', UMMI, 'GO HOME', 'SHALAT ASHAR', 'Kitab Kuning', 'Do\\'a dan Hadits', BK, 'Seni Teater'.",
+    "4. Gunakan nama kelas lengkap sesuai PDF (contoh: 'VII Ibnu Battuta', 'VIII Ibnu Sina').",
+    "5. Nama hari: Senin, Selasa, Rabu, Kamis, Jumat, Sabtu (kapital pertama saja).",
+    "6. Format waktu: HH:MM (24 jam).",
+    "7. mapel: nama mata pelajaran persis seperti di PDF, tapi bersihkan angka kelas dari akhir jika ada (contoh: 'MATEMATIKA7' → 'MATEMATIKA', 'SKI8' → 'SKI', 'SBK8' → 'SBK').",
+    "",
+    'Kembalikan JSON: { "entries": [ { "kelas": "...", "hari": "...", "jamMulai": "...", "jamSelesai": "...", "mapel": "..." }, ... ] }',
+    "",
+    "Teks jadwal:",
+    pdfText,
+  ].join("\n");
+
+  const result = await callJson<{ entries?: unknown }>([{ role: "user", content: prompt }]);
+  if (!result.entries || !Array.isArray(result.entries)) {
+    throw new Error("AI tidak menemukan jadwal dalam dokumen");
+  }
+  return result.entries as JadwalExtractedEntry[];
+}
+
+// -----------------------------------------------------------------------
 // Buat Modul Ajar (Kurikulum Merdeka lesson-plan generator)
 // -----------------------------------------------------------------------
 

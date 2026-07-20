@@ -1,6 +1,10 @@
 import { Router, type IRouter } from "express";
 import { and, eq, inArray } from "drizzle-orm";
 import { db, schedulesTable, subjectsTable, neonDb, gurusTable } from "@workspace/db";
+import { extractJadwalFromPDF } from "../lib/gemini";
+import { createRequire } from "node:module";
+const _require = createRequire(import.meta.url);
+const pdfParse: (buf: Buffer) => Promise<{ text: string }> = _require("pdf-parse");
 import {
   ListJadwalQueryParams,
   ListJadwalResponse,
@@ -155,6 +159,122 @@ router.delete("/jadwal/:id", requireAuth, async (req, res): Promise<void> => {
   if (!row) { res.status(404).json({ error: "Jadwal tidak ditemukan" }); return; }
 
   res.json(DeleteJadwalResponse.parse({ success: true }));
+});
+
+// ─── POST /jadwal/import-preview ─────────────────────────────────────────────
+// Accepts a base64-encoded PDF, extracts the schedule with AI, then tries to
+// match each mapel to an existing subject in the school's DB.
+// Returns a preview list for the user to review before saving.
+router.post("/jadwal/import-preview", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { fileBase64 } = req.body as { fileBase64?: string };
+  if (!fileBase64) { res.status(400).json({ error: "fileBase64 wajib diisi" }); return; }
+
+  // Extract text from PDF
+  const buffer = Buffer.from(fileBase64, "base64");
+  const { text } = await pdfParse(buffer);
+
+  // AI: parse schedule from text
+  const extracted = await extractJadwalFromPDF(text);
+
+  // Load all subjects in this school to match by name
+  const allSubjects = await db
+    .select({ id: subjectsTable.id, name: subjectsTable.name, teacherId: subjectsTable.teacherId })
+    .from(subjectsTable)
+    .where(eq(subjectsTable.school, guru.school ?? ""));
+
+  // Fuzzy match: normalize names for comparison
+  function normalize(s: string) {
+    return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
+  const subjectMap = new Map(allSubjects.map((s) => [normalize(s.name), s]));
+
+  // Build teacher name map
+  const teacherIds = [...new Set(allSubjects.map((s) => s.teacherId))];
+  const teachers = teacherIds.length
+    ? await neonDb
+        .select({ id: gurusTable.id, name: gurusTable.name })
+        .from(gurusTable)
+        .where(inArray(gurusTable.id, teacherIds))
+    : [];
+  const teacherNameById = new Map(teachers.map((t) => [t.id, t.name]));
+
+  // Map each extracted entry to a subject
+  const preview = extracted.map((entry) => {
+    const key = normalize(entry.mapel);
+    // Try exact match first, then prefix match
+    let subject = subjectMap.get(key);
+    if (!subject) {
+      for (const [k, v] of subjectMap) {
+        if (k.startsWith(key) || key.startsWith(k)) { subject = v; break; }
+      }
+    }
+    return {
+      kelas: entry.kelas,
+      hari: entry.hari,
+      jamMulai: entry.jamMulai,
+      jamSelesai: entry.jamSelesai,
+      mapelRaw: entry.mapel,
+      subjectId: subject?.id ?? null,
+      subjectName: subject?.name ?? null,
+      teacherName: subject ? (teacherNameById.get(subject.teacherId) ?? null) : null,
+      matched: !!subject,
+    };
+  });
+
+  res.json({ preview });
+});
+
+// ─── POST /jadwal/bulk ────────────────────────────────────────────────────────
+// Saves confirmed jadwal entries in bulk. Each entry must have a subjectId.
+// teacherId is resolved from the subject row to ensure correct ownership.
+router.post("/jadwal/bulk", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!isSchoolAdmin(guru)) { res.status(403).json({ error: "Hanya admin sekolah" }); return; }
+
+  const { entries } = req.body as {
+    entries?: { subjectId: string; kelas: string; hari: string; jamMulai: string; jamSelesai: string }[];
+  };
+  if (!Array.isArray(entries) || entries.length === 0) {
+    res.status(400).json({ error: "entries wajib diisi" });
+    return;
+  }
+
+  // Resolve teacherIds from subject rows
+  const subjectIds = [...new Set(entries.map((e) => e.subjectId))];
+  const subjects = await db
+    .select({ id: subjectsTable.id, teacherId: subjectsTable.teacherId })
+    .from(subjectsTable)
+    .where(inArray(subjectsTable.id, subjectIds));
+  const teacherBySubjectId = new Map(subjects.map((s) => [s.id, s.teacherId]));
+
+  const rows = entries
+    .map((e) => {
+      const teacherId = teacherBySubjectId.get(e.subjectId);
+      if (!teacherId) return null;
+      return {
+        teacherId,
+        subjectId: e.subjectId,
+        kelas: e.kelas,
+        hari: e.hari as any,
+        jamMulai: e.jamMulai,
+        jamSelesai: e.jamSelesai,
+        school: guru.school ?? null,
+      };
+    })
+    .filter(Boolean) as NonNullable<ReturnType<typeof entries.map>[number]>[];
+
+  if (rows.length === 0) {
+    res.status(400).json({ error: "Tidak ada entry valid" });
+    return;
+  }
+
+  await db.insert(schedulesTable).values(rows);
+  res.json({ inserted: rows.length });
 });
 
 export default router;
