@@ -33,6 +33,14 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV BASE_PATH=/
 
+# Inject a unique build ID into the frontend env so every Docker build produces
+# a different value.  When users open the app after a redeploy, the stored
+# localStorage version won't match and the "What's New" dialog fires for everyone.
+# We use a millisecond timestamp (no git history available in Docker context).
+RUN node -e "require('fs').appendFileSync( \
+      'artifacts/guru-eob5/.env.production', \
+      '\nVITE_BUILD_ID=' + Date.now() + '\n')"
+
 # Skip the repo-wide typecheck here: it's a dev/CI concern and its extra
 # `tsc` processes roughly double the peak memory used during this step,
 # which matters on a small-RAM VPS. Run `pnpm run build` (with typecheck)

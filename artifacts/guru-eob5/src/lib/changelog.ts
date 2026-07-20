@@ -158,13 +158,21 @@ export const RELEASES: Release[] = [
 export const APP_VERSION = RELEASES[0].id;
 export const STORAGE_KEY = "guru_last_seen_version";
 
+// In production (Docker/Coolify) builds, VITE_BUILD_ID is a millisecond
+// timestamp injected by the Dockerfile — it changes on *every* deploy, so
+// every user will see the "What's New" dialog after an update without any
+// manual version bumping.  In the Vite dev server the variable is undefined,
+// so we fall back to APP_VERSION (stable across restarts — no dev spam).
+const EFFECTIVE_VERSION: string =
+  import.meta.env.VITE_BUILD_ID ?? APP_VERSION;
+
 export function hasUnseenUpdate(): boolean {
   if (typeof localStorage === "undefined") return false;
-  return localStorage.getItem(STORAGE_KEY) !== APP_VERSION;
+  return localStorage.getItem(STORAGE_KEY) !== EFFECTIVE_VERSION;
 }
 
 export function markAsSeen(): void {
   if (typeof localStorage !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, APP_VERSION);
+    localStorage.setItem(STORAGE_KEY, EFFECTIVE_VERSION);
   }
 }
