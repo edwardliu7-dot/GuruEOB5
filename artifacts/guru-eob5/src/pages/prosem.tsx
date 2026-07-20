@@ -499,7 +499,7 @@ export default function Prosem() {
                           <SelectValue placeholder="Pilih Pekan" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="max-h-60 overflow-y-auto">
                         {weeks?.map((w: any) => (
                           <SelectItem key={w.id} value={w.id}>
                             Pekan {w.pekanKe}
