@@ -138,11 +138,16 @@ export default function ModulAjarPage() {
   const onSubmit = async (values: FormValues) => {
     try {
       const result = await generate.mutateAsync({ data: values });
+      // Pre-fill the cache so useGetModulAjar shows content immediately
+      // without a second network round-trip (which could fail and leave the
+      // panel blank even though generation succeeded).
+      queryClient.setQueryData(getGetModulAjarQueryKey(result.id), result);
       setSelectedId(result.id);
       queryClient.invalidateQueries({ queryKey: ["/api/modul-ajar"] });
       toast({ title: "Berhasil", description: "Modul ajar berhasil dibuat" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan saat membuat modul ajar" });
+    } catch (e: any) {
+      const msg = e?.data?.error ?? e?.message ?? "Terjadi kesalahan saat membuat modul ajar";
+      toast({ variant: "destructive", title: "Gagal membuat modul ajar", description: msg });
     }
   };
 

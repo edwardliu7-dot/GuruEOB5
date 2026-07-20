@@ -91,11 +91,14 @@ export default function SoalOtomatisPage() {
   const onSubmit = async (values: FormValues) => {
     try {
       const result = await generate.mutateAsync({ data: values });
+      // Pre-fill cache so the detail view shows instantly without a second fetch
+      queryClient.setQueryData(getGetSoalOtomatisQueryKey(result.id), result);
       setSelectedId(result.id);
       queryClient.invalidateQueries({ queryKey: ["/api/soal-otomatis"] });
       toast({ title: "Berhasil", description: "Soal berhasil dibuat" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan saat membuat soal" });
+    } catch (e: any) {
+      const msg = e?.data?.error ?? e?.message ?? "Terjadi kesalahan saat membuat soal";
+      toast({ variant: "destructive", title: "Gagal membuat soal", description: msg });
     }
   };
 
