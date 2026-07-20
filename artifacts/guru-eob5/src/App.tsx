@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { ThemeProvider } from "@/lib/theme-context";
 import { useEffect } from "react";
 
 // Pages
@@ -27,6 +28,7 @@ import AkunSiswa from "@/pages/akun-siswa";
 import ModulAjar from "@/pages/modul-ajar";
 import SoalOtomatis from "@/pages/soal-otomatis";
 import FeedbackAdmin from "@/pages/feedback";
+import Pengaturan from "@/pages/pengaturan";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -81,8 +83,21 @@ function Router() {
       <Route path="/modul-ajar" component={() => <ProtectedRoute component={ModulAjar} />} />
       <Route path="/soal-otomatis" component={() => <ProtectedRoute component={SoalOtomatis} />} />
       <Route path="/feedback" component={() => <ProtectedRoute component={FeedbackAdmin} adminOnly />} />
+      <Route path="/pengaturan" component={() => <ProtectedRoute component={Pengaturan} />} />
       <Route component={NotFound} />
     </Switch>
+  );
+}
+
+function AppWithTheme() {
+  const { user } = useAuth();
+  return (
+    <ThemeProvider userId={user?.id ?? null}>
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <Router />
+      </WouterRouter>
+      <Toaster />
+    </ThemeProvider>
   );
 }
 
@@ -91,10 +106,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
+          <AppWithTheme />
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
