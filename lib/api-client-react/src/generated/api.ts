@@ -54,7 +54,11 @@ import type {
   GradeUpdate,
   HealthStatus,
   InfoPekanan,
+  JadwalBulkInput,
+  JadwalBulkResult,
   JadwalEntry,
+  JadwalImportInput,
+  JadwalImportPreviewResponse,
   JadwalInput,
   JournalEntry,
   JournalEntryInput,
@@ -3792,6 +3796,148 @@ export const useDeleteJadwal = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteJadwalMutationOptions(options));
+    }
+
+export const getImportJadwalPreviewUrl = () => {
+
+
+
+
+  return `/api/jadwal/import-preview`
+}
+
+/**
+ * @summary Ekstrak jadwal dari PDF dan preview pencocokan mata pelajaran (AI)
+ */
+export const importJadwalPreview = async (jadwalImportInput: JadwalImportInput, options?: RequestInit): Promise<JadwalImportPreviewResponse> => {
+
+  return customFetch<JadwalImportPreviewResponse>(getImportJadwalPreviewUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(jadwalImportInput)
+  }
+);}
+
+
+
+
+
+export const getImportJadwalPreviewMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importJadwalPreview>>, TError,{data: BodyType<JadwalImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importJadwalPreview>>, TError,{data: BodyType<JadwalImportInput>}, TContext> => {
+
+const mutationKey = ['importJadwalPreview'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importJadwalPreview>>, {data: BodyType<JadwalImportInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  importJadwalPreview(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportJadwalPreviewMutationResult = NonNullable<Awaited<ReturnType<typeof importJadwalPreview>>>
+    export type ImportJadwalPreviewMutationBody = BodyType<JadwalImportInput>
+    export type ImportJadwalPreviewMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Ekstrak jadwal dari PDF dan preview pencocokan mata pelajaran (AI)
+ */
+export const useImportJadwalPreview = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importJadwalPreview>>, TError,{data: BodyType<JadwalImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importJadwalPreview>>,
+        TError,
+        {data: BodyType<JadwalImportInput>},
+        TContext
+      > => {
+      return useMutation(getImportJadwalPreviewMutationOptions(options));
+    }
+
+export const getBulkCreateJadwalUrl = () => {
+
+
+
+
+  return `/api/jadwal/bulk`
+}
+
+/**
+ * @summary Simpan banyak jadwal sekaligus (admin sekolah)
+ */
+export const bulkCreateJadwal = async (jadwalBulkInput: JadwalBulkInput, options?: RequestInit): Promise<JadwalBulkResult> => {
+
+  return customFetch<JadwalBulkResult>(getBulkCreateJadwalUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(jadwalBulkInput)
+  }
+);}
+
+
+
+
+
+export const getBulkCreateJadwalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateJadwal>>, TError,{data: BodyType<JadwalBulkInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkCreateJadwal>>, TError,{data: BodyType<JadwalBulkInput>}, TContext> => {
+
+const mutationKey = ['bulkCreateJadwal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkCreateJadwal>>, {data: BodyType<JadwalBulkInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkCreateJadwal(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkCreateJadwalMutationResult = NonNullable<Awaited<ReturnType<typeof bulkCreateJadwal>>>
+    export type BulkCreateJadwalMutationBody = BodyType<JadwalBulkInput>
+    export type BulkCreateJadwalMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Simpan banyak jadwal sekaligus (admin sekolah)
+ */
+export const useBulkCreateJadwal = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkCreateJadwal>>, TError,{data: BodyType<JadwalBulkInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof bulkCreateJadwal>>,
+        TError,
+        {data: BodyType<JadwalBulkInput>},
+        TContext
+      > => {
+      return useMutation(getBulkCreateJadwalMutationOptions(options));
     }
 
 export const getGetRekapAbsensiUrl = (params?: GetRekapAbsensiParams,) => {

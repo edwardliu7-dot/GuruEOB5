@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Layout } from "@/components/layout";
 import {
   useListJadwal,
@@ -6,13 +6,20 @@ import {
   useUpdateJadwal,
   useDeleteJadwal,
   useListSubjects,
+  useImportJadwalPreview,
+  useBulkCreateJadwal,
   getListJadwalQueryKey,
 } from "@workspace/api-client-react";
-import type { JadwalEntry, JadwalInput, JadwalInputHari } from "@workspace/api-client-react";
+import type {
+  JadwalEntry,
+  JadwalInput,
+  JadwalInputHari,
+  JadwalImportPreviewItem,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -32,13 +39,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertCircle,
   CalendarClock,
+  CheckCircle2,
   Clock,
+  FileUp,
+  Loader2,
   Pencil,
   Plus,
   Trash2,
+  XCircle,
 } from "lucide-react";
 import { KELAS_OPTIONS } from "@/lib/options";
+import { cn } from "@/lib/utils";
 
 const HARI_LIST = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] as const;
 type Hari = (typeof HARI_LIST)[number];
@@ -198,6 +219,265 @@ function JadwalDialog({
   );
 }
 
+// ── Import PDF dialog ─────────────────────────────────────────────────────────
+type ImportStep = "upload" | "preview";
+
+function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const previewMutation = useImportJadwalPreview();
+  const bulkMutation = useBulkCreateJadwal();
+
+  const [step, setStep] = useState<ImportStep>("upload");
+  const [items, setItems] = useState<JadwalImportPreviewItem[]>([]);
+  // track which unmatched rows the user has excluded
+  const [excluded, setExcluded] = useState<Set<number>>(new Set());
+
+  function resetState() {
+    setStep("upload");
+    setItems([]);
+    setExcluded(new Set());
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function handleClose() {
+    resetState();
+    onClose();
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (!file) return;
+
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast({ title: "Format tidak didukung", description: "Harap unggah file PDF", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      const result = await previewMutation.mutateAsync({ data: { fileBase64: base64 } });
+      if (!result.preview || result.preview.length === 0) {
+        toast({ title: "Tidak ada jadwal ditemukan", description: "AI tidak berhasil mengekstrak jadwal dari PDF ini", variant: "destructive" });
+        return;
+      }
+      setItems(result.preview);
+      setStep("preview");
+    } catch (err: unknown) {
+      const msg = (err as { data?: { error?: string } })?.data?.error ?? "Gagal membaca PDF";
+      toast({ title: "Gagal ekstraksi", description: msg, variant: "destructive" });
+    }
+  }
+
+  async function handleSave() {
+    const toSave = items
+      .filter((item, idx) => item.matched && item.subjectId && !excluded.has(idx))
+      .map((item) => ({
+        subjectId: item.subjectId!,
+        kelas: item.kelas,
+        hari: item.hari,
+        jamMulai: item.jamMulai,
+        jamSelesai: item.jamSelesai,
+      }));
+
+    if (toSave.length === 0) {
+      toast({ title: "Tidak ada data untuk disimpan", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const result = await bulkMutation.mutateAsync({ data: { entries: toSave } });
+      toast({ title: `${result.inserted} jadwal berhasil disimpan` });
+      queryClient.invalidateQueries({ queryKey: getListJadwalQueryKey() });
+      handleClose();
+    } catch (err: unknown) {
+      const msg = (err as { data?: { error?: string } })?.data?.error ?? "Gagal menyimpan jadwal";
+      toast({ title: "Gagal", description: msg, variant: "destructive" });
+    }
+  }
+
+  function toggleExclude(idx: number) {
+    setExcluded((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  }
+
+  const matchedCount = items.filter((item, idx) => item.matched && !excluded.has(idx)).length;
+  const unmatchedCount = items.filter((item) => !item.matched).length;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
+      <DialogContent className={cn("max-w-3xl", step === "preview" && "max-w-5xl")}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileUp className="h-5 w-5" />
+            Import Jadwal dari PDF
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* ── Step 1: Upload ── */}
+        {step === "upload" && (
+          <div className="py-4">
+            {previewMutation.isPending ? (
+              <div className="flex flex-col items-center gap-4 py-12 text-muted-foreground">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-sm font-medium">AI sedang membaca jadwal dari PDF…</p>
+                <p className="text-xs">Proses ini bisa memakan 15–30 detik</p>
+              </div>
+            ) : (
+              <div
+                className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-border/60 bg-muted/20 py-16 text-center cursor-pointer hover:bg-muted/40 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FileUp className="h-10 w-10 text-muted-foreground/50" />
+                <div>
+                  <p className="font-medium text-foreground">Klik untuk memilih file PDF jadwal</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    AI akan mengekstrak jadwal dan mencocokkan mata pelajaran secara otomatis
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" type="button">
+                  Pilih File PDF
+                </Button>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              className="hidden"
+              onChange={handleFileChange}
+              disabled={previewMutation.isPending}
+            />
+          </div>
+        )}
+
+        {/* ── Step 2: Preview ── */}
+        {step === "preview" && (
+          <div className="space-y-3 py-2">
+            {/* Summary bar */}
+            <div className="flex flex-wrap gap-2 text-sm">
+              <span className="flex items-center gap-1.5 rounded-full bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 px-3 py-1 font-medium">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {matchedCount} cocok
+              </span>
+              {unmatchedCount > 0 && (
+                <span className="flex items-center gap-1.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300 px-3 py-1 font-medium">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {unmatchedCount} tidak cocok — tidak akan disimpan
+                </span>
+              )}
+            </div>
+
+            {/* Table */}
+            <div className="max-h-[55vh] overflow-auto rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-8"></TableHead>
+                    <TableHead>Kelas</TableHead>
+                    <TableHead>Hari</TableHead>
+                    <TableHead>Waktu</TableHead>
+                    <TableHead>Nama di PDF</TableHead>
+                    <TableHead>Mata Pelajaran (sistem)</TableHead>
+                    <TableHead>Guru</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item, idx) => {
+                    const isExcluded = excluded.has(idx);
+                    return (
+                      <TableRow
+                        key={idx}
+                        className={cn(
+                          !item.matched && "bg-orange-50/50 dark:bg-orange-950/20",
+                          isExcluded && "opacity-40 line-through",
+                        )}
+                      >
+                        <TableCell>
+                          {item.matched ? (
+                            <button
+                              title={isExcluded ? "Sertakan kembali" : "Hapus dari import"}
+                              onClick={() => toggleExclude(idx)}
+                              className="text-muted-foreground hover:text-destructive transition-colors"
+                            >
+                              {isExcluded ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <XCircle className="h-4 w-4" />
+                              )}
+                            </button>
+                          ) : (
+                            <AlertCircle className="h-4 w-4 text-orange-500" />
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium text-xs">{item.kelas}</TableCell>
+                        <TableCell className="text-xs">{item.hari}</TableCell>
+                        <TableCell className="text-xs whitespace-nowrap">
+                          {item.jamMulai} – {item.jamSelesai}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{item.mapelRaw}</TableCell>
+                        <TableCell>
+                          {item.matched ? (
+                            <span className="text-xs font-medium text-foreground">{item.subjectName}</span>
+                          ) : (
+                            <span className="text-xs text-orange-600 italic">Tidak ditemukan</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {item.teacherName ?? "—"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+
+            {unmatchedCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Baris tidak cocok terjadi karena nama mata pelajaran di PDF tidak ditemukan di
+                sistem. Tambahkan mata pelajaran lebih dulu lalu import ulang.
+              </p>
+            )}
+          </div>
+        )}
+
+        <DialogFooter className="gap-2">
+          {step === "preview" && (
+            <Button
+              variant="outline"
+              onClick={() => { setStep("upload"); setItems([]); setExcluded(new Set()); }}
+              disabled={bulkMutation.isPending}
+            >
+              Pilih File Lain
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleClose} disabled={previewMutation.isPending || bulkMutation.isPending}>
+            Batal
+          </Button>
+          {step === "preview" && (
+            <Button onClick={handleSave} disabled={bulkMutation.isPending || matchedCount === 0}>
+              {bulkMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" />Menyimpan…</>
+              ) : (
+                `Simpan ${matchedCount} Jadwal`
+              )}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Jadwal card ───────────────────────────────────────────────────────────────
 function JadwalCard({
   entry,
@@ -240,6 +520,7 @@ function JadwalCard({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Jadwal() {
+  const { user } = useAuth();
   const { data: jadwalList, isLoading } = useListJadwal();
   const deleteMutation = useDeleteJadwal();
   const queryClient = useQueryClient();
@@ -247,6 +528,7 @@ export default function Jadwal() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editEntry, setEditEntry] = useState<JadwalEntry | undefined>();
+  const [importOpen, setImportOpen] = useState(false);
 
   function openCreate() {
     setEditEntry(undefined);
@@ -297,10 +579,18 @@ export default function Jadwal() {
               Jadwal mengajarmu per hari dalam seminggu.
             </p>
           </div>
-          <Button onClick={openCreate} className="shrink-0">
-            <Plus className="h-4 w-4 mr-1.5" />
-            Tambah Jadwal
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            {user?.isAdmin && (
+              <Button variant="outline" onClick={() => setImportOpen(true)}>
+                <FileUp className="h-4 w-4 mr-1.5" />
+                Import PDF
+              </Button>
+            )}
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Tambah Jadwal
+            </Button>
+          </div>
         </div>
 
         {/* Empty state */}
@@ -311,10 +601,18 @@ export default function Jadwal() {
               <p className="font-medium text-foreground">Belum ada jadwal</p>
               <p className="text-sm mt-1">Tambahkan jadwal pelajaranmu untuk mulai</p>
             </div>
-            <Button onClick={openCreate}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              Tambah Jadwal Pertama
-            </Button>
+            <div className="flex gap-2">
+              {user?.isAdmin && (
+                <Button variant="outline" onClick={() => setImportOpen(true)}>
+                  <FileUp className="h-4 w-4 mr-1.5" />
+                  Import PDF
+                </Button>
+              )}
+              <Button onClick={openCreate}>
+                <Plus className="h-4 w-4 mr-1.5" />
+                Tambah Jadwal Pertama
+              </Button>
+            </div>
           </div>
         )}
 
@@ -363,7 +661,7 @@ export default function Jadwal() {
         )}
       </div>
 
-      {/* Dialog */}
+      {/* Edit/Create Dialog */}
       <JadwalDialog
         open={dialogOpen}
         initial={{
@@ -380,6 +678,9 @@ export default function Jadwal() {
         }}
         onClose={() => setDialogOpen(false)}
       />
+
+      {/* Import Dialog */}
+      <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
     </Layout>
   );
 }

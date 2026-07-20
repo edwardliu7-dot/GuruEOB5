@@ -932,6 +932,46 @@ export const DeleteJadwalResponse = zod.object({
 
 
 /**
+ * @summary Ekstrak jadwal dari PDF dan preview pencocokan mata pelajaran (AI)
+ */
+export const ImportJadwalPreviewBody = zod.object({
+  "fileBase64": zod.string().describe('Base64-encoded PDF content')
+})
+
+export const ImportJadwalPreviewResponse = zod.object({
+  "preview": zod.array(zod.object({
+  "kelas": zod.string(),
+  "hari": zod.string(),
+  "jamMulai": zod.string(),
+  "jamSelesai": zod.string(),
+  "mapelRaw": zod.string().describe('Nama mata pelajaran mentah dari PDF'),
+  "subjectId": zod.string().nullish(),
+  "subjectName": zod.string().nullish(),
+  "teacherName": zod.string().nullish(),
+  "matched": zod.boolean()
+}))
+})
+
+
+/**
+ * @summary Simpan banyak jadwal sekaligus (admin sekolah)
+ */
+export const BulkCreateJadwalBody = zod.object({
+  "entries": zod.array(zod.object({
+  "subjectId": zod.string(),
+  "kelas": zod.string(),
+  "hari": zod.string(),
+  "jamMulai": zod.string(),
+  "jamSelesai": zod.string()
+}))
+})
+
+export const BulkCreateJadwalResponse = zod.object({
+  "inserted": zod.number()
+})
+
+
+/**
  * @summary Rekap absensi bulanan per kelas (6 bulan terakhir)
  */
 export const GetRekapAbsensiQueryParams = zod.object({
@@ -1227,7 +1267,7 @@ export const ListGradesResponseItem = zod.object({
   "studentId": zod.string(),
   "subjectId": zod.string(),
   "calendarId": zod.string(),
-  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_akhir']),
+  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_tengah', 'sumatif_akhir']),
   "lingkupMateri": zod.number().min(1).nullish(),
   "tpNumber": zod.number().min(1).nullish(),
   "nilai": zod.number(),
@@ -1247,7 +1287,7 @@ export const CreateGradeBody = zod.object({
   "studentId": zod.string(),
   "subjectId": zod.string(),
   "calendarId": zod.string(),
-  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_akhir']),
+  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_tengah', 'sumatif_akhir']),
   "lingkupMateri": zod.number().min(1).optional(),
   "tpNumber": zod.number().min(1).optional(),
   "nilai": zod.number()
@@ -1262,7 +1302,7 @@ export const CreateGradeResponse = zod.object({
   "studentId": zod.string(),
   "subjectId": zod.string(),
   "calendarId": zod.string(),
-  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_akhir']),
+  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_tengah', 'sumatif_akhir']),
   "lingkupMateri": zod.number().min(1).nullish(),
   "tpNumber": zod.number().min(1).nullish(),
   "nilai": zod.number(),
@@ -1290,7 +1330,7 @@ export const UpdateGradeResponse = zod.object({
   "studentId": zod.string(),
   "subjectId": zod.string(),
   "calendarId": zod.string(),
-  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_akhir']),
+  "jenis": zod.enum(['formatif', 'sumatif_lm', 'sumatif_tengah', 'sumatif_akhir']),
   "lingkupMateri": zod.number().min(1).nullish(),
   "tpNumber": zod.number().min(1).nullish(),
   "nilai": zod.number(),

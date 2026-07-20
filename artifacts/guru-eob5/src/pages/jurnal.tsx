@@ -245,11 +245,12 @@ export default function Jurnal() {
 
   const onSubmit = async (data: z.infer<typeof journalSchema>) => {
     try {
+      const payload = { ...data, materi: data.materi ?? "" };
       if (editingJournal) {
-        await updateJournal.mutateAsync({ id: editingJournal, data });
+        await updateJournal.mutateAsync({ id: editingJournal, data: payload });
         toast({ title: "Berhasil", description: "Jurnal diperbarui" });
       } else {
-        await createJournal.mutateAsync({ data });
+        await createJournal.mutateAsync({ data: payload });
         toast({ title: "Berhasil", description: "Jurnal ditambahkan" });
       }
       setIsDialogOpen(false);

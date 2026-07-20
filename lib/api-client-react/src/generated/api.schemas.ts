@@ -38,6 +38,44 @@ export interface JadwalEntry {
   createdAt: string;
 }
 
+export interface JadwalImportPreviewItem {
+  kelas: string;
+  hari: string;
+  jamMulai: string;
+  jamSelesai: string;
+  /** Nama mata pelajaran mentah dari PDF */
+  mapelRaw: string;
+  subjectId?: string | null;
+  subjectName?: string | null;
+  teacherName?: string | null;
+  matched: boolean;
+}
+
+export interface JadwalImportInput {
+  /** Base64-encoded PDF content */
+  fileBase64: string;
+}
+
+export interface JadwalImportPreviewResponse {
+  preview: JadwalImportPreviewItem[];
+}
+
+export interface JadwalBulkEntry {
+  subjectId: string;
+  kelas: string;
+  hari: string;
+  jamMulai: string;
+  jamSelesai: string;
+}
+
+export interface JadwalBulkInput {
+  entries: JadwalBulkEntry[];
+}
+
+export interface JadwalBulkResult {
+  inserted: number;
+}
+
 export type JadwalInputHari = typeof JadwalInputHari[keyof typeof JadwalInputHari];
 
 
@@ -658,6 +696,7 @@ export type GradeJenis = typeof GradeJenis[keyof typeof GradeJenis];
 export const GradeJenis = {
   formatif: 'formatif',
   sumatif_lm: 'sumatif_lm',
+  sumatif_tengah: 'sumatif_tengah',
   sumatif_akhir: 'sumatif_akhir',
 } as const;
 
@@ -687,6 +726,7 @@ export type GradeInputJenis = typeof GradeInputJenis[keyof typeof GradeInputJeni
 export const GradeInputJenis = {
   formatif: 'formatif',
   sumatif_lm: 'sumatif_lm',
+  sumatif_tengah: 'sumatif_tengah',
   sumatif_akhir: 'sumatif_akhir',
 } as const;
 
