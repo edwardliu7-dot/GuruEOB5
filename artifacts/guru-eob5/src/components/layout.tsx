@@ -1,11 +1,13 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileDialog } from "@/components/profile-dialog";
 import { FeedbackWidget } from "@/components/feedback-widget";
+import { WhatsNewDialog, useWhatsNew } from "@/components/whats-new-dialog";
+import { hasUnseenUpdate } from "@/lib/changelog";
 import { formatJabatan } from "@/lib/options";
 import logoUrl from "@/assets/logo.png";
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +38,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+  const { open: whatsNewOpen, setOpen: setWhatsNewOpen } = useWhatsNew();
+  const [hasBadge, setHasBadge] = useState(() => hasUnseenUpdate());
 
   const initials = (user?.name ?? "?")
     .split(" ")
@@ -219,6 +223,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <p className="text-xs text-sidebar-foreground/50 truncate">{formatJabatan(user?.jabatan)}</p>
             </div>
           </button>
+          {/* What's New button */}
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 mb-1"
+            onClick={() => { setWhatsNewOpen(true); setHasBadge(false); }}
+          >
+            <span className="relative group-data-[collapsible=icon]:mr-0 mr-2">
+              <Bell className="w-4 h-4" />
+              {hasBadge && (
+                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-red-500 ring-1 ring-sidebar" />
+              )}
+            </span>
+            <span className="group-data-[collapsible=icon]:hidden">Yang Baru</span>
+            {hasBadge && (
+              <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
+                Baru
+              </span>
+            )}
+          </Button>
+
           <Button
             variant="ghost"
             className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
@@ -231,6 +255,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </Sidebar>
 
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
+      <WhatsNewDialog
+        open={whatsNewOpen}
+        onOpenChange={(v) => {
+          setWhatsNewOpen(v);
+          if (!v) setHasBadge(false);
+        }}
+      />
       <FeedbackWidget />
 
       <SidebarInset className="h-svh min-w-0 overflow-hidden bg-[#F8FAFC]">
