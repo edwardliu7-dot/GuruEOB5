@@ -8,6 +8,78 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
+/* ── Global micro-interactions ──────────────────────────────────────────────── */
+
+/* Smooth table row hover */
+tbody tr {
+  transition: background-color 0.15s ease, transform 0.12s ease;
+}
+tbody tr:hover {
+  background-color: hsl(var(--muted) / 0.4);
+}
+
+/* Card lift on hover */
+.card-hover {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.09);
+}
+
+/* Button press feedback */
+button:not([disabled]):active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* Sidebar menu item slide */
+[data-slot="sidebar-menu-button"] {
+  transition: background-color 0.18s ease, color 0.18s ease, padding-left 0.18s ease;
+}
+[data-slot="sidebar-menu-button"][data-active="true"] {
+  padding-left: 0.625rem;
+}
+
+/* Badge pulse for notification dots */
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.75; transform: scale(1.15); }
+}
+.badge-pulse {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+/* Shimmer on skeleton — replaces static grey */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted)/0.6) 50%, hsl(var(--muted)) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Smooth dialog/popover open */
+[data-radix-popper-content-wrapper] {
+  animation: scale-in 0.18s cubic-bezier(0.22,1,0.36,1);
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Icon bounce on active sidebar item */
+[data-slot="sidebar-menu-button"][data-active="true"] svg {
+  animation: icon-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes icon-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* Geometric sidebar pattern — set by theme-context via --sidebar-pattern CSS var */

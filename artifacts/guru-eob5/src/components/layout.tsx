@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
+import { AnimatePresence, PageTransition } from "@/components/motion";
 import { useAuth } from "@/lib/auth";
 import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox, Bell, Settings2, Contact, CalendarClock, PieChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -275,7 +276,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10">
           <div className="max-w-6xl mx-auto">
-            {children}
+            <AnimatePresence mode="wait" initial={false}>
+              <PageTransition key={location}>
+                {children}
+              </PageTransition>
+            </AnimatePresence>
           </div>
         </div>
       </SidebarInset>

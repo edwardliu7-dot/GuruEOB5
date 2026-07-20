@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout";
+import { FadeIn } from "@/components/motion";
 import {
   useListAttendance,
   useBulkMixedCreateAttendance,
@@ -199,8 +200,8 @@ export default function Absensi() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex justify-between items-center">
+      <div className="space-y-6">
+        <FadeIn className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold font-serif">Absensi</h1>
             <p className="text-muted-foreground mt-1">Kelola kehadiran siswa.</p>
@@ -214,7 +215,7 @@ export default function Absensi() {
               Catat Serentak
             </Button>
           </div>
-        </div>
+        </FadeIn>
 
         {/* ---- Catat Serentak panel ---- */}
         {isBulkMode && (

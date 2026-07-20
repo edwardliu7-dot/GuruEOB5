@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Layout } from "@/components/layout";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion";
 import {
   useListSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject,
   useListDocuments, useCreateDocument, useDeleteDocument,
@@ -697,7 +698,7 @@ export default function Administrasi() {
           <TabsContent value="administrasi" className="mt-4">
             {/* Subject folder grid */}
             {!selectedSubject && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {isLoadingSubjects ? (
                   Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
                 ) : subjects?.length === 0 ? (
@@ -707,37 +708,38 @@ export default function Administrasi() {
                   </div>
                 ) : (
                   subjects?.map((subject: any) => (
-                    <div
-                      key={subject.id}
-                      className="group relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
-                      onClick={() => setSelectedSubject(subject.id)}
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                          <Folder className="w-5 h-5 fill-current opacity-20" />
+                    <StaggerItem key={subject.id}>
+                      <div
+                        className="group relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer h-full"
+                        onClick={() => setSelectedSubject(subject.id)}
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <Folder className="w-5 h-5 fill-current opacity-20" />
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingSubject(subject); subjectForm.reset({ name: subject.name }); setIsSubjectDialogOpen(true); }}>
+                                <Edit2 className="w-4 h-4 mr-2" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteSubject(subject.id); }}>
+                                <Trash2 className="w-4 h-4 mr-2" /> Hapus
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingSubject(subject); subjectForm.reset({ name: subject.name }); setIsSubjectDialogOpen(true); }}>
-                              <Edit2 className="w-4 h-4 mr-2" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteSubject(subject.id); }}>
-                              <Trash2 className="w-4 h-4 mr-2" /> Hapus
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <h3 className="font-semibold text-lg line-clamp-1">{subject.name}</h3>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-1">Guru: {me?.name}</p>
                       </div>
-                      <h3 className="font-semibold text-lg line-clamp-1">{subject.name}</h3>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-1">Guru: {me?.name}</p>
-                    </div>
+                    </StaggerItem>
                   ))
                 )}
-              </div>
+              </StaggerContainer>
             )}
 
             {/* Document & TP tabs inside a subject */}

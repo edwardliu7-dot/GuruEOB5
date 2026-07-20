@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/motion";
 import {
   useListJournalEntries,
   useCreateJournalEntry,
@@ -276,8 +277,8 @@ export default function Jurnal() {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex justify-between items-center">
+      <div className="space-y-6">
+        <FadeIn className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold font-serif">Jurnal Mengajar</h1>
             <p className="text-muted-foreground mt-1">Catatan harian pelaksanaan pembelajaran.</p>
@@ -340,9 +341,9 @@ export default function Jurnal() {
               </Form>
             </DialogContent>
           </Dialog>
-        </div>
+        </FadeIn>
 
-        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <FadeIn delay={0.08} className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="p-4 border-b border-border bg-muted/40 flex gap-4">
              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
               <SelectTrigger className="w-[250px] bg-card"><SelectValue placeholder="Semua Mata Pelajaran" /></SelectTrigger>
@@ -369,8 +370,8 @@ export default function Jurnal() {
               ) : !journals?.length ? (
                 <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Belum ada jurnal.</TableCell></TableRow>
               ) : (
-                journals.map((j:any) => (
-                  <TableRow key={j.id}>
+                journals.map((j:any, idx:number) => (
+                  <TableRow key={j.id} style={{ animationDelay: `${idx * 40}ms` }} className="animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both">
                     <TableCell>{format(new Date(j.tanggal), "dd MMM yyyy")}</TableCell>
                     <TableCell>{subjects?.find((s:any) => s.id === j.subjectId)?.name}</TableCell>
                     <TableCell>{j.kelas}</TableCell>
@@ -394,7 +395,7 @@ export default function Jurnal() {
               )}
             </TableBody>
           </Table>
-        </div>
+        </FadeIn>
       </div>
     </Layout>
   );
