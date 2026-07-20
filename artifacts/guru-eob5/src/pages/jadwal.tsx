@@ -259,7 +259,15 @@ function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void })
 
     try {
       const buffer = await file.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      // btoa(String.fromCharCode(...)) overflows the call stack for large files;
+      // use a chunked approach instead.
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      const CHUNK = 8192;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+      }
+      const base64 = btoa(binary);
       const result = await previewMutation.mutateAsync({ data: { fileBase64: base64 } });
       if (!result.preview || result.preview.length === 0) {
         toast({ title: "Tidak ada jadwal ditemukan", description: "AI tidak berhasil mengekstrak jadwal dari PDF ini", variant: "destructive" });

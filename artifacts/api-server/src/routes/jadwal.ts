@@ -173,11 +173,31 @@ router.post("/jadwal/import-preview", requireAuth, async (req, res): Promise<voi
   if (!fileBase64) { res.status(400).json({ error: "fileBase64 wajib diisi" }); return; }
 
   // Extract text from PDF
-  const buffer = Buffer.from(fileBase64, "base64");
-  const { text } = await pdfParse(buffer);
+  let text: string;
+  try {
+    const buffer = Buffer.from(fileBase64, "base64");
+    const result = await pdfParse(buffer);
+    text = result.text;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    res.status(422).json({ error: `Gagal membaca PDF: ${msg}` });
+    return;
+  }
+
+  if (!text?.trim()) {
+    res.status(422).json({ error: "PDF tidak mengandung teks yang dapat dibaca (mungkin berupa gambar scan)" });
+    return;
+  }
 
   // AI: parse schedule from text
-  const extracted = await extractJadwalFromPDF(text);
+  let extracted: Awaited<ReturnType<typeof extractJadwalFromPDF>>;
+  try {
+    extracted = await extractJadwalFromPDF(text);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    res.status(502).json({ error: `Gagal mengekstrak jadwal dengan AI: ${msg}` });
+    return;
+  }
 
   // Load all subjects in this school to match by name
   const allSubjects = await db
