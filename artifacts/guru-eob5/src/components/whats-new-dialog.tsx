@@ -73,7 +73,9 @@ export function WhatsNewDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else onOpenChange(true); }}>
+    // Always call markAsSeen() regardless of how the dialog is dismissed
+    // (click outside, Escape, or the explicit close button).
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden rounded-2xl">
         {/* Header */}
         <div className="relative overflow-hidden bg-gradient-to-br from-primary/90 to-blue-600 px-6 pt-7 pb-6 text-white">

@@ -20,6 +20,25 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: "20260720-2",
+    date: "20 Juli 2026",
+    title: "Perbaikan Prosem & Kalender",
+    items: [
+      {
+        tag: "Perbaikan",
+        text: "Tambah Materi Prosem: dropdown CP kini muncul pada semua pekan aktif (efektif) — sebelumnya tampil 'Tidak ada KBM' karena tipe pekan tidak dikenali.",
+      },
+      {
+        tag: "Perbaikan",
+        text: "Impor AI Prosem: distribusi materi ke pekan aktif kini benar — sebelumnya pekan bertipe 'efektif' diabaikan saat memetakan materi.",
+      },
+      {
+        tag: "Perbaikan",
+        text: "Pekan PTS dan PAS kini dikunci sebagai pekan ujian (tidak dapat menerima materi KBM), sama seperti STS dan SAS.",
+      },
+    ],
+  },
+  {
     id: "20260720",
     date: "20 Juli 2026",
     title: "Tema, Font & Prosem",
