@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Layout } from "@/components/layout";
 import {
   useListSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject,
@@ -17,8 +17,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import {
   Folder, FileText, Plus, ArrowLeft, Trash2, Edit2, MoreVertical, Upload,
-  BookOpen, Download, Loader2, Link as LinkIcon, ExternalLink,
+  BookOpen, Download, Loader2, ExternalLink, X, CheckCircle2, AlertCircle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -49,11 +50,19 @@ function formatFileSize(bytes?: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// Strip extension from filename for default document name
+function fileBaseName(filename: string): string {
+  return filename.replace(/\.[^.]+$/, "");
+}
+
+interface PendingDoc {
+  id: string;
+  file: File;
+  name: string;
+  status: "pending" | "uploading" | "done" | "error";
+}
+
 const subjectSchema = z.object({ name: z.string().min(1, "Nama mata pelajaran harus diisi") });
-const documentSchema = z.object({
-  name: z.string().min(1, "Nama dokumen harus diisi"),
-  description: z.string().optional(),
-});
 const bahanAjarSchema = z.object({
   judul: z.string().min(1, "Judul harus diisi"),
   mataPelajaran: z.string().optional(),
@@ -63,7 +72,6 @@ const bahanAjarSchema = z.object({
 });
 
 type SubjectFormValues = z.infer<typeof subjectSchema>;
-type DocumentFormValues = z.infer<typeof documentSchema>;
 type BahanAjarFormValues = z.infer<typeof bahanAjarSchema>;
 
 // ─── Bahan Ajar API helpers ───────────────────────────────────────────────────
@@ -357,9 +365,11 @@ export default function Administrasi() {
   const createDocument = useCreateDocument();
   const deleteDocument = useDeleteDocument();
   const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [pendingDocs, setPendingDocs] = useState<PendingDoc[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const docFileInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -368,12 +378,36 @@ export default function Administrasi() {
     resolver: zodResolver(subjectSchema),
     defaultValues: { name: "" },
   });
-  const documentForm = useForm<DocumentFormValues>({
-    resolver: zodResolver(documentSchema),
-    defaultValues: { name: "", description: "" },
-  });
 
   const isAdmin = (me as any)?.isAdmin === true;
+
+  // Add files to pending list (dedup by name+size)
+  const addFiles = useCallback((files: FileList | File[]) => {
+    const arr = Array.from(files);
+    setPendingDocs((prev) => {
+      const existing = new Set(prev.map((p) => `${p.file.name}-${p.file.size}`));
+      const newEntries: PendingDoc[] = arr
+        .filter((f) => !existing.has(`${f.name}-${f.size}`))
+        .map((f) => ({
+          id: `${f.name}-${f.size}-${Math.random()}`,
+          file: f,
+          name: fileBaseName(f.name),
+          status: "pending" as const,
+        }));
+      return [...prev, ...newEntries];
+    });
+  }, []);
+
+  const removeDoc = (id: string) => setPendingDocs((prev) => prev.filter((d) => d.id !== id));
+  const updateDocName = (id: string, name: string) =>
+    setPendingDocs((prev) => prev.map((d) => (d.id === id ? { ...d, name } : d)));
+
+  const closeDocDialog = () => {
+    if (uploadProgress) return; // block close while uploading
+    setIsDocumentDialogOpen(false);
+    setPendingDocs([]);
+    setUploadProgress(null);
+  };
 
   const onSubjectSubmit = async (data: SubjectFormValues) => {
     if (!me) return;
@@ -394,27 +428,44 @@ export default function Administrasi() {
     }
   };
 
-  const onDocumentSubmit = async (data: DocumentFormValues) => {
-    if (!selectedSubject) return;
-    if (!selectedFile) {
-      toast({ variant: "destructive", title: "Gagal", description: "Pilih berkas untuk diunggah" });
-      return;
+  const handleUploadDocs = async () => {
+    if (!selectedSubject || pendingDocs.length === 0) return;
+    const todo = pendingDocs.filter((d) => d.status === "pending");
+    if (todo.length === 0) return;
+    setUploadProgress({ done: 0, total: todo.length });
+    let done = 0;
+    let failed = 0;
+    for (const doc of todo) {
+      setPendingDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: "uploading" } : d)));
+      try {
+        const fileData = await readFileAsBase64(doc.file);
+        await createDocument.mutateAsync({
+          data: {
+            name: doc.name.trim() || fileBaseName(doc.file.name),
+            subjectId: selectedSubject,
+            fileData,
+            fileName: doc.file.name,
+            fileType: doc.file.type || undefined,
+            fileSize: doc.file.size,
+          },
+        });
+        setPendingDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: "done" } : d)));
+        done++;
+      } catch {
+        setPendingDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: "error" } : d)));
+        failed++;
+      }
+      setUploadProgress({ done, total: todo.length });
     }
-    setIsUploading(true);
-    try {
-      const fileData = await readFileAsBase64(selectedFile);
-      await createDocument.mutateAsync({
-        data: { ...data, subjectId: selectedSubject, fileData, fileName: selectedFile.name, fileType: selectedFile.type || undefined, fileSize: selectedFile.size },
-      });
-      toast({ title: "Berhasil", description: "Dokumen berhasil diunggah" });
+    queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
+    if (failed === 0) {
+      toast({ title: "Berhasil", description: `${done} dokumen berhasil diunggah.` });
       setIsDocumentDialogOpen(false);
-      documentForm.reset();
-      setSelectedFile(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
-    } catch {
-      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
-    } finally {
-      setIsUploading(false);
+      setPendingDocs([]);
+      setUploadProgress(null);
+    } else {
+      toast({ variant: "destructive", title: `${failed} dokumen gagal`, description: "Dokumen yang gagal ditandai merah — Anda dapat mencoba lagi." });
+      setUploadProgress(null);
     }
   };
 
@@ -510,32 +561,126 @@ export default function Administrasi() {
             </Dialog>
           )}
           {pageTab === "administrasi" && selectedSubject && innerTab === "dokumen" && (
-            <Dialog open={isDocumentDialogOpen} onOpenChange={(open) => { setIsDocumentDialogOpen(open); if (!open) { documentForm.reset(); setSelectedFile(null); } }}>
+            <Dialog open={isDocumentDialogOpen} onOpenChange={(open) => { if (!open) closeDocDialog(); else setIsDocumentDialogOpen(true); }}>
               <DialogTrigger asChild>
                 <Button><Upload className="w-4 h-4 mr-2" /> Unggah Dokumen</Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Unggah Dokumen Baru</DialogTitle></DialogHeader>
-                <Form {...documentForm}>
-                  <form onSubmit={documentForm.handleSubmit(onDocumentSubmit)} className="space-y-4">
-                    <FormField control={documentForm.control} name="name" render={({ field }) => (
-                      <FormItem><FormLabel>Nama Dokumen</FormLabel><FormControl><Input placeholder="Misal: RPP Semester 1" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={documentForm.control} name="description" render={({ field }) => (
-                      <FormItem><FormLabel>Keterangan (Opsional)</FormLabel><FormControl><Textarea placeholder="Catatan tambahan" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <div className="space-y-2">
-                      <Label htmlFor="document-file">Berkas</Label>
-                      <Input id="document-file" type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)} />
-                      {selectedFile && <p className="text-xs text-muted-foreground">{selectedFile.name} ({formatFileSize(selectedFile.size)})</p>}
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Unggah Dokumen</DialogTitle>
+                </DialogHeader>
+
+                {/* Drop zone */}
+                <div
+                  className={cn(
+                    "relative border-2 border-dashed rounded-xl transition-colors cursor-pointer",
+                    isDraggingOver
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50 hover:bg-muted/30",
+                  )}
+                  onClick={() => docFileInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
+                  onDragLeave={() => setIsDraggingOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDraggingOver(false);
+                    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+                  }}
+                >
+                  <div className="py-7 flex flex-col items-center gap-2 text-muted-foreground select-none">
+                    <Upload className="w-8 h-8 opacity-40" />
+                    <p className="text-sm font-medium">Klik atau seret berkas ke sini</p>
+                    <p className="text-xs">Bisa pilih beberapa berkas sekaligus</p>
+                  </div>
+                  <input
+                    ref={docFileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => { if (e.target.files?.length) { addFiles(e.target.files); e.target.value = ""; } }}
+                  />
+                </div>
+
+                {/* File list */}
+                {pendingDocs.length > 0 && (
+                  <div className="border border-border rounded-lg overflow-hidden divide-y divide-border max-h-64 overflow-y-auto">
+                    {pendingDocs.map((doc) => (
+                      <div key={doc.id} className={cn(
+                        "flex items-center gap-2 px-3 py-2 text-sm",
+                        doc.status === "done" && "bg-green-50/60",
+                        doc.status === "error" && "bg-red-50/60",
+                        doc.status === "uploading" && "bg-blue-50/40",
+                      )}>
+                        {/* Status icon */}
+                        <div className="shrink-0 w-5">
+                          {doc.status === "pending" && <FileText className="w-4 h-4 text-muted-foreground" />}
+                          {doc.status === "uploading" && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
+                          {doc.status === "done" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                          {doc.status === "error" && <AlertCircle className="w-4 h-4 text-red-500" />}
+                        </div>
+
+                        {/* Editable name */}
+                        <Input
+                          className="h-7 text-xs flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0 px-0"
+                          value={doc.name}
+                          disabled={doc.status !== "pending"}
+                          onChange={(e) => updateDocName(doc.id, e.target.value)}
+                          placeholder="Nama dokumen"
+                        />
+
+                        {/* File size */}
+                        <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">
+                          {formatFileSize(doc.file.size)}
+                        </span>
+
+                        {/* Remove */}
+                        {doc.status === "pending" && (
+                          <button
+                            type="button"
+                            className="shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => removeDoc(doc.id)}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Progress bar */}
+                {uploadProgress && (
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Mengunggah…</span>
+                      <span>{uploadProgress.done}/{uploadProgress.total}</span>
                     </div>
-                    <DialogFooter>
-                      <Button type="submit" disabled={createDocument.isPending || isUploading}>
-                        {isUploading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mengunggah...</> : "Simpan"}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all duration-300 rounded-full"
+                        style={{ width: `${Math.round((uploadProgress.done / uploadProgress.total) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={closeDocDialog} disabled={!!uploadProgress}>
+                    Batal
+                  </Button>
+                  <Button
+                    onClick={handleUploadDocs}
+                    disabled={pendingDocs.filter((d) => d.status === "pending").length === 0 || !!uploadProgress}
+                  >
+                    {uploadProgress
+                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mengunggah…</>
+                      : <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Unggah {pendingDocs.filter((d) => d.status === "pending").length} Berkas
+                        </>
+                    }
+                  </Button>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
           )}
