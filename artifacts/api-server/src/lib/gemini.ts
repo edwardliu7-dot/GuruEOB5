@@ -273,6 +273,107 @@ export async function mapMarkedToProsemItems(
 }
 
 // -----------------------------------------------------------------------
+// Prosem (Program Semester) import — any file format
+// -----------------------------------------------------------------------
+
+const PROSEM_EXTRACT_PROMPT = (weeksContext: string) =>
+  [
+    "Kamu adalah asisten kurikulum yang mengekstrak rencana Program Semester dari dokumen guru Indonesia.",
+    "Dokumen berisi rencana materi atau topik yang akan diajarkan di setiap pekan.",
+    "",
+    weeksContext,
+    "",
+    "Tugasmu:",
+    "1. Identifikasi materi atau topik yang direncanakan untuk setiap pekan KBM.",
+    "2. Jika dokumen mencantumkan nomor pekan secara eksplisit, gunakan nomor tersebut.",
+    "3. Jika tidak ada nomor pekan eksplisit, distribusikan materi secara berurutan ke pekan KBM.",
+    "4. jp (Jam Pelajaran) diisi sesuai yang tertera; gunakan 2 sebagai default jika tidak tersedia.",
+    "5. Setiap item materi menjadi satu entri terpisah — jangan digabung.",
+    "",
+    'Kembalikan JSON: { "items": [ { "pekanKe": number, "materi": "string", "jp": number }, ... ] }',
+  ].join("\n");
+
+function buildWeeksContext(weeks: { pekanKe: number; jenis: string }[]): string {
+  const kbmPekan = weeks
+    .filter((w) => w.jenis.toLowerCase() === "kbm")
+    .map((w) => w.pekanKe);
+  return `Pekan KBM yang tersedia (nomor urut): ${JSON.stringify(kbmPekan)}`;
+}
+
+export async function extractProsemFromText(
+  text: string,
+  weeks: { pekanKe: number; jenis: string }[],
+): Promise<MappedProsemItem[]> {
+  const prompt = PROSEM_EXTRACT_PROMPT(buildWeeksContext(weeks));
+  const result = await callJson<{ items?: unknown }>([
+    { role: "user", content: [prompt, "", "Isi dokumen:", "", text].join("\n") },
+  ]);
+  if (!result.items || !Array.isArray(result.items)) {
+    throw new Error("AI tidak menemukan materi dalam dokumen");
+  }
+  return result.items as MappedProsemItem[];
+}
+
+export async function extractProsemFromFile(
+  fileBase64: string,
+  mimeType: string,
+  fileName: string,
+  weeks: { pekanKe: number; jenis: string }[],
+): Promise<MappedProsemItem[]> {
+  const prompt = PROSEM_EXTRACT_PROMPT(buildWeeksContext(weeks));
+
+  const isImage =
+    mimeType.startsWith("image/png") ||
+    mimeType.startsWith("image/jpeg") ||
+    mimeType.startsWith("image/jpg") ||
+    mimeType.startsWith("image/webp") ||
+    mimeType.startsWith("image/heic") ||
+    mimeType.startsWith("image/heif");
+
+  if (isImage) {
+    const result = await callJson<{ items?: unknown }>(
+      [
+        {
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${fileBase64}` } },
+            { type: "text", text: prompt },
+          ],
+        } as Groq.Chat.ChatCompletionUserMessageParam,
+      ],
+      VISION_MODEL,
+    );
+    if (!result.items || !Array.isArray(result.items)) {
+      throw new Error("AI tidak menemukan materi dalam gambar ini");
+    }
+    return result.items as MappedProsemItem[];
+  }
+
+  if (mimeType === "application/pdf") {
+    const buffer = Buffer.from(fileBase64, "base64");
+    const { text } = await pdfParse(buffer);
+    return extractProsemFromText(text, weeks);
+  }
+
+  const isDocx =
+    mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    mimeType === "application/msword" ||
+    fileName?.toLowerCase().endsWith(".docx") ||
+    fileName?.toLowerCase().endsWith(".doc");
+
+  if (isDocx) {
+    const mammoth = _require("mammoth");
+    const buffer = Buffer.from(fileBase64, "base64");
+    const { value: text } = await (mammoth.extractRawText as (arg: { buffer: Buffer }) => Promise<{ value: string }>)({ buffer });
+    return extractProsemFromText(text, weeks);
+  }
+
+  // Fallback: treat as plain text (txt, etc.)
+  const text = Buffer.from(fileBase64, "base64").toString("utf-8");
+  return extractProsemFromText(text, weeks);
+}
+
+// -----------------------------------------------------------------------
 // Buat Modul Ajar (Kurikulum Merdeka lesson-plan generator)
 // -----------------------------------------------------------------------
 

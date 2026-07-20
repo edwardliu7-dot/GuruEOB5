@@ -17,7 +17,7 @@ import {
   DeleteProsemItemResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../lib/auth";
-import { mapMarkedToProsemItems } from "../lib/gemini";
+import { mapMarkedToProsemItems, extractProsemFromFile } from "../lib/gemini";
 
 const router: IRouter = Router();
 
@@ -166,6 +166,38 @@ router.delete("/prosem-items/:id", requireAuth, async (req, res): Promise<void> 
   }
   await db.delete(prosemItemsTable).where(eq(prosemItemsTable.id, params.data.id));
   res.json(DeleteProsemItemResponse.parse({ success: true }));
+});
+
+// POST /api/prosem/import-ai-file
+// Accepts raw file (base64) for PDF/image/docx/txt formats.
+router.post("/prosem/import-ai-file", requireAuth, async (req, res): Promise<void> => {
+  const teacherId = req.session.teacherId as string;
+  const { fileBase64, mimeType, fileName, weeks, prosemId } = req.body as {
+    fileBase64: string;
+    mimeType: string;
+    fileName?: string;
+    weeks: { id: string; pekanKe: number; jenis: string }[];
+    prosemId: string;
+  };
+
+  if (!fileBase64 || !mimeType || !Array.isArray(weeks) || !prosemId) {
+    res.status(400).json({ error: "fileBase64, mimeType, weeks, dan prosemId wajib diisi" });
+    return;
+  }
+
+  if (!(await ownsProsem(prosemId, teacherId))) {
+    res.status(404).json({ error: "Prosem tidak ditemukan" });
+    return;
+  }
+
+  try {
+    const items = await extractProsemFromFile(fileBase64, mimeType, fileName ?? "", weeks);
+    res.json({ items });
+  } catch (err) {
+    res.status(422).json({
+      error: err instanceof Error ? err.message : "Gagal menganalisis berkas dengan AI",
+    });
+  }
 });
 
 // POST /api/prosem/import-ai

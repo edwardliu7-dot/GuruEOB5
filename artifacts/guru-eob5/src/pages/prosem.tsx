@@ -98,7 +98,8 @@ interface VerifyWeekGroup {
 // ---- Manual tambah materi types ----
 interface ManualCPEntry {
   id: string;
-  tpKey: string; // e.g. "TP 1"
+  tpKey: string; // e.g. "TP 1" — empty if not yet matched
+  aiMateri?: string; // hint from AI import
   jp: string;
 }
 
@@ -499,12 +500,16 @@ export default function Prosem() {
           newItems.push({ weekId: group.weekId, materi: "Libur", catatan: "Libur" });
         } else {
           group.cps.forEach((cp) => {
-            if (!cp.tpKey) return;
-            const tp = (tpList as any[] | undefined)?.find((t: any) => `TP ${t.tpNumber}` === cp.tpKey);
+            // Skip if both tpKey and aiMateri are empty
+            if (!cp.tpKey && !cp.aiMateri) return;
+            const tp = cp.tpKey
+              ? (tpList as any[] | undefined)?.find((t: any) => `TP ${t.tpNumber}` === cp.tpKey)
+              : undefined;
             newItems.push({
               weekId: group.weekId,
-              kd: cp.tpKey,
-              materi: tp?.description ?? cp.tpKey,
+              kd: cp.tpKey || undefined,
+              // prefer TP description if matched, else aiMateri hint, else tpKey text
+              materi: tp?.description ?? cp.aiMateri ?? cp.tpKey,
               jp: cp.jp ? Number(cp.jp) : undefined,
             });
           });
@@ -539,10 +544,56 @@ export default function Prosem() {
     }
   };
 
+  // AI-import: build manualGroups from AI result and open the manual dialog
+  const openManualDialogWithAI = (
+    aiItems: { pekanKe: number; bab?: string; materi: string; jp?: number }[],
+    allWeeks: any[],
+  ) => {
+    const sorted = [...allWeeks].sort((a: any, b: any) => a.pekanKe - b.pekanKe);
+    const byPekan = new Map<number, { bab?: string; materi: string; jp?: number }[]>();
+    aiItems.forEach((item) => {
+      const arr = byPekan.get(item.pekanKe) ?? [];
+      arr.push(item);
+      byPekan.set(item.pekanKe, arr);
+    });
+
+    const groups: ManualWeekGroup[] = sorted.map((w: any) => {
+      const pekanItems = byPekan.get(w.pekanKe) ?? [];
+      let cps: ManualCPEntry[];
+      if (isKBMWeek(w.jenis ?? "")) {
+        if (pekanItems.length > 0) {
+          cps = pekanItems.slice(0, 3).map((item) => ({
+            id: nextId(),
+            tpKey: "",
+            aiMateri: item.materi || item.bab || "",
+            jp: item.jp ? String(item.jp) : "2",
+          }));
+        } else {
+          cps = [{ id: nextId(), tpKey: "", jp: "" }];
+        }
+      } else {
+        cps = [];
+      }
+      return {
+        weekId: w.id,
+        pekanKe: w.pekanKe,
+        jenis: w.jenis ?? "KBM",
+        tanggalMulai: w.tanggalMulai,
+        tanggalSelesai: w.tanggalSelesai,
+        isLibur: false,
+        cps,
+      };
+    });
+
+    setManualGroups(groups);
+    setManualOpen(true);
+  };
+
   const manualFilledCount = manualGroups.reduce((acc, g) => {
     if (!isKBMWeek(g.jenis)) return acc;
     if (g.isLibur) return acc;
-    return acc + g.cps.filter((c) => c.tpKey).length;
+    // count CPs that have either a tpKey selected OR an AI hint (will be saved as free-text)
+    return acc + g.cps.filter((c) => c.tpKey || c.aiMateri).length;
   }, 0);
 
   // ---- Download Template ----
@@ -574,50 +625,110 @@ export default function Prosem() {
     XLSX.writeFile(wb, "Format_Prosem.xlsx");
   };
 
-  // ---- Handle file pick for AI import ----
+  // ---- Handle file pick for AI import — dispatch by type ----
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const buffer = ev.target?.result as ArrayBuffer;
-        const workbook = XLSX.read(buffer, { type: "array" });
-        const parsed: { name: string; rows: string[][] }[] = workbook.SheetNames.map((name) => {
-          const ws = workbook.Sheets[name];
-          if (!ws) return { name, rows: [] };
-          const raw = XLSX.utils.sheet_to_json<unknown[]>(ws, {
-            header: 1,
-            raw: false,
-            defval: "",
-          });
-          return {
-            name,
-            rows: raw.map((row) => (row as unknown[]).map((c) => String(c ?? "").trim())),
-          };
-        });
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const isSpreadsheet = ["xlsx", "xls", "ods", "csv", "tsv"].includes(ext);
 
-        if (parsed.length === 0) {
-          toast({ variant: "destructive", title: "File kosong", description: "Tidak ada sheet di file ini." });
-          return;
+    if (isSpreadsheet) {
+      // Client-side Excel parse → AI or deterministic distribution
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const buffer = ev.target?.result as ArrayBuffer;
+          const workbook = XLSX.read(buffer, { type: "array" });
+          const parsed: { name: string; rows: string[][] }[] = workbook.SheetNames.map((name) => {
+            const ws = workbook.Sheets[name];
+            if (!ws) return { name, rows: [] };
+            const raw = XLSX.utils.sheet_to_json<unknown[]>(ws, {
+              header: 1,
+              raw: false,
+              defval: "",
+            });
+            return {
+              name,
+              rows: raw.map((row) => (row as unknown[]).map((c) => String(c ?? "").trim())),
+            };
+          });
+          if (parsed.length === 0) {
+            toast({ variant: "destructive", title: "File kosong", description: "Tidak ada sheet di file ini." });
+            return;
+          }
+          if (parsed.length === 1) {
+            runImport(parsed[0].rows);
+          } else {
+            setImportSheets(parsed);
+            setSheetPickerOpen(true);
+          }
+        } catch {
+          toast({ variant: "destructive", title: "Gagal membaca file", description: "Pastikan file berformat spreadsheet yang valid." });
         }
-        if (parsed.length === 1) {
-          runImport(parsed[0].rows);
-        } else {
-          setImportSheets(parsed);
-          setSheetPickerOpen(true);
-        }
-      } catch {
-        toast({
-          variant: "destructive",
-          title: "Gagal membaca file",
-          description: "Pastikan file berformat .xlsx atau .xls yang valid.",
-        });
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      // PDF / image / docx / txt → send raw to backend AI
+      runImportFile(file);
+    }
+  };
+
+  // ---- Handle non-spreadsheet file upload → backend AI → open manual dialog ----
+  const runImportFile = async (file: File) => {
+    if (!openProsemId || !weeks?.length) return;
+    setImportLoading(true);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+      const fileBase64 = btoa(binary);
+
+      const weeksPayload = (weeks as any[]).map((w) => ({
+        id: w.id,
+        pekanKe: w.pekanKe,
+        jenis: w.jenis ?? "KBM",
+      }));
+
+      const res = await fetch("/api/prosem/import-ai-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          fileBase64,
+          mimeType: file.type || "application/octet-stream",
+          fileName: file.name,
+          weeks: weeksPayload,
+          prosemId: openProsemId,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any).error ?? "Gagal menganalisis file");
       }
-    };
-    reader.readAsArrayBuffer(file);
+
+      const { items: aiItems } = (await res.json()) as {
+        items: { pekanKe: number; materi: string; jp?: number }[];
+      };
+
+      if (!aiItems?.length) {
+        toast({ variant: "destructive", title: "Tidak ada data", description: "AI tidak menemukan materi dalam file ini." });
+        return;
+      }
+
+      openManualDialogWithAI(aiItems, weeks as any[]);
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Gagal impor AI",
+        description: err instanceof Error ? err.message : "Terjadi kesalahan",
+      });
+    } finally {
+      setImportLoading(false);
+    }
   };
 
   const runImport = async (rows: string[][]) => {
@@ -652,9 +763,7 @@ export default function Prosem() {
         jp: 2,
       }));
 
-      const groups = buildVerifyGroups(aiItems, allWeeks);
-      setVerifyGroups(groups);
-      setVerifyOpen(true);
+      openManualDialogWithAI(aiItems, allWeeks);
       return;
     }
 
@@ -688,9 +797,7 @@ export default function Prosem() {
         return;
       }
 
-      const groups = buildVerifyGroups(aiItems, allWeeks);
-      setVerifyGroups(groups);
-      setVerifyOpen(true);
+      openManualDialogWithAI(aiItems, allWeeks);
     } catch (err) {
       toast({
         variant: "destructive",
@@ -1023,7 +1130,7 @@ export default function Prosem() {
                 <input
                   ref={importFileRef}
                   type="file"
-                  accept=".xlsx,.xls,.ods,.csv"
+                  accept=".xlsx,.xls,.ods,.csv,.tsv,.pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.webp"
                   className="hidden"
                   onChange={handleImportFile}
                 />
@@ -1190,7 +1297,7 @@ export default function Prosem() {
                         <div key={cp.id} className="flex items-center gap-1.5">
                           <span className="text-xs text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
                           {/* CP dropdown */}
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 space-y-0.5">
                             <Select
                               value={cp.tpKey || "__none__"}
                               onValueChange={(v) =>
@@ -1209,6 +1316,12 @@ export default function Prosem() {
                                 ))}
                               </SelectContent>
                             </Select>
+                            {/* AI hint — shown when AI suggested materi but user hasn't picked CP yet */}
+                            {cp.aiMateri && !cp.tpKey && (
+                              <p className="text-[10px] text-blue-500 italic truncate pl-0.5" title={cp.aiMateri}>
+                                AI: {cp.aiMateri}
+                              </p>
+                            )}
                           </div>
                           {/* JP input */}
                           <Input
