@@ -13,10 +13,11 @@ import {
   useListTujuanPembelajaran,
   useGetMe,
 } from "@workspace/api-client-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,7 +52,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Pencil, ChevronLeft } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronLeft, Download, Sparkles, Loader2, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -68,6 +69,16 @@ const itemSchema = z.object({
   catatan: z.string().optional(),
 });
 
+// ---- Types for AI import verify ----
+interface VerifyItem {
+  id: string; // ephemeral key
+  weekId: string;
+  bab: string;
+  materi: string;
+  jp: string;
+  catatan: string;
+}
+
 export default function Prosem() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -75,7 +86,6 @@ export default function Prosem() {
   const { data: calendars, isLoading: calLoading } = useListAcademicCalendars();
   const { data: subjects } = useListSubjects();
   const { data: me } = useGetMe();
-  // Kelas options: teacher's assigned classes, or all known classes as fallback
   const FALLBACK_KELAS = ["VII Ibnu Battutah", "VIII Ibnu Sina", "IX Al Khawarizmi"];
   const kelasOptions: string[] =
     (me as any)?.kelasDiampu?.length ? (me as any).kelasDiampu : FALLBACK_KELAS;
@@ -122,6 +132,17 @@ export default function Prosem() {
     resolver: zodResolver(itemSchema),
     defaultValues: { weekId: "", kd: "", materi: "", jp: "", catatan: "" },
   });
+
+  // ---- AI import state ----
+  const importFileRef = useRef<HTMLInputElement>(null);
+  const [importSheets, setImportSheets] = useState<
+    { name: string; rows: string[][] }[]
+  >([]);
+  const [sheetPickerOpen, setSheetPickerOpen] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [verifyItems, setVerifyItems] = useState<VerifyItem[]>([]);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const subjectName = (id: string) => subjects?.find((s: any) => s.id === id)?.name ?? "-";
   const weekLabel = (id: string) => {
@@ -176,8 +197,6 @@ export default function Prosem() {
   const onSubmitItem = async (data: z.infer<typeof itemSchema>) => {
     if (!openProsemId) return;
     try {
-      // If a TP was selected, materi was auto-filled from its description.
-      // If not, fall back to the manually typed materi, then to the kd string itself.
       const resolvedMateri =
         data.materi?.trim() ||
         (data.kd
@@ -227,6 +246,178 @@ export default function Prosem() {
       },
     },
   );
+
+  // ---- Download Template ----
+  const handleDownloadTemplate = () => {
+    const months = ["Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const headerRow1 = ["No", "Bab", "Materi"];
+    const headerRow2: (string | null)[] = [null, null, null];
+    months.forEach((m) => {
+      headerRow1.push(m, null as any, null as any, null as any);
+      headerRow2.push(1 as any, 2 as any, 3 as any, 4 as any);
+    });
+
+    const aoa: (string | number | null)[][] = [
+      ["PROGRAM SEMESTER _ KELAS _"],
+      ["T.A ____-____"],
+      ["NAMA SEKOLAH"],
+      ["MAPEL : "],
+      headerRow1,
+      headerRow2,
+      [1, "BAB I ...", "Topik 1"],
+      [null, null, "Topik 2"],
+      [2, "BAB II ...", "Topik 3"],
+      [null, null, "Topik 4"],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Prosem");
+    XLSX.writeFile(wb, "Format_Prosem.xlsx");
+  };
+
+  // ---- Handle file pick for AI import ----
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // reset input so same file can be re-picked
+    e.target.value = "";
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const buffer = ev.target?.result as ArrayBuffer;
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const parsed: { name: string; rows: string[][] }[] = workbook.SheetNames.map((name) => {
+          const ws = workbook.Sheets[name];
+          if (!ws) return { name, rows: [] };
+          const raw = XLSX.utils.sheet_to_json<unknown[]>(ws, {
+            header: 1,
+            raw: false,
+            defval: "",
+          });
+          return {
+            name,
+            rows: raw.map((row) => (row as unknown[]).map((c) => String(c ?? "").trim())),
+          };
+        });
+
+        if (parsed.length === 0) {
+          toast({ variant: "destructive", title: "File kosong", description: "Tidak ada sheet di file ini." });
+          return;
+        }
+        if (parsed.length === 1) {
+          // Single sheet → go straight to AI
+          runImportAI(parsed[0].rows);
+        } else {
+          // Multiple sheets → ask user to pick
+          setImportSheets(parsed);
+          setSheetPickerOpen(true);
+        }
+      } catch {
+        toast({ variant: "destructive", title: "Gagal membaca file", description: "Pastikan file berformat .xlsx atau .xls yang valid." });
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const runImportAI = async (rows: string[][]) => {
+    if (!openProsemId || !weeks?.length) return;
+    setImportLoading(true);
+    try {
+      const res = await fetch("/api/prosem/import-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          rows,
+          weeks: weeks.map((w: any) => ({ id: w.id, pekanKe: w.pekanKe })),
+          prosemId: openProsemId,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as any).error ?? "Gagal menganalisis file");
+      }
+      const { items: aiItems } = (await res.json()) as {
+        items: { pekanKe: number; bab: string; materi: string; jp?: number }[];
+      };
+
+      if (!aiItems?.length) {
+        toast({ variant: "destructive", title: "Tidak ada data", description: "AI tidak menemukan materi dalam file ini." });
+        return;
+      }
+
+      // Map pekanKe → weekId
+      const weekByPekan = new Map((weeks as any[]).map((w) => [w.pekanKe, w.id]));
+
+      const mapped: VerifyItem[] = aiItems
+        .map((item, idx) => ({
+          id: String(idx),
+          weekId: weekByPekan.get(item.pekanKe) ?? (weeks as any[])[0]?.id ?? "",
+          bab: item.bab ?? "",
+          materi: item.materi ?? "",
+          jp: item.jp != null ? String(item.jp) : "",
+          catatan: item.bab ? `${item.bab}` : "",
+        }))
+        .filter((it) => it.materi.trim() !== "");
+
+      setVerifyItems(mapped);
+      setVerifyOpen(true);
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Gagal impor AI",
+        description: err instanceof Error ? err.message : "Terjadi kesalahan",
+      });
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleBulkSave = async () => {
+    if (!openProsemId) return;
+    const validItems = verifyItems.filter((it) => it.weekId && it.materi.trim());
+    if (!validItems.length) {
+      toast({ variant: "destructive", title: "Tidak ada materi valid" });
+      return;
+    }
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/prosem-items/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          prosemId: openProsemId,
+          items: validItems.map((it) => ({
+            weekId: it.weekId,
+            materi: it.materi,
+            jp: it.jp ? Number(it.jp) : undefined,
+            catatan: it.catatan || undefined,
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error("Gagal menyimpan");
+      const { inserted } = (await res.json()) as { inserted: number };
+      toast({ title: "Berhasil", description: `${inserted} materi berhasil diimpor.` });
+      setVerifyOpen(false);
+      setVerifyItems([]);
+      invalidateItems();
+    } catch {
+      toast({ variant: "destructive", title: "Gagal menyimpan", description: "Terjadi kesalahan saat menyimpan." });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const updateVerifyItem = (id: string, field: keyof VerifyItem, value: string) => {
+    setVerifyItems((prev) => prev.map((it) => (it.id === id ? { ...it, [field]: value } : it)));
+  };
+
+  const removeVerifyItem = (id: string) => {
+    setVerifyItems((prev) => prev.filter((it) => it.id !== id));
+  };
 
   const noCalendar = !calLoading && !calendars?.length;
 
@@ -336,61 +527,61 @@ export default function Prosem() {
               )}
             </div>
             <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50/50">
-                  <TableHead>Mata Pelajaran</TableHead>
-                  <TableHead>Kelas</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {prosemLoading ? (
-                  Array(3)
-                    .fill(0)
-                    .map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell colSpan={3}>
-                          <Skeleton className="h-6 w-full" />
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/50">
+                    <TableHead>Mata Pelajaran</TableHead>
+                    <TableHead>Kelas</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {prosemLoading ? (
+                    Array(3)
+                      .fill(0)
+                      .map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell colSpan={3}>
+                            <Skeleton className="h-6 w-full" />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                  ) : !prosemList?.length ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
+                        Belum ada prosem. Buat prosem baru.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    prosemList.map((p: any) => (
+                      <TableRow
+                        key={p.id}
+                        className="cursor-pointer"
+                        onClick={() => setOpenProsemId(p.id)}
+                      >
+                        <TableCell className="font-medium">{subjectName(p.subjectId)}</TableCell>
+                        <TableCell>{p.kelas}</TableCell>
+                        <TableCell
+                          className="text-right"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button variant="outline" size="sm" onClick={() => setOpenProsemId(p.id)}>
+                            Kelola Materi
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive ml-1"
+                            onClick={() => handleDeleteProsem(p.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
-                ) : !prosemList?.length ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                      Belum ada prosem. Buat prosem baru.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  prosemList.map((p: any) => (
-                    <TableRow
-                      key={p.id}
-                      className="cursor-pointer"
-                      onClick={() => setOpenProsemId(p.id)}
-                    >
-                      <TableCell className="font-medium">{subjectName(p.subjectId)}</TableCell>
-                      <TableCell>{p.kelas}</TableCell>
-                      <TableCell
-                        className="text-right"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button variant="outline" size="sm" onClick={() => setOpenProsemId(p.id)}>
-                          Kelola Materi
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive ml-1"
-                          onClick={() => handleDeleteProsem(p.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </div>
         ) : (
@@ -408,78 +599,109 @@ export default function Prosem() {
                   <p className="text-xs text-muted-foreground">Materi per pekan</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={openNewItem} disabled={!weeks?.length}>
-                <Plus className="w-4 h-4 mr-2" /> Tambah Materi
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* Download Template */}
+                <Button variant="ghost" size="sm" onClick={handleDownloadTemplate} title="Download format Excel">
+                  <Download className="w-4 h-4 mr-1.5" /> Format
+                </Button>
+
+                {/* Impor AI */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => importFileRef.current?.click()}
+                  disabled={importLoading || !weeks?.length}
+                >
+                  {importLoading ? (
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 mr-1.5" />
+                  )}
+                  {importLoading ? "Menganalisis…" : "Impor AI"}
+                </Button>
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".xlsx,.xls,.ods,.csv"
+                  className="hidden"
+                  onChange={handleImportFile}
+                />
+
+                {/* Tambah Manual */}
+                <Button variant="outline" onClick={openNewItem} disabled={!weeks?.length}>
+                  <Plus className="w-4 h-4 mr-2" /> Tambah Materi
+                </Button>
+              </div>
             </div>
             <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50/50">
-                  <TableHead className="w-24">Pekan</TableHead>
-                  <TableHead>CP</TableHead>
-                  <TableHead>Materi</TableHead>
-                  <TableHead className="w-16">JP</TableHead>
-                  <TableHead>Catatan</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {!weeks?.length ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      Kalender ini belum punya pekan. Minta admin menambah pekan.
-                    </TableCell>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50/50">
+                    <TableHead className="w-24">Pekan</TableHead>
+                    <TableHead>CP</TableHead>
+                    <TableHead>Materi</TableHead>
+                    <TableHead className="w-16">JP</TableHead>
+                    <TableHead>Catatan</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
-                ) : itemsLoading ? (
-                  Array(3)
-                    .fill(0)
-                    .map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell colSpan={6}>
-                          <Skeleton className="h-6 w-full" />
+                </TableHeader>
+                <TableBody>
+                  {!weeks?.length ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        Kalender ini belum punya pekan. Minta admin menambah pekan.
+                      </TableCell>
+                    </TableRow>
+                  ) : itemsLoading ? (
+                    Array(3)
+                      .fill(0)
+                      .map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell colSpan={6}>
+                            <Skeleton className="h-6 w-full" />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                  ) : !items?.length ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        Belum ada materi. Tambah manual atau gunakan Impor AI.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    items.map((it: any) => (
+                      <TableRow key={it.id}>
+                        <TableCell className="font-medium">{weekLabel(it.weekId)}</TableCell>
+                        <TableCell>{it.kd || "-"}</TableCell>
+                        <TableCell>{it.materi}</TableCell>
+                        <TableCell>{it.jp ?? "-"}</TableCell>
+                        <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                          {it.catatan || "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => openEditItem(it)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            onClick={() => handleDeleteItem(it.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
-                ) : !items?.length ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      Belum ada materi.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  items.map((it: any) => (
-                    <TableRow key={it.id}>
-                      <TableCell className="font-medium">{weekLabel(it.weekId)}</TableCell>
-                      <TableCell>{it.kd || "-"}</TableCell>
-                      <TableCell>{it.materi}</TableCell>
-                      <TableCell>{it.jp ?? "-"}</TableCell>
-                      <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                        {it.catatan || "-"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => openEditItem(it)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive"
-                          onClick={() => handleDeleteItem(it.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </div>
         )}
       </div>
 
+      {/* ---- Dialog: Tambah/Edit Materi Manual ---- */}
       <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -604,6 +826,156 @@ export default function Prosem() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Dialog: Pilih Sheet ---- */}
+      <Dialog open={sheetPickerOpen} onOpenChange={setSheetPickerOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pilih Sheet</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            File ini memiliki beberapa sheet. Pilih sheet yang ingin diimpor.
+          </p>
+          <div className="flex flex-col gap-2 mt-2">
+            {importSheets.map((sheet) => (
+              <Button
+                key={sheet.name}
+                variant="outline"
+                className="justify-start"
+                onClick={() => {
+                  setSheetPickerOpen(false);
+                  setImportSheets([]);
+                  runImportAI(sheet.rows);
+                }}
+              >
+                {sheet.name}
+              </Button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setSheetPickerOpen(false); setImportSheets([]); }}>
+              Batal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Dialog: Verifikasi Hasil Impor AI ---- */}
+      <Dialog
+        open={verifyOpen}
+        onOpenChange={(open) => {
+          if (!open) { setVerifyOpen(false); setVerifyItems([]); }
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-violet-500" />
+              Verifikasi Impor AI — {verifyItems.length} materi
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground -mt-1">
+            Periksa dan edit hasilnya sebelum disimpan. Klik × untuk menghapus baris yang tidak diperlukan.
+          </p>
+
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-gray-50 text-muted-foreground">
+                  <th className="text-left font-medium px-2 py-2 w-28">Pekan</th>
+                  <th className="text-left font-medium px-2 py-2">Materi</th>
+                  <th className="text-left font-medium px-2 py-2 w-16">JP</th>
+                  <th className="text-left font-medium px-2 py-2">Catatan/Bab</th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody>
+                {verifyItems.map((it) => (
+                  <tr key={it.id} className="border-t border-gray-100">
+                    <td className="px-1 py-1.5">
+                      <Select
+                        value={it.weekId}
+                        onValueChange={(v) => updateVerifyItem(it.id, "weekId", v)}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-48 overflow-y-auto">
+                          {(weeks as any[] ?? []).map((w: any) => (
+                            <SelectItem key={w.id} value={w.id}>
+                              Pekan {w.pekanKe}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-1 py-1.5">
+                      <Input
+                        className="h-8 text-xs"
+                        value={it.materi}
+                        onChange={(e) => updateVerifyItem(it.id, "materi", e.target.value)}
+                      />
+                    </td>
+                    <td className="px-1 py-1.5">
+                      <Input
+                        className="h-8 text-xs w-14"
+                        type="number"
+                        min={0}
+                        value={it.jp}
+                        onChange={(e) => updateVerifyItem(it.id, "jp", e.target.value)}
+                      />
+                    </td>
+                    <td className="px-1 py-1.5">
+                      <Input
+                        className="h-8 text-xs"
+                        value={it.catatan}
+                        placeholder="Bab / keterangan"
+                        onChange={(e) => updateVerifyItem(it.id, "catatan", e.target.value)}
+                      />
+                    </td>
+                    <td className="px-1 py-1.5 text-center">
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                        onClick={() => removeVerifyItem(it.id)}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {verifyItems.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
+                      Semua baris dihapus.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => { setVerifyOpen(false); setVerifyItems([]); }}
+              disabled={bulkLoading}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleBulkSave}
+              disabled={bulkLoading || verifyItems.length === 0}
+            >
+              {bulkLoading ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan…</>
+              ) : (
+                `Simpan ${verifyItems.length} Materi`
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>

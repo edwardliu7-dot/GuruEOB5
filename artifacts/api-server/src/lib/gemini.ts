@@ -214,6 +214,57 @@ export async function mapFileToTP(fileBase64: string, mimeType: string): Promise
 }
 
 // -----------------------------------------------------------------------
+// Prosem (Program Semester) import -- AI distributes materi to weeks
+// -----------------------------------------------------------------------
+
+export interface MappedProsemItem {
+  pekanKe: number;
+  bab: string;
+  materi: string;
+  jp?: number;
+}
+
+export async function mapRowsToProsemItems(
+  rows: string[][],
+  availableWeeks: number[],
+): Promise<MappedProsemItem[]> {
+  const prompt = [
+    "Kamu adalah asisten yang membaca dokumen Program Semester (Prosem) guru Indonesia dan menghasilkan daftar materi per pekan.",
+    "",
+    "Format dokumen Prosem yang umum:",
+    "- Baris awal berisi judul, tahun ajaran, nama sekolah, dan mapel",
+    "- Baris header berisi nama bulan (Juli, Agustus, September, Oktober, November, Desember)",
+    "- Baris berikutnya berisi nomor pekan 1-4 per bulan (kolom berulang)",
+    "- Baris data berisi: No, Bab/Chapter, Materi/Topik, lalu kolom-kolom pekan",
+    "- 'S T S' = Sumatif Tengah Semester (ujian pertengahan -- ABAIKAN sebagai materi)",
+    "- 'S A S' = Sumatif Akhir Semester (ujian akhir -- ABAIKAN sebagai materi)",
+    "",
+    `Pekan yang tersedia di kalender akademik ini (nomor pekan urut, mulai dari 1): ${JSON.stringify(availableWeeks)}`,
+    `Total pekan tersedia: ${availableWeeks.length}`,
+    "",
+    "Tugasmu:",
+    "1. Ekstrak semua bab dan topik materi dari baris data. Abaikan header, judul, S T S, dan S A S.",
+    "2. Jika spreadsheet SUDAH punya penanda pekan di kolom tertentu (ada nilai non-null seperti centang, 'v', 'x', atau angka), gunakan posisi kolom tersebut untuk menentukan pekan ke berapa (kolom 4=pekan1 Juli, 5=pekan2 Juli, ..., 27=pekan4 Desember).",
+    "3. Jika tidak ada penanda pekan eksplisit, distribusikan materi ke pekan-pekan yang tersedia secara berurutan dan merata (satu pekan bisa berisi 1-3 topik, gabungkan jika berdekatan).",
+    "4. Perkirakan JP (Jam Pelajaran) yang wajar per materi: biasanya 2 JP untuk topik singkat, 4 JP untuk topik sedang, 6 JP untuk topik panjang.",
+    "5. Nomor pekanKe harus TEPAT sama dengan salah satu dari availableWeeks yang diberikan.",
+    "6. Boleh ada beberapa item dengan pekanKe yang sama (artinya satu pekan membahas beberapa topik).",
+    "7. bab diisi dengan nama BAB/Chapter/Elemen dari dokumen (bukan nomor).",
+    "",
+    'Kembalikan JSON: { "items": [ { "pekanKe": number, "bab": "string", "materi": "string", "jp": number }, ... ] }',
+    "",
+    "Data spreadsheet (baris-baris raw dari file):",
+    JSON.stringify(rows),
+  ].join("\n");
+
+  const result = await callJson<{ items?: unknown }>([{ role: "user", content: prompt }]);
+  if (!result.items || !Array.isArray(result.items)) {
+    throw new Error("Groq response missing items array");
+  }
+  return result.items as MappedProsemItem[];
+}
+
+// -----------------------------------------------------------------------
 // Buat Modul Ajar (Kurikulum Merdeka lesson-plan generator)
 // -----------------------------------------------------------------------
 

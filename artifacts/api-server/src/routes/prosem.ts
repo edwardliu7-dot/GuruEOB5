@@ -17,6 +17,7 @@ import {
   DeleteProsemItemResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../lib/auth";
+import { mapRowsToProsemItems } from "../lib/gemini";
 
 const router: IRouter = Router();
 
@@ -165,6 +166,73 @@ router.delete("/prosem-items/:id", requireAuth, async (req, res): Promise<void> 
   }
   await db.delete(prosemItemsTable).where(eq(prosemItemsTable.id, params.data.id));
   res.json(DeleteProsemItemResponse.parse({ success: true }));
+});
+
+// POST /api/prosem/import-ai
+// Accepts parsed spreadsheet rows + available weeks, returns AI-mapped items
+router.post("/prosem/import-ai", requireAuth, async (req, res): Promise<void> => {
+  const teacherId = req.session.teacherId as string;
+  const { rows, weeks, prosemId } = req.body as {
+    rows: string[][];
+    weeks: { id: string; pekanKe: number }[];
+    prosemId: string;
+  };
+
+  if (!Array.isArray(rows) || !Array.isArray(weeks) || !prosemId) {
+    res.status(400).json({ error: "rows, weeks, dan prosemId wajib diisi" });
+    return;
+  }
+
+  if (!(await ownsProsem(prosemId, teacherId))) {
+    res.status(404).json({ error: "Prosem tidak ditemukan" });
+    return;
+  }
+
+  try {
+    const availableWeeks = weeks.map((w) => w.pekanKe);
+    const items = await mapRowsToProsemItems(rows, availableWeeks);
+    res.json({ items });
+  } catch (err) {
+    res.status(422).json({
+      error: err instanceof Error ? err.message : "Gagal menganalisis berkas dengan AI",
+    });
+  }
+});
+
+// POST /api/prosem-items/bulk
+// Bulk create prosem items after AI import verification
+router.post("/prosem-items/bulk", requireAuth, async (req, res): Promise<void> => {
+  const teacherId = req.session.teacherId as string;
+  const { prosemId, items } = req.body as {
+    prosemId: string;
+    items: { weekId: string; materi: string; kd?: string; jp?: number; catatan?: string }[];
+  };
+
+  if (!prosemId || !Array.isArray(items) || items.length === 0) {
+    res.status(400).json({ error: "prosemId dan items wajib diisi" });
+    return;
+  }
+
+  if (!(await ownsProsem(prosemId, teacherId))) {
+    res.status(404).json({ error: "Prosem tidak ditemukan" });
+    return;
+  }
+
+  const inserted = await db
+    .insert(prosemItemsTable)
+    .values(
+      items.map((item) => ({
+        prosemId,
+        weekId: item.weekId,
+        kd: item.kd || null,
+        materi: item.materi,
+        jp: item.jp ?? null,
+        catatan: item.catatan || null,
+      })),
+    )
+    .returning();
+
+  res.status(201).json({ inserted: inserted.length });
 });
 
 export default router;
