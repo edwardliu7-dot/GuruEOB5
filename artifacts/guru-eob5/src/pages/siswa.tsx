@@ -338,7 +338,7 @@ export default function Siswa() {
             <div className="max-h-[50vh] overflow-y-auto border border-border rounded-md">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50/50">
+                  <TableRow className="bg-muted/40">
                     <TableHead className="w-[110px]">NISN</TableHead>
                     <TableHead>Nama Lengkap</TableHead>
                     <TableHead className="w-[100px]">Kelas</TableHead>
@@ -409,13 +409,13 @@ export default function Siswa() {
           </DialogContent>
         </Dialog>
 
-        <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border bg-gray-50/50">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-border bg-muted/40">
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
                 placeholder="Cari nama atau NISN..." 
-                className="pl-9 bg-white"
+                className="pl-9 bg-card"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -425,7 +425,7 @@ export default function Siswa() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50/50">
+                <TableRow className="bg-muted/40">
                   <TableHead className="w-[100px]">NISN</TableHead>
                   <TableHead>Nama Lengkap</TableHead>
                   <TableHead>Kelas</TableHead>
@@ -452,7 +452,7 @@ export default function Siswa() {
                   </TableRow>
                 ) : (
                   students?.map((student: any) => (
-                    <TableRow key={student.id} className="hover:bg-gray-50/50">
+                    <TableRow key={student.id} className="hover:bg-muted/40">
                       <TableCell className="font-medium text-muted-foreground">{student.nisn || "-"}</TableCell>
                       <TableCell className="font-medium">{student.namaLengkap}</TableCell>
                       <TableCell>{student.kelas}</TableCell>

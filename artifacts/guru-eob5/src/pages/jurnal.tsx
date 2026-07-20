@@ -99,7 +99,7 @@ function AttendanceContext({
   for (const a of attendance) counts[a.status] = (counts[a.status] ?? 0) + 1;
 
   return (
-    <div className="rounded-md border bg-gray-50/50 p-3 text-sm">
+    <div className="rounded-md border bg-muted/40 p-3 text-sm">
       <p className="mb-2 font-medium text-muted-foreground">
         Absensi tercatat ({attendance.length} siswa):
       </p>
@@ -343,10 +343,10 @@ export default function Jurnal() {
           </Dialog>
         </div>
 
-        <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border bg-gray-50/50 flex gap-4">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-border bg-muted/40 flex gap-4">
              <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-              <SelectTrigger className="w-[250px] bg-white"><SelectValue placeholder="Semua Mata Pelajaran" /></SelectTrigger>
+              <SelectTrigger className="w-[250px] bg-card"><SelectValue placeholder="Semua Mata Pelajaran" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Mata Pelajaran</SelectItem>
                 {subjects?.map((s:any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -355,7 +355,7 @@ export default function Jurnal() {
           </div>
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50/50">
+              <TableRow className="bg-muted/40">
                 <TableHead>Tanggal</TableHead>
                 <TableHead>Mata Pelajaran</TableHead>
                 <TableHead>Kelas</TableHead>

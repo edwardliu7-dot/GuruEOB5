@@ -218,12 +218,12 @@ export default function Absensi() {
 
         {/* ---- Catat Serentak panel ---- */}
         {isBulkMode && (
-          <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-border bg-gray-50/50 flex flex-wrap gap-3 items-end">
+          <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-border bg-muted/40 flex flex-wrap gap-3 items-end">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Kelas</label>
                 <Select value={bulkKelas} onValueChange={setBulkKelas}>
-                  <SelectTrigger className="w-[180px] bg-white"><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
+                  <SelectTrigger className="w-[180px] bg-card"><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
                   <SelectContent>
                     {kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
                   </SelectContent>
@@ -232,7 +232,7 @@ export default function Absensi() {
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Mata Pelajaran</label>
                 <Select value={bulkSubjectId} onValueChange={setBulkSubjectId}>
-                  <SelectTrigger className="w-[210px] bg-white"><SelectValue placeholder="Pilih Mapel" /></SelectTrigger>
+                  <SelectTrigger className="w-[210px] bg-card"><SelectValue placeholder="Pilih Mapel" /></SelectTrigger>
                   <SelectContent>
                     {subjects?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
@@ -240,7 +240,7 @@ export default function Absensi() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Tanggal</label>
-                <Input type="date" className="w-[150px] bg-white" value={bulkTanggal} onChange={(e) => setBulkTanggal(e.target.value)} />
+                <Input type="date" className="w-[150px] bg-card" value={bulkTanggal} onChange={(e) => setBulkTanggal(e.target.value)} />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Tandai semua</label>
@@ -264,7 +264,7 @@ export default function Absensi() {
             </div>
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50/50">
+                <TableRow className="bg-muted/40">
                   <TableHead>Nama Siswa</TableHead>
                   <TableHead className="w-[130px]">Status Kehadiran</TableHead>
                 </TableRow>
@@ -312,10 +312,10 @@ export default function Absensi() {
 
           {/* ─── Tab: Riwayat ─── */}
           <TabsContent value="riwayat">
-            <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-              <div className="p-4 border-b border-border bg-gray-50/50 flex gap-4">
+            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-border bg-muted/40 flex gap-4">
                 <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                  <SelectTrigger className="w-[250px] bg-white"><SelectValue placeholder="Semua Mata Pelajaran" /></SelectTrigger>
+                  <SelectTrigger className="w-[250px] bg-card"><SelectValue placeholder="Semua Mata Pelajaran" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Semua Mata Pelajaran</SelectItem>
                     {subjects?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -324,7 +324,7 @@ export default function Absensi() {
               </div>
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50/50">
+                  <TableRow className="bg-muted/40">
                     <TableHead>Nama Siswa</TableHead>
                     <TableHead>Mata Pelajaran</TableHead>
                     <TableHead>Status</TableHead>
@@ -388,12 +388,12 @@ export default function Absensi() {
                   {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
                 </div>
               ) : !rekapByDate.length ? (
-                <div className="bg-white border border-border rounded-xl shadow-sm h-32 flex items-center justify-center text-muted-foreground">
+                <div className="bg-card border border-border rounded-xl shadow-sm h-32 flex items-center justify-center text-muted-foreground">
                   Belum ada data absensi untuk ditampilkan.
                 </div>
               ) : (
                 rekapByDate.map(([tanggal, groups]) => (
-                  <div key={tanggal} className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+                  <div key={tanggal} className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
                     <div className="px-4 py-2.5 bg-gray-50/80 border-b border-border">
                       <p className="font-semibold text-sm">
                         {format(new Date(tanggal), "EEEE, dd MMMM yyyy", { locale: idLocale })}

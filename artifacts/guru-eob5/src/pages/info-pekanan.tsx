@@ -65,7 +65,7 @@ function StatCard({
   toneClass: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-white px-5 py-4">
+    <div className="rounded-xl border border-border bg-card px-5 py-4">
       <div className={`text-3xl font-bold font-serif ${toneClass}`}>{value}</div>
       <div className="mt-1 text-sm text-muted-foreground">{label}</div>
     </div>
@@ -137,7 +137,7 @@ function LessonCard({ group }: { group: GroupedItem }) {
   const jpTotal = group.rows.reduce((sum: number, r: any) => sum + (r.jp ?? 0), 0);
 
   return (
-    <div className="rounded-xl border border-border bg-white p-5">
+    <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-primary">
@@ -331,7 +331,7 @@ export default function InfoPekanan() {
                 <Skeleton className="h-9 w-full" />
               ) : (
                 <Select value={selectedCalendar} onValueChange={setSelectedCalendar}>
-                  <SelectTrigger className="bg-white">
+                  <SelectTrigger className="bg-card">
                     <SelectValue placeholder="Pilih Kalender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -348,16 +348,16 @@ export default function InfoPekanan() {
         </div>
 
         {noCalendar ? (
-          <div className="rounded-xl border border-border bg-white h-32 flex items-center justify-center text-muted-foreground">
+          <div className="rounded-xl border border-border bg-card h-32 flex items-center justify-center text-muted-foreground">
             Belum ada kalender akademik. Minta admin membuat kalender terlebih dahulu.
           </div>
         ) : !weeks?.length ? (
-          <div className="rounded-xl border border-border bg-white h-32 flex items-center justify-center text-muted-foreground">
+          <div className="rounded-xl border border-border bg-card h-32 flex items-center justify-center text-muted-foreground">
             Kalender ini belum punya pekan.
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between rounded-xl border border-border bg-white px-4 py-3">
+            <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
               <Button
                 variant="outline"
                 size="icon"
@@ -429,7 +429,7 @@ export default function InfoPekanan() {
                     ))}
                 </div>
               ) : !info?.items?.length ? (
-                <div className="rounded-xl border border-border bg-white h-32 flex items-center justify-center text-muted-foreground">
+                <div className="rounded-xl border border-border bg-card h-32 flex items-center justify-center text-muted-foreground">
                   Belum ada rencana prosem atau jurnal untuk pekan ini.
                 </div>
               ) : (

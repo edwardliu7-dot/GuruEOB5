@@ -76,7 +76,7 @@ export default function Direktori() {
               ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-20 text-center text-muted-foreground bg-white rounded-2xl border border-dashed border-border">
+          <div className="py-20 text-center text-muted-foreground bg-card rounded-2xl border border-dashed border-border">
             <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
             <p className="font-medium">Tidak ada guru ditemukan.</p>
             {query && (
@@ -90,7 +90,7 @@ export default function Direktori() {
             {filtered.map((t: any) => (
               <div
                 key={t.id}
-                className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow"
               >
                 {/* Avatar + name */}
                 <div className="flex items-center gap-3">

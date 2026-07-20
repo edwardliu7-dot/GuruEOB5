@@ -133,7 +133,7 @@ export default function FeedbackAdmin() {
                 "px-3 py-1.5 rounded-full text-sm font-medium border transition-colors",
                 filter === tab.key
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-white text-muted-foreground border-border hover:border-primary/40",
+                  : "bg-card text-muted-foreground border-border hover:border-primary/40",
               )}
             >
               {tab.label}
@@ -142,7 +142,7 @@ export default function FeedbackAdmin() {
         </div>
 
         {/* Content */}
-        <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="p-6 space-y-3">
               {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
@@ -170,7 +170,7 @@ export default function FeedbackAdmin() {
                     key={item.id}
                     className={cn(
                       "p-4 sm:p-5 flex gap-4 transition-colors",
-                      !item.isRead ? "bg-blue-50/40" : "bg-white",
+                      !item.isRead ? "bg-blue-50/40" : "bg-card",
                     )}
                   >
                     {/* Icon */}

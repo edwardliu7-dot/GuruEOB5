@@ -195,7 +195,7 @@ export default function Poin() {
                             </Select>
                           </div>
                           <div className="border rounded-md max-h-48 overflow-y-auto">
-                            <label className="flex items-center gap-2 px-3 py-2 border-b bg-gray-50/50 cursor-pointer text-sm font-medium">
+                            <label className="flex items-center gap-2 px-3 py-2 border-b bg-muted/40 cursor-pointer text-sm font-medium">
                               <Checkbox
                                 checked={allVisibleSelected}
                                 onCheckedChange={(checked) => {
@@ -209,7 +209,7 @@ export default function Poin() {
                               <p className="px-3 py-4 text-sm text-muted-foreground text-center">Tidak ada siswa.</p>
                             ) : (
                               visibleStudents.map((s: any) => (
-                                <label key={s.id} className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-50 text-sm">
+                                <label key={s.id} className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-muted/30 text-sm">
                                   <Checkbox
                                     checked={field.value.includes(s.id)}
                                     onCheckedChange={(checked) => {
@@ -347,10 +347,10 @@ export default function Poin() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+              <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50/50">
+                    <TableRow className="bg-muted/40">
                       <TableHead>Nama Siswa</TableHead>
                       <TableHead>Kelas</TableHead>
                       <TableHead className="text-emerald-600">Poin Positif</TableHead>
@@ -413,10 +413,10 @@ export default function Poin() {
           </TabsContent>
 
           <TabsContent value="riwayat">
-            <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50/50">
+                  <TableRow className="bg-muted/40">
                     <TableHead>Nama Siswa</TableHead>
                     <TableHead>Poin</TableHead>
                     <TableHead>Keterangan</TableHead>

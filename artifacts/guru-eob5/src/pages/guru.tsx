@@ -102,11 +102,11 @@ export default function Guru() {
           </DialogContent>
         </Dialog>
 
-        <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50/50">
+              <TableRow className="bg-muted/40">
                 <TableHead>Guru</TableHead>
                 <TableHead>Username</TableHead>
                 <TableHead>Jabatan & Mapel</TableHead>

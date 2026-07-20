@@ -135,7 +135,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center w-full bg-[#F8FAFC] py-10 px-4">
+    <div className="min-h-screen flex items-center justify-center w-full bg-background py-10 px-4">
       <div className="w-full max-w-xl">
         <div className="flex items-center mb-6 justify-center">
           <img src={logoUrl} alt="GuruEOB5" className="h-20 w-auto" />

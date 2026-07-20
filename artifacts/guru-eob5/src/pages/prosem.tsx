@@ -1016,17 +1016,17 @@ export default function Prosem() {
         </div>
 
         {noCalendar ? (
-          <div className="bg-white border border-border rounded-xl shadow-sm h-32 flex items-center justify-center text-muted-foreground">
+          <div className="bg-card border border-border rounded-xl shadow-sm h-32 flex items-center justify-center text-muted-foreground">
             Belum ada kalender akademik. Minta admin membuat kalender terlebih dahulu.
           </div>
         ) : !openProsemId ? (
-          <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-border bg-gray-50/50">
+          <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-border bg-muted/40">
               {calLoading ? (
                 <Skeleton className="h-9 w-[280px]" />
               ) : (
                 <Select value={selectedCalendar} onValueChange={setSelectedCalendar}>
-                  <SelectTrigger className="w-[280px] bg-white">
+                  <SelectTrigger className="w-[280px] bg-card">
                     <SelectValue placeholder="Pilih Kalender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1042,7 +1042,7 @@ export default function Prosem() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50/50">
+                  <TableRow className="bg-muted/40">
                     <TableHead>Mata Pelajaran</TableHead>
                     <TableHead>Kelas</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
@@ -1098,8 +1098,8 @@ export default function Prosem() {
             </div>
           </div>
         ) : (
-          <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-border bg-gray-50/50 flex items-center justify-between">
+          <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-border bg-muted/40 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Button variant="ghost" size="icon" onClick={() => setOpenProsemId(null)}>
                   <ChevronLeft className="w-4 h-4" />
@@ -1149,7 +1149,7 @@ export default function Prosem() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50/50">
+                  <TableRow className="bg-muted/40">
                     <TableHead className="w-24">Pekan</TableHead>
                     <TableHead>CP</TableHead>
                     <TableHead>Materi</TableHead>

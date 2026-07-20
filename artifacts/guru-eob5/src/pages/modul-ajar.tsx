@@ -130,7 +130,7 @@ function ModulPreview({ modul }: { modul: ModulAjar }) {
         <p className="font-medium mt-3">5. Kegiatan Pembelajaran</p>
         <div className="space-y-3">
           {toArr(ki.kegiatanPembelajaran).map((k: any, idx: number) => (
-            <div key={k?.pertemuanKe ?? idx} className="border border-border rounded-md p-3 bg-gray-50/50">
+            <div key={k?.pertemuanKe ?? idx} className="border border-border rounded-md p-3 bg-muted/40">
               <p className="font-medium mb-1">Pertemuan ke-{k?.pertemuanKe ?? idx + 1}</p>
               <p><span className="text-muted-foreground">Pendahuluan: </span>{k?.pendahuluan}</p>
               <p><span className="text-muted-foreground">Kegiatan Inti: </span>{k?.kegiatanInti}</p>
@@ -262,7 +262,7 @@ export default function ModulAjarPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white border border-border rounded-xl shadow-sm p-5">
+            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
               <h2 className="font-semibold mb-4 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Detail Modul</h2>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -334,8 +334,8 @@ export default function ModulAjarPage() {
               </Form>
             </div>
 
-            <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-border bg-gray-50/50">
+            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border bg-muted/40">
                 <h2 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4" /> Riwayat</h2>
               </div>
               {isLoadingHistory ? (
@@ -348,7 +348,7 @@ export default function ModulAjarPage() {
                     <button
                       key={h.id}
                       onClick={() => setSelectedId(h.id)}
-                      className={`w-full text-left p-3 hover:bg-gray-50 transition-colors flex items-start justify-between gap-2 ${selectedId === h.id ? "bg-primary/5" : ""}`}
+                      className={`w-full text-left p-3 hover:bg-muted/30 transition-colors flex items-start justify-between gap-2 ${selectedId === h.id ? "bg-primary/5" : ""}`}
                     >
                       <div className="min-w-0">
                         <p className="font-medium text-sm truncate">{h.materi}</p>
@@ -380,7 +380,7 @@ export default function ModulAjarPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-2 bg-white border border-border rounded-xl shadow-sm p-6 min-h-[500px]">
+          <div className="lg:col-span-2 bg-card border border-border rounded-xl shadow-sm p-6 min-h-[500px]">
             {isLoadingSelected ? (
               <div className="space-y-3">{Array(8).fill(0).map((_, i) => <Skeleton key={i} className="h-5 w-full" />)}</div>
             ) : selectedModul ? (

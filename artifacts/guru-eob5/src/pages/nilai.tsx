@@ -435,14 +435,14 @@ export default function Nilai() {
           </Button>
         </div>
 
-        <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border bg-gray-50/50 flex flex-wrap gap-3">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-border bg-muted/40 flex flex-wrap gap-3">
             <Select value={kelasFilter} onValueChange={setKelasFilter}>
-              <SelectTrigger className="w-[180px] bg-white"><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
+              <SelectTrigger className="w-[180px] bg-card"><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
               <SelectContent>{kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
             </Select>
             <Select value={subjectId} onValueChange={setSubjectId}>
-              <SelectTrigger className="w-[240px] bg-white"><SelectValue placeholder="Pilih Mata Pelajaran" /></SelectTrigger>
+              <SelectTrigger className="w-[240px] bg-card"><SelectValue placeholder="Pilih Mata Pelajaran" /></SelectTrigger>
               <SelectContent>
                 {filteredSubjects.map((s: any) => (
                   <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
@@ -455,7 +455,7 @@ export default function Nilai() {
               </SelectContent>
             </Select>
             <Select value={calendarId} onValueChange={setCalendarId}>
-              <SelectTrigger className="w-[220px] bg-white"><SelectValue placeholder="Pilih Tahun Ajaran/Semester" /></SelectTrigger>
+              <SelectTrigger className="w-[220px] bg-card"><SelectValue placeholder="Pilih Tahun Ajaran/Semester" /></SelectTrigger>
               <SelectContent>
                 {calendars?.map((c: any) => (
                   <SelectItem key={c.id} value={c.id}>
@@ -490,9 +490,9 @@ export default function Nilai() {
               )}
               <table className="text-sm border-collapse w-full">
                 <thead>
-                  <tr className="bg-gray-50/70">
-                    <th rowSpan={2} className="sticky left-0 bg-gray-50/70 border px-2 py-1 min-w-[40px]">No</th>
-                    <th rowSpan={2} className="sticky left-[40px] bg-gray-50/70 border px-2 py-1 min-w-[180px] text-left">Nama Siswa</th>
+                  <tr className="bg-muted/50">
+                    <th rowSpan={2} className="sticky left-0 bg-muted/50 border px-2 py-1 min-w-[40px]">No</th>
+                    <th rowSpan={2} className="sticky left-[40px] bg-muted/50 border px-2 py-1 min-w-[180px] text-left">Nama Siswa</th>
                     {LM_LIST.map((lm) => (
                       <th key={lm} colSpan={tpByLM.get(lm)?.length ?? 0} className="border px-2 py-1 whitespace-nowrap">Formatif - LM {lm}</th>
                     ))}
@@ -505,7 +505,7 @@ export default function Nilai() {
                     <th rowSpan={2} className="border px-2 py-1 whitespace-nowrap bg-yellow-50/80 text-amber-700">Jml</th>
                     <th rowSpan={2} className="border px-2 py-1 whitespace-nowrap bg-yellow-50/80 text-amber-700 font-bold">Nilai Raport</th>
                   </tr>
-                  <tr className="bg-gray-50/70">
+                  <tr className="bg-muted/50">
                     {LM_LIST.map((lm) =>
                       (tpByLM.get(lm) ?? []).map((tp) => (
                         <th key={`${lm}-${tp}`} className="border px-1 py-1 font-normal text-xs">TP{tp}</th>
@@ -517,9 +517,9 @@ export default function Nilai() {
                   {kelasStudents.map((s: any, i: number) => {
                     const { rataRata, jumlah, nilaiRaport } = computeStats(s.id);
                     return (
-                      <tr key={s.id} className="hover:bg-gray-50/50">
-                        <td className="sticky left-0 bg-white border px-2 py-1 text-center text-muted-foreground">{i + 1}</td>
-                        <td className="sticky left-[40px] bg-white border px-2 py-1 font-medium whitespace-nowrap">{s.namaLengkap}</td>
+                      <tr key={s.id} className="hover:bg-muted/40">
+                        <td className="sticky left-0 bg-card border px-2 py-1 text-center text-muted-foreground">{i + 1}</td>
+                        <td className="sticky left-[40px] bg-card border px-2 py-1 font-medium whitespace-nowrap">{s.namaLengkap}</td>
                         {LM_LIST.map((lm) =>
                           (tpByLM.get(lm) ?? []).map((tp) => {
                             const g = gradeMap.get(`${s.id}::${gradeKey("formatif", lm, tp)}`);

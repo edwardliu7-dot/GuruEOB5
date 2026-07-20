@@ -272,14 +272,14 @@ export default function Kalender() {
           </Dialog>
         </div>
 
-        <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-border bg-gray-50/50 flex flex-wrap gap-4 items-center justify-between">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-border bg-muted/40 flex flex-wrap gap-4 items-center justify-between">
             <div className="flex items-center gap-3">
               {isLoading ? (
                 <Skeleton className="h-9 w-[280px]" />
               ) : (
                 <Select value={selectedCalendar} onValueChange={setSelectedCalendar}>
-                  <SelectTrigger className="w-[280px] bg-white">
+                  <SelectTrigger className="w-[280px] bg-card">
                     <SelectValue placeholder="Pilih Kalender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -317,7 +317,7 @@ export default function Kalender() {
             <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50/50">
+                <TableRow className="bg-muted/40">
                   <TableHead className="w-20">Pekan</TableHead>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Jenis</TableHead>

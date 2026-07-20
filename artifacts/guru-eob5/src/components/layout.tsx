@@ -266,8 +266,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       />
       <FeedbackWidget />
 
-      <SidebarInset className="h-svh min-w-0 overflow-hidden bg-[#F8FAFC]">
-        <div className="h-14 flex items-center gap-2 px-4 border-b border-border shrink-0 md:h-16 md:px-6 bg-white">
+      <SidebarInset className="h-svh min-w-0 overflow-hidden bg-background">
+        <div className="h-14 flex items-center gap-2 px-4 border-b border-border shrink-0 md:h-16 md:px-6 bg-card">
           <SidebarTrigger />
           <img src={logoUrl} alt="GuruEOB5" className="h-8 w-auto md:hidden" />
         </div>

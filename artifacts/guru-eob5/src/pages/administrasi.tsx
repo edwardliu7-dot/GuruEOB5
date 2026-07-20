@@ -270,7 +270,7 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
           {Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
         </div>
       ) : !items?.length ? (
-        <div className="py-16 text-center text-muted-foreground bg-white rounded-xl border border-dashed border-border">
+        <div className="py-16 text-center text-muted-foreground bg-card rounded-xl border border-dashed border-border">
           <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
           <p>Belum ada bahan ajar.</p>
           <p className="text-sm mt-1">Klik "Tambah Bahan Ajar" untuk memulai.</p>
@@ -701,7 +701,7 @@ export default function Administrasi() {
                 {isLoadingSubjects ? (
                   Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
                 ) : subjects?.length === 0 ? (
-                  <div className="col-span-full py-12 text-center text-muted-foreground bg-white rounded-xl border border-dashed border-border">
+                  <div className="col-span-full py-12 text-center text-muted-foreground bg-card rounded-xl border border-dashed border-border">
                     <Folder className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
                     <p>Belum ada mata pelajaran.</p>
                   </div>
@@ -709,7 +709,7 @@ export default function Administrasi() {
                   subjects?.map((subject: any) => (
                     <div
                       key={subject.id}
-                      className="group relative bg-white border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
+                      className="group relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
                       onClick={() => setSelectedSubject(subject.id)}
                     >
                       <div className="flex justify-between items-start mb-4">
@@ -748,7 +748,7 @@ export default function Administrasi() {
                   <TabsTrigger value="tp">Tujuan Pembelajaran</TabsTrigger>
                 </TabsList>
                 <TabsContent value="dokumen">
-                  <div className="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
+                  <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                     {isLoadingDocuments ? (
                       <div className="p-4 space-y-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
                     ) : documents?.length === 0 ? (
@@ -759,7 +759,7 @@ export default function Administrasi() {
                     ) : (
                       <div className="divide-y divide-border">
                         {documents?.map((doc: any) => (
-                          <div key={doc.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                          <div key={doc.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                             <div className="flex items-center gap-4">
                               <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-500">
                                 <FileText className="w-5 h-5" />

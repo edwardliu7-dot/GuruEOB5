@@ -395,7 +395,7 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="bg-white border border-border rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
         {isLoadingCalendars || isLoading ? (
           <div className="p-4 space-y-4">
             <Skeleton className="h-12 w-full" />
@@ -420,7 +420,7 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
                   {items.map((item: any) => (
                     <div key={item.id} className="flex items-start justify-between gap-3 bg-gray-50/60 rounded-lg p-3">
                       <div className="flex gap-3">
-                        <span className="shrink-0 text-xs font-medium text-muted-foreground bg-white border border-border rounded px-2 py-0.5 h-fit">
+                        <span className="shrink-0 text-xs font-medium text-muted-foreground bg-card border border-border rounded px-2 py-0.5 h-fit">
                           TP {item.tpNumber}
                         </span>
                         <p className="text-sm">{item.description}</p>

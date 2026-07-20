@@ -166,7 +166,7 @@ export function FeedbackWidget() {
           ref={panelRef}
           className={cn(
             "feedback-ignore fixed bottom-16 right-5 z-50 w-[340px] max-w-[calc(100vw-2.5rem)]",
-            "bg-white rounded-2xl shadow-2xl border border-border",
+            "bg-card rounded-2xl shadow-2xl border border-border",
             "animate-in fade-in slide-in-from-bottom-4 duration-200",
           )}
         >
