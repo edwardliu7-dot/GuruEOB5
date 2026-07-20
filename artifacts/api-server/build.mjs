@@ -104,6 +104,8 @@ async function buildAll() {
       // pdfkit loads its standard-14 font .afm files from disk relative to its
       // own package directory at runtime -- bundling breaks that path resolution.
       "pdfkit",
+      // pdf-parse v2 ESM build has no default export; load at runtime via CJS require.
+      "pdf-parse",
     ],
     // "external" (not "linked") keeps the bundler from holding both the inline
     // sourcemap comment and the full separate map in memory at once — cheaper

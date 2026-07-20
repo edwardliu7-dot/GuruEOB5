@@ -1,7 +1,10 @@
 import Groq from "groq-sdk";
-// pdf-parse v2 ESM types don't declare a default export but esbuild handles it at runtime
-// @ts-ignore
-import pdfParse from "pdf-parse";
+import { createRequire } from "node:module";
+
+// pdf-parse v2 ESM build has no default export; load via CJS require instead.
+const _require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const pdfParse: (buf: Buffer) => Promise<{ text: string }> = _require("pdf-parse");
 
 const apiKey = process.env["GROQ_API_KEY"];
 if (!apiKey) {
