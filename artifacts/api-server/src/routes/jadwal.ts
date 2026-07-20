@@ -199,11 +199,22 @@ router.post("/jadwal/import-preview", requireAuth, async (req, res): Promise<voi
     return;
   }
 
-  // Load all subjects in this school to match by name
-  const allSubjects = await db
-    .select({ id: subjectsTable.id, name: subjectsTable.name, teacherId: subjectsTable.teacherId })
-    .from(subjectsTable)
-    .where(eq(subjectsTable.school, guru.school ?? ""));
+  // Load all teachers in this school from Neon, then load their subjects.
+  // (subjectsTable has no school column — tenancy goes through teacherId)
+  const schoolTeachers = await neonDb
+    .select({ id: gurusTable.id, name: gurusTable.name })
+    .from(gurusTable)
+    .where(eq(gurusTable.school, guru.school ?? ""));
+
+  const teacherIds = schoolTeachers.map((t) => t.id);
+  const teacherNameById = new Map(schoolTeachers.map((t) => [t.id, t.name]));
+
+  const allSubjects = teacherIds.length
+    ? await db
+        .select({ id: subjectsTable.id, name: subjectsTable.name, teacherId: subjectsTable.teacherId })
+        .from(subjectsTable)
+        .where(inArray(subjectsTable.teacherId, teacherIds))
+    : [];
 
   // Fuzzy match: normalize names for comparison
   function normalize(s: string) {
@@ -211,16 +222,6 @@ router.post("/jadwal/import-preview", requireAuth, async (req, res): Promise<voi
   }
 
   const subjectMap = new Map(allSubjects.map((s) => [normalize(s.name), s]));
-
-  // Build teacher name map
-  const teacherIds = [...new Set(allSubjects.map((s) => s.teacherId))];
-  const teachers = teacherIds.length
-    ? await neonDb
-        .select({ id: gurusTable.id, name: gurusTable.name })
-        .from(gurusTable)
-        .where(inArray(gurusTable.id, teacherIds))
-    : [];
-  const teacherNameById = new Map(teachers.map((t) => [t.id, t.name]));
 
   // Map each extracted entry to a subject
   const preview = extracted.map((entry) => {
