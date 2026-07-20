@@ -1,7 +1,6 @@
 import { Layout } from "@/components/layout";
 import {
   useListAttendance,
-  useBulkCreateAttendance,
   useBulkMixedCreateAttendance,
   useUpdateAttendanceRecord,
   useDeleteAttendanceRecord,
@@ -11,24 +10,18 @@ import {
   useListStudents,
 } from "@workspace/api-client-react";
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarCheck2, Plus, Trash2, X } from "lucide-react";
+import { CalendarCheck2, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 
 type AttendanceStatus = "hadir" | "izin" | "sakit" | "alpa";
 
@@ -53,13 +46,6 @@ const statusTextColors: Record<AttendanceStatus, string> = {
   alpa: "text-rose-600",
 };
 
-const attendanceSchema = z.object({
-  studentIds: z.array(z.string()).min(1, "Pilih minimal satu siswa"),
-  subjectId: z.string().min(1, "Mata pelajaran harus dipilih"),
-  tanggal: z.string().min(1, "Tanggal harus diisi"),
-  status: z.enum(["hadir", "izin", "sakit", "alpa"]),
-});
-
 function todayStr() {
   return new Date().toISOString().split("T")[0];
 }
@@ -78,14 +64,11 @@ export default function Absensi() {
 
   const { data: rekapData, isLoading: rekapLoading } = useGetAttendanceRekap();
 
-  const bulkCreateAttendance = useBulkCreateAttendance();
   const bulkMixedAttendance = useBulkMixedCreateAttendance();
   const updateAttendance = useUpdateAttendanceRecord();
   const deleteAttendance = useDeleteAttendanceRecord();
   const bulkDeleteByKelas = useBulkDeleteAttendanceByKelas();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [kelasFilter, setKelasFilter] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -192,15 +175,6 @@ export default function Absensi() {
     }
   };
 
-  const form = useForm<z.infer<typeof attendanceSchema>>({
-    resolver: zodResolver(attendanceSchema),
-    defaultValues: { studentIds: [], subjectId: "", tanggal: todayStr(), status: "hadir" },
-  });
-
-  const visibleStudents = (students ?? []).filter(
-    (s: any) => kelasFilter === "all" || s.kelas === kelasFilter,
-  );
-
   const groupedByDate = (() => {
     const groups = new Map<string, any[]>();
     for (const a of (attendanceList ?? []) as any[]) {
@@ -210,19 +184,6 @@ export default function Absensi() {
     }
     return [...groups.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
   })();
-
-  const onSubmit = async (data: z.infer<typeof attendanceSchema>) => {
-    try {
-      const result = await bulkCreateAttendance.mutateAsync({ data });
-      toast({ title: "Berhasil", description: `Kehadiran dicatat untuk ${result.count} siswa` });
-      setIsDialogOpen(false);
-      form.reset();
-      setKelasFilter("all");
-      invalidateAttendance();
-    } catch {
-      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
-    }
-  };
 
   // Group rekap by date for display
   const rekapByDate = useMemo(() => {
@@ -252,92 +213,6 @@ export default function Absensi() {
               <CalendarCheck2 className="w-4 h-4 mr-2" />
               Catat Serentak
             </Button>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" /> Catat Kehadiran</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Catat Kehadiran</DialogTitle></DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField control={form.control} name="studentIds" render={({ field }) => {
-                      const visibleIds = visibleStudents.map((s: any) => s.id);
-                      const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id: string) => field.value.includes(id));
-                      return (
-                        <FormItem>
-                          <div className="flex items-center justify-between">
-                            <FormLabel>Siswa ({field.value.length} dipilih)</FormLabel>
-                            <Select value={kelasFilter} onValueChange={setKelasFilter}>
-                              <SelectTrigger className="w-[150px] h-8"><SelectValue placeholder="Semua Kelas" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">Semua Kelas</SelectItem>
-                                {kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="border rounded-md max-h-48 overflow-y-auto">
-                            <label className="flex items-center gap-2 px-3 py-2 border-b bg-gray-50/50 cursor-pointer text-sm font-medium">
-                              <Checkbox
-                                checked={allVisibleSelected}
-                                onCheckedChange={(checked) => {
-                                  if (checked) field.onChange([...new Set([...field.value, ...visibleIds])]);
-                                  else field.onChange(field.value.filter((id: string) => !visibleIds.includes(id)));
-                                }}
-                              />
-                              Pilih Semua {kelasFilter !== "all" ? `(${kelasFilter})` : ""}
-                            </label>
-                            {visibleStudents.length === 0 ? (
-                              <p className="px-3 py-4 text-sm text-muted-foreground text-center">Tidak ada siswa.</p>
-                            ) : (
-                              visibleStudents.map((s: any) => (
-                                <label key={s.id} className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-50 text-sm">
-                                  <Checkbox
-                                    checked={field.value.includes(s.id)}
-                                    onCheckedChange={(checked) => {
-                                      field.onChange(
-                                        checked ? [...field.value, s.id] : field.value.filter((id: string) => id !== s.id),
-                                      );
-                                    }}
-                                  />
-                                  <span className="flex-1">{s.namaLengkap}</span>
-                                  <span className="text-xs text-muted-foreground">{s.kelas}</span>
-                                </label>
-                              ))
-                            )}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      );
-                    }} />
-                    <FormField control={form.control} name="subjectId" render={({ field }) => (
-                      <FormItem><FormLabel>Mata Pelajaran</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Pilih Mapel" /></SelectTrigger></FormControl>
-                          <SelectContent>{subjects?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                        </Select><FormMessage />
-                      </FormItem>
-                    )} />
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField control={form.control} name="tanggal" render={({ field }) => (
-                        <FormItem><FormLabel>Tanggal</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                      )} />
-                      <FormField control={form.control} name="status" render={({ field }) => (
-                        <FormItem><FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Pilih Status" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                              {STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                            </SelectContent>
-                          </Select><FormMessage />
-                        </FormItem>
-                      )} />
-                    </div>
-                    <DialogFooter><Button type="submit" disabled={bulkCreateAttendance.isPending}>Simpan</Button></DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
 
