@@ -71,9 +71,10 @@ function JadwalDialog({
   const [form, setForm] = useState<JadwalInput>(initial.data);
 
   // Sync when dialog re-opens with different entry
-  const [lastId, setLastId] = useState(initial.entry?.id ?? "");
-  if (initial.entry?.id !== lastId) {
-    setLastId(initial.entry?.id ?? "");
+  const currentId = initial.entry?.id ?? "";
+  const [lastId, setLastId] = useState(currentId);
+  if (currentId !== lastId) {
+    setLastId(currentId);
     setForm(initial.data);
   }
 

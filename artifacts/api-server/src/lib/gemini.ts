@@ -6,12 +6,17 @@ const _require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pdfParse: (buf: Buffer) => Promise<{ text: string }> = _require("pdf-parse");
 
-const apiKey = process.env["GROQ_API_KEY"];
-if (!apiKey) {
-  throw new Error("GROQ_API_KEY environment variable is required");
+let _groq: Groq | null = null;
+function getGroq(): Groq {
+  if (!_groq) {
+    const apiKey = process.env["GROQ_API_KEY"];
+    if (!apiKey) {
+      throw new Error("GROQ_API_KEY environment variable is required for AI features");
+    }
+    _groq = new Groq({ apiKey });
+  }
+  return _groq;
 }
-
-const groq = new Groq({ apiKey });
 
 /** Text model — fast, high-quality, supports JSON mode. */
 const TEXT_MODEL = "llama-3.3-70b-versatile";
@@ -23,7 +28,7 @@ async function callJson<T>(
   messages: Groq.Chat.ChatCompletionMessageParam[],
   model: string = TEXT_MODEL,
 ): Promise<T> {
-  const response = await groq.chat.completions.create({
+  const response = await getGroq().chat.completions.create({
     model,
     messages,
     response_format: { type: "json_object" },
