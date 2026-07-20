@@ -20,6 +20,21 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: "20260720-3",
+    date: "20 Juli 2026",
+    title: "Jadwal Pelajaran & Rekap Analitik",
+    items: [
+      {
+        tag: "Baru",
+        text: "Jadwal Pelajaran: tampilan timetable mingguan (Senin–Sabtu) dengan CRUD per sesi — tambah, edit, dan hapus jadwal langsung dari grid.",
+      },
+      {
+        tag: "Baru",
+        text: "Rekap & Analitik: grafik tren absensi bulanan (6 bulan terakhir) dan distribusi nilai per mata pelajaran, dengan filter per kelas.",
+      },
+    ],
+  },
+  {
     id: "20260720-2",
     date: "20 Juli 2026",
     title: "Perbaikan Prosem & Kalender",

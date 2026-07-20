@@ -12,3 +12,4 @@ export * from "./student-accounts";
 export * from "./tujuan-pembelajaran";
 export * from "./feedback";
 export * from "./bahan-ajar";
+export * from "./schedules";

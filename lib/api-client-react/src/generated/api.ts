@@ -47,11 +47,15 @@ import type {
   GenerateSoalOtomatisInput,
   GenerateStudentAccountInput,
   GetInfoPekananParams,
+  GetRekapAbsensiParams,
+  GetRekapNilaiParams,
   Grade,
   GradeInput,
   GradeUpdate,
   HealthStatus,
   InfoPekanan,
+  JadwalEntry,
+  JadwalInput,
   JournalEntry,
   JournalEntryInput,
   KepsekOverview,
@@ -61,6 +65,7 @@ import type {
   ListAttendanceParams,
   ListDocumentsParams,
   ListGradesParams,
+  ListJadwalParams,
   ListJournalEntriesParams,
   ListModulAjarParams,
   ListPointsParams,
@@ -81,6 +86,8 @@ import type {
   ProsemItem,
   ProsemItemInput,
   RegisterInput,
+  RekapAbsensiResponse,
+  RekapNilaiResponse,
   RoleJurnalResponse,
   SoalOtomatis,
   SoalOtomatisSummary,
@@ -3488,6 +3495,472 @@ export const useDeleteTujuanPembelajaran = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getDeleteTujuanPembelajaranMutationOptions(options));
     }
+
+export const getListJadwalUrl = (params?: ListJadwalParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/jadwal?${stringifiedParams}` : `/api/jadwal`
+}
+
+/**
+ * @summary List jadwal pelajaran milik guru yang login (atau semua jika admin)
+ */
+export const listJadwal = async (params?: ListJadwalParams, options?: RequestInit): Promise<JadwalEntry[]> => {
+
+  return customFetch<JadwalEntry[]>(getListJadwalUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListJadwalQueryKey = (params?: ListJadwalParams,) => {
+    return [
+    `/api/jadwal`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListJadwalQueryOptions = <TData = Awaited<ReturnType<typeof listJadwal>>, TError = ErrorType<unknown>>(params?: ListJadwalParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJadwal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListJadwalQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listJadwal>>> = ({ signal }) => listJadwal(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listJadwal>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListJadwalQueryResult = NonNullable<Awaited<ReturnType<typeof listJadwal>>>
+export type ListJadwalQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List jadwal pelajaran milik guru yang login (atau semua jika admin)
+ */
+
+export function useListJadwal<TData = Awaited<ReturnType<typeof listJadwal>>, TError = ErrorType<unknown>>(
+ params?: ListJadwalParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listJadwal>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListJadwalQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateJadwalUrl = () => {
+
+
+
+
+  return `/api/jadwal`
+}
+
+/**
+ * @summary Buat jadwal baru
+ */
+export const createJadwal = async (jadwalInput: JadwalInput, options?: RequestInit): Promise<JadwalEntry> => {
+
+  return customFetch<JadwalEntry>(getCreateJadwalUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(jadwalInput)
+  }
+);}
+
+
+
+
+
+export const getCreateJadwalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJadwal>>, TError,{data: BodyType<JadwalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createJadwal>>, TError,{data: BodyType<JadwalInput>}, TContext> => {
+
+const mutationKey = ['createJadwal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createJadwal>>, {data: BodyType<JadwalInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createJadwal(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateJadwalMutationResult = NonNullable<Awaited<ReturnType<typeof createJadwal>>>
+    export type CreateJadwalMutationBody = BodyType<JadwalInput>
+    export type CreateJadwalMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Buat jadwal baru
+ */
+export const useCreateJadwal = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJadwal>>, TError,{data: BodyType<JadwalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createJadwal>>,
+        TError,
+        {data: BodyType<JadwalInput>},
+        TContext
+      > => {
+      return useMutation(getCreateJadwalMutationOptions(options));
+    }
+
+export const getUpdateJadwalUrl = (id: string,) => {
+
+
+
+
+  return `/api/jadwal/${id}`
+}
+
+/**
+ * @summary Update jadwal
+ */
+export const updateJadwal = async (id: string,
+    jadwalInput: JadwalInput, options?: RequestInit): Promise<JadwalEntry> => {
+
+  return customFetch<JadwalEntry>(getUpdateJadwalUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(jadwalInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateJadwalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJadwal>>, TError,{id: string;data: BodyType<JadwalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateJadwal>>, TError,{id: string;data: BodyType<JadwalInput>}, TContext> => {
+
+const mutationKey = ['updateJadwal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateJadwal>>, {id: string;data: BodyType<JadwalInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateJadwal(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateJadwalMutationResult = NonNullable<Awaited<ReturnType<typeof updateJadwal>>>
+    export type UpdateJadwalMutationBody = BodyType<JadwalInput>
+    export type UpdateJadwalMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update jadwal
+ */
+export const useUpdateJadwal = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJadwal>>, TError,{id: string;data: BodyType<JadwalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateJadwal>>,
+        TError,
+        {id: string;data: BodyType<JadwalInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateJadwalMutationOptions(options));
+    }
+
+export const getDeleteJadwalUrl = (id: string,) => {
+
+
+
+
+  return `/api/jadwal/${id}`
+}
+
+/**
+ * @summary Hapus jadwal
+ */
+export const deleteJadwal = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteJadwalUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteJadwalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteJadwal>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteJadwal>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteJadwal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteJadwal>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteJadwal(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteJadwalMutationResult = NonNullable<Awaited<ReturnType<typeof deleteJadwal>>>
+
+    export type DeleteJadwalMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Hapus jadwal
+ */
+export const useDeleteJadwal = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteJadwal>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteJadwal>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteJadwalMutationOptions(options));
+    }
+
+export const getGetRekapAbsensiUrl = (params?: GetRekapAbsensiParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/rekap/absensi?${stringifiedParams}` : `/api/rekap/absensi`
+}
+
+/**
+ * @summary Rekap absensi bulanan per kelas (6 bulan terakhir)
+ */
+export const getRekapAbsensi = async (params?: GetRekapAbsensiParams, options?: RequestInit): Promise<RekapAbsensiResponse> => {
+
+  return customFetch<RekapAbsensiResponse>(getGetRekapAbsensiUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRekapAbsensiQueryKey = (params?: GetRekapAbsensiParams,) => {
+    return [
+    `/api/rekap/absensi`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetRekapAbsensiQueryOptions = <TData = Awaited<ReturnType<typeof getRekapAbsensi>>, TError = ErrorType<unknown>>(params?: GetRekapAbsensiParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRekapAbsensi>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRekapAbsensiQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRekapAbsensi>>> = ({ signal }) => getRekapAbsensi(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRekapAbsensi>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRekapAbsensiQueryResult = NonNullable<Awaited<ReturnType<typeof getRekapAbsensi>>>
+export type GetRekapAbsensiQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Rekap absensi bulanan per kelas (6 bulan terakhir)
+ */
+
+export function useGetRekapAbsensi<TData = Awaited<ReturnType<typeof getRekapAbsensi>>, TError = ErrorType<unknown>>(
+ params?: GetRekapAbsensiParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRekapAbsensi>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRekapAbsensiQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetRekapNilaiUrl = (params?: GetRekapNilaiParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/rekap/nilai?${stringifiedParams}` : `/api/rekap/nilai`
+}
+
+/**
+ * @summary Rekap nilai per mata pelajaran/kelas
+ */
+export const getRekapNilai = async (params?: GetRekapNilaiParams, options?: RequestInit): Promise<RekapNilaiResponse> => {
+
+  return customFetch<RekapNilaiResponse>(getGetRekapNilaiUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRekapNilaiQueryKey = (params?: GetRekapNilaiParams,) => {
+    return [
+    `/api/rekap/nilai`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetRekapNilaiQueryOptions = <TData = Awaited<ReturnType<typeof getRekapNilai>>, TError = ErrorType<unknown>>(params?: GetRekapNilaiParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRekapNilai>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRekapNilaiQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRekapNilai>>> = ({ signal }) => getRekapNilai(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRekapNilai>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRekapNilaiQueryResult = NonNullable<Awaited<ReturnType<typeof getRekapNilai>>>
+export type GetRekapNilaiQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Rekap nilai per mata pelajaran/kelas
+ */
+
+export function useGetRekapNilai<TData = Awaited<ReturnType<typeof getRekapNilai>>, TError = ErrorType<unknown>>(
+ params?: GetRekapNilaiParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRekapNilai>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRekapNilaiQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListJournalEntriesUrl = (params?: ListJournalEntriesParams,) => {
   const normalizedParams = new URLSearchParams();

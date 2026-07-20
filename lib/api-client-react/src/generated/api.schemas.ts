@@ -13,6 +13,87 @@ export interface SuccessResponse {
   success: boolean;
 }
 
+export type JadwalEntryHari = typeof JadwalEntryHari[keyof typeof JadwalEntryHari];
+
+
+export const JadwalEntryHari = {
+  Senin: 'Senin',
+  Selasa: 'Selasa',
+  Rabu: 'Rabu',
+  Kamis: 'Kamis',
+  Jumat: 'Jumat',
+  Sabtu: 'Sabtu',
+} as const;
+
+export interface JadwalEntry {
+  id: string;
+  teacherId: string;
+  teacherName: string;
+  subjectId: string;
+  subjectName: string;
+  kelas: string;
+  hari: JadwalEntryHari;
+  jamMulai: string;
+  jamSelesai: string;
+  createdAt: string;
+}
+
+export type JadwalInputHari = typeof JadwalInputHari[keyof typeof JadwalInputHari];
+
+
+export const JadwalInputHari = {
+  Senin: 'Senin',
+  Selasa: 'Selasa',
+  Rabu: 'Rabu',
+  Kamis: 'Kamis',
+  Jumat: 'Jumat',
+  Sabtu: 'Sabtu',
+} as const;
+
+export interface JadwalInput {
+  subjectId: string;
+  kelas: string;
+  hari: JadwalInputHari;
+  jamMulai: string;
+  jamSelesai: string;
+}
+
+export interface RekapAbsensiItem {
+  bulan: string;
+  kelas: string;
+  hadir: number;
+  izin: number;
+  sakit: number;
+  alpa: number;
+  total: number;
+}
+
+export interface RekapAbsensiResponse {
+  kelasOptions: string[];
+  data: RekapAbsensiItem[];
+}
+
+export interface RekapNilaiDistribusiItem {
+  range: string;
+  jumlah: number;
+}
+
+export interface RekapNilaiSubject {
+  subjectId: string;
+  subjectName: string;
+  kelas: string;
+  rataRata?: number | null;
+  nilaiMin?: number | null;
+  nilaiMax?: number | null;
+  jumlahNilai: number;
+  distribusi: RekapNilaiDistribusiItem[];
+}
+
+export interface RekapNilaiResponse {
+  kelasOptions: string[];
+  subjects: RekapNilaiSubject[];
+}
+
 export interface TeacherProgress {
   teacherId: string;
   jurnalBulanIni: number;
@@ -931,6 +1012,21 @@ subjectId?: string;
 export type ListTujuanPembelajaranParams = {
 subjectId?: string;
 calendarId?: string;
+};
+
+export type ListJadwalParams = {
+/**
+ * Filter by teacher id (admin only)
+ */
+teacherId?: string;
+};
+
+export type GetRekapAbsensiParams = {
+kelas?: string;
+};
+
+export type GetRekapNilaiParams = {
+kelas?: string;
 };
 
 export type ListJournalEntriesParams = {

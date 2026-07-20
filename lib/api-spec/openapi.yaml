@@ -777,6 +777,114 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
+  /jadwal:
+    get:
+      operationId: listJadwal
+      tags: [jadwal]
+      summary: List jadwal pelajaran milik guru yang login (atau semua jika admin)
+      parameters:
+        - name: teacherId
+          in: query
+          description: Filter by teacher id (admin only)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List jadwal
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JadwalEntry"
+    post:
+      operationId: createJadwal
+      tags: [jadwal]
+      summary: Buat jadwal baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JadwalInput"
+      responses:
+        "201":
+          description: Jadwal dibuat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JadwalEntry"
+
+  /jadwal/{id}:
+    patch:
+      operationId: updateJadwal
+      tags: [jadwal]
+      summary: Update jadwal
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JadwalInput"
+      responses:
+        "200":
+          description: Jadwal diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JadwalEntry"
+    delete:
+      operationId: deleteJadwal
+      tags: [jadwal]
+      summary: Hapus jadwal
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /rekap/absensi:
+    get:
+      operationId: getRekapAbsensi
+      tags: [rekap]
+      summary: Rekap absensi bulanan per kelas (6 bulan terakhir)
+      parameters:
+        - name: kelas
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Data rekap absensi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RekapAbsensiResponse"
+
+  /rekap/nilai:
+    get:
+      operationId: getRekapNilai
+      tags: [rekap]
+      summary: Rekap nilai per mata pelajaran/kelas
+      parameters:
+        - name: kelas
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Data rekap nilai
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RekapNilaiResponse"
+
   /journal:
     get:
       operationId: listJournalEntries
@@ -1637,6 +1745,129 @@ components:
           type: boolean
       required:
         - success
+
+    JadwalEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        teacherId:
+          type: string
+        teacherName:
+          type: string
+        subjectId:
+          type: string
+        subjectName:
+          type: string
+        kelas:
+          type: string
+        hari:
+          type: string
+          enum: [Senin, Selasa, Rabu, Kamis, Jumat, Sabtu]
+        jamMulai:
+          type: string
+        jamSelesai:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, teacherId, teacherName, subjectId, subjectName, kelas, hari, jamMulai, jamSelesai, createdAt]
+
+    JadwalInput:
+      type: object
+      properties:
+        subjectId:
+          type: string
+        kelas:
+          type: string
+        hari:
+          type: string
+          enum: [Senin, Selasa, Rabu, Kamis, Jumat, Sabtu]
+        jamMulai:
+          type: string
+        jamSelesai:
+          type: string
+      required: [subjectId, kelas, hari, jamMulai, jamSelesai]
+
+    RekapAbsensiItem:
+      type: object
+      properties:
+        bulan:
+          type: string
+        kelas:
+          type: string
+        hadir:
+          type: integer
+        izin:
+          type: integer
+        sakit:
+          type: integer
+        alpa:
+          type: integer
+        total:
+          type: integer
+      required: [bulan, kelas, hadir, izin, sakit, alpa, total]
+
+    RekapAbsensiResponse:
+      type: object
+      properties:
+        kelasOptions:
+          type: array
+          items:
+            type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RekapAbsensiItem"
+      required: [kelasOptions, data]
+
+    RekapNilaiDistribusiItem:
+      type: object
+      properties:
+        range:
+          type: string
+        jumlah:
+          type: integer
+      required: [range, jumlah]
+
+    RekapNilaiSubject:
+      type: object
+      properties:
+        subjectId:
+          type: string
+        subjectName:
+          type: string
+        kelas:
+          type: string
+        rataRata:
+          type: number
+          nullable: true
+        nilaiMin:
+          type: number
+          nullable: true
+        nilaiMax:
+          type: number
+          nullable: true
+        jumlahNilai:
+          type: integer
+        distribusi:
+          type: array
+          items:
+            $ref: "#/components/schemas/RekapNilaiDistribusiItem"
+      required: [subjectId, subjectName, kelas, jumlahNilai, distribusi]
+
+    RekapNilaiResponse:
+      type: object
+      properties:
+        kelasOptions:
+          type: array
+          items:
+            type: string
+        subjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/RekapNilaiSubject"
+      required: [kelasOptions, subjects]
 
     TeacherProgress:
       type: object

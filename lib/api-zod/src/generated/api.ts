@@ -844,6 +844,140 @@ export const DeleteTujuanPembelajaranResponse = zod.object({
 
 
 /**
+ * @summary List jadwal pelajaran milik guru yang login (atau semua jika admin)
+ */
+export const ListJadwalQueryParams = zod.object({
+  "teacherId": zod.coerce.string().optional().describe('Filter by teacher id (admin only)')
+})
+
+export const ListJadwalResponseItem = zod.object({
+  "id": zod.string(),
+  "teacherId": zod.string(),
+  "teacherName": zod.string(),
+  "subjectId": zod.string(),
+  "subjectName": zod.string(),
+  "kelas": zod.string(),
+  "hari": zod.enum(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']),
+  "jamMulai": zod.string(),
+  "jamSelesai": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListJadwalResponse = zod.array(ListJadwalResponseItem)
+
+
+/**
+ * @summary Buat jadwal baru
+ */
+export const CreateJadwalBody = zod.object({
+  "subjectId": zod.string(),
+  "kelas": zod.string(),
+  "hari": zod.enum(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']),
+  "jamMulai": zod.string(),
+  "jamSelesai": zod.string()
+})
+
+export const CreateJadwalResponse = zod.object({
+  "id": zod.string(),
+  "teacherId": zod.string(),
+  "teacherName": zod.string(),
+  "subjectId": zod.string(),
+  "subjectName": zod.string(),
+  "kelas": zod.string(),
+  "hari": zod.enum(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']),
+  "jamMulai": zod.string(),
+  "jamSelesai": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update jadwal
+ */
+export const UpdateJadwalParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateJadwalBody = zod.object({
+  "subjectId": zod.string(),
+  "kelas": zod.string(),
+  "hari": zod.enum(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']),
+  "jamMulai": zod.string(),
+  "jamSelesai": zod.string()
+})
+
+export const UpdateJadwalResponse = zod.object({
+  "id": zod.string(),
+  "teacherId": zod.string(),
+  "teacherName": zod.string(),
+  "subjectId": zod.string(),
+  "subjectName": zod.string(),
+  "kelas": zod.string(),
+  "hari": zod.enum(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']),
+  "jamMulai": zod.string(),
+  "jamSelesai": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Hapus jadwal
+ */
+export const DeleteJadwalParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DeleteJadwalResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Rekap absensi bulanan per kelas (6 bulan terakhir)
+ */
+export const GetRekapAbsensiQueryParams = zod.object({
+  "kelas": zod.coerce.string().optional()
+})
+
+export const GetRekapAbsensiResponse = zod.object({
+  "kelasOptions": zod.array(zod.string()),
+  "data": zod.array(zod.object({
+  "bulan": zod.string(),
+  "kelas": zod.string(),
+  "hadir": zod.number(),
+  "izin": zod.number(),
+  "sakit": zod.number(),
+  "alpa": zod.number(),
+  "total": zod.number()
+}))
+})
+
+
+/**
+ * @summary Rekap nilai per mata pelajaran/kelas
+ */
+export const GetRekapNilaiQueryParams = zod.object({
+  "kelas": zod.coerce.string().optional()
+})
+
+export const GetRekapNilaiResponse = zod.object({
+  "kelasOptions": zod.array(zod.string()),
+  "subjects": zod.array(zod.object({
+  "subjectId": zod.string(),
+  "subjectName": zod.string(),
+  "kelas": zod.string(),
+  "rataRata": zod.number().nullish(),
+  "nilaiMin": zod.number().nullish(),
+  "nilaiMax": zod.number().nullish(),
+  "jumlahNilai": zod.number(),
+  "distribusi": zod.array(zod.object({
+  "range": zod.string(),
+  "jumlah": zod.number()
+}))
+}))
+})
+
+
+/**
  * @summary List teaching journal entries
  */
 export const ListJournalEntriesQueryParams = zod.object({
