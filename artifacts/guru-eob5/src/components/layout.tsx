@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox, Bell, Settings2 } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox, Bell, Settings2, Contact } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileDialog } from "@/components/profile-dialog";
@@ -69,6 +69,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const utamaNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/direktori", label: "Direktori Guru", icon: Contact },
     { href: "/pengaturan", label: "Pengaturan Tampilan", icon: Settings2 },
   ];
 

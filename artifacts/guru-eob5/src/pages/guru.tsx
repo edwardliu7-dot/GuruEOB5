@@ -15,6 +15,9 @@ import { Trash2, Edit2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { formatJabatan, JABATAN_LABELS } from "@/lib/options";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const teacherSchema = z.object({
   name: z.string().min(1, "Nama harus diisi"),
@@ -104,39 +107,78 @@ export default function Guru() {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/50">
+                <TableHead>Guru</TableHead>
                 <TableHead>Username</TableHead>
-                <TableHead>Nama Lengkap</TableHead>
+                <TableHead>Jabatan & Mapel</TableHead>
                 <TableHead>Peran</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
+                Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-10 w-full" /></TableCell></TableRow>)
               ) : (
-                teachers?.map((t:any) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium text-muted-foreground">{t.username}</TableCell>
-                    <TableCell className="font-medium">{t.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={t.role === 'admin' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-secondary text-secondary-foreground'}>
-                        {t.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => {
-                          setEditingTeacher(t);
-                          form.reset({ name: t.name, role: t.role });
-                          setIsDialogOpen(true);
-                        }}><Edit2 className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDelete(t.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                teachers?.map((t:any) => {
+                  const ini = (t.name ?? "?").split(" ").map((p: string) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+                  return (
+                    <TableRow key={t.id}>
+                      {/* Avatar + name + bio */}
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-9 h-9 shrink-0 border border-border">
+                            {t.photoUrl ? <AvatarImage src={t.photoUrl} alt={t.name} /> : null}
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{ini}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate max-w-[160px]">{t.name}</p>
+                            {t.bio && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <p className="text-xs text-muted-foreground truncate max-w-[160px] cursor-default">{t.bio}</p>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="max-w-xs whitespace-pre-wrap">{t.bio}</TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{t.username}</TableCell>
+                      {/* Jabatan + mapel */}
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {(t.jabatan as string[] | undefined)?.map((j: string) => (
+                            <Badge key={j} variant="outline" className="text-[11px] px-1.5 py-0">
+                              {JABATAN_LABELS[j] ?? j}
+                            </Badge>
+                          ))}
+                          {(t.mapel as string[] | undefined)?.slice(0, 2).map((m: string) => (
+                            <Badge key={m} variant="secondary" className="text-[11px] px-1.5 py-0">{m}</Badge>
+                          ))}
+                          {(t.mapel?.length ?? 0) > 2 && (
+                            <Badge variant="secondary" className="text-[11px] px-1.5 py-0 text-muted-foreground">+{t.mapel.length - 2}</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={t.role === 'admin' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-secondary text-secondary-foreground'}>
+                          {t.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => {
+                            setEditingTeacher(t);
+                            form.reset({ name: t.name, role: t.role });
+                            setIsDialogOpen(true);
+                          }}><Edit2 className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDelete(t.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

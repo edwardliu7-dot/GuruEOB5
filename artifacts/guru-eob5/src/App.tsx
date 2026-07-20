@@ -29,6 +29,7 @@ import ModulAjar from "@/pages/modul-ajar";
 import SoalOtomatis from "@/pages/soal-otomatis";
 import FeedbackAdmin from "@/pages/feedback";
 import Pengaturan from "@/pages/pengaturan";
+import Direktori from "@/pages/direktori";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -84,6 +85,7 @@ function Router() {
       <Route path="/soal-otomatis" component={() => <ProtectedRoute component={SoalOtomatis} />} />
       <Route path="/feedback" component={() => <ProtectedRoute component={FeedbackAdmin} adminOnly />} />
       <Route path="/pengaturan" component={() => <ProtectedRoute component={Pengaturan} />} />
+      <Route path="/direktori" component={() => <ProtectedRoute component={Direktori} />} />
       <Route component={NotFound} />
     </Switch>
   );
