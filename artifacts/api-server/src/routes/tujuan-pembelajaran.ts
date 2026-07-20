@@ -21,8 +21,8 @@ import { mapRowsToTP, mapTextToTP, mapFileToTP } from "../lib/gemini";
 
 const router: IRouter = Router();
 
-// MIME types Gemini can read directly as inline file data.
-const GEMINI_INLINE_MIME_TYPES = new Set([
+// MIME types the AI can process directly as file data (images via vision, PDFs via text extraction).
+const AI_INLINE_MIME_TYPES = new Set([
   "application/pdf",
   "image/png",
   "image/jpeg",
@@ -343,7 +343,7 @@ router.post("/tp/import/analyze", requireAuth, async (req, res): Promise<void> =
       if (mimeType === DOCX_MIME_TYPE) {
         const { value: text } = await mammoth.extractRawText({ buffer });
         items = await mapTextToTP(text);
-      } else if (mimeType && GEMINI_INLINE_MIME_TYPES.has(mimeType)) {
+      } else if (mimeType && AI_INLINE_MIME_TYPES.has(mimeType)) {
         items = await mapFileToTP(fileData as string, mimeType);
       } else {
         // Fallback: treat as plain text (covers .txt and unrecognized types).

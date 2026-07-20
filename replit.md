@@ -6,7 +6,7 @@ An Indonesian school administration platform for teachers. Manages students, att
 
 - **Frontend** (`artifacts/guru-eob5`): React + Vite + Tailwind CSS + shadcn/ui
 - **Backend** (`artifacts/api-server`): Express 5 + Drizzle ORM + PostgreSQL
-- **AI**: Google Gemini (student import, modul ajar generation, soal otomatis, TP import)
+- **AI**: Groq (student import, modul ajar generation, soal otomatis, TP import) — models: llama-3.3-70b-versatile (text), llama-4-scout (vision)
 - **Auth**: Session-based (express-session + connect-pg-simple)
 - **Package manager**: pnpm (monorepo)
 
@@ -26,7 +26,7 @@ The frontend is served at `/` and the API at `/api`.
 | Secret | Purpose |
 |---|---|
 | `SESSION_SECRET` | Express session signing |
-| `GEMINI_API_KEY` | Google Gemini AI features |
+| `GROQ_API_KEY` | Groq AI features (text + vision) |
 | `NEON_DATABASE_URL` | Shared Neon Postgres (gurus/accounts table) |
 | `DATABASE_URL` | App database — provisioned automatically by Replit |
 

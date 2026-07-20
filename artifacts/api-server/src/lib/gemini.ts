@@ -1,11 +1,40 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import Groq from "groq-sdk";
+// pdf-parse v2 ESM types don't declare a default export but esbuild handles it at runtime
+// @ts-ignore
+import pdfParse from "pdf-parse";
 
-const apiKey = process.env["GEMINI_API_KEY"];
+const apiKey = process.env["GROQ_API_KEY"];
 if (!apiKey) {
-  throw new Error("GEMINI_API_KEY environment variable is required");
+  throw new Error("GROQ_API_KEY environment variable is required");
 }
 
-export const gemini = new GoogleGenAI({ apiKey });
+const groq = new Groq({ apiKey });
+
+/** Text model — fast, high-quality, supports JSON mode. */
+const TEXT_MODEL = "llama-3.3-70b-versatile";
+/** Vision model — supports base64 image input. */
+const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+
+/** Call Groq chat completions and return parsed JSON. Throws on empty response. */
+async function callJson<T>(
+  messages: Groq.Chat.ChatCompletionMessageParam[],
+  model: string = TEXT_MODEL,
+): Promise<T> {
+  const response = await groq.chat.completions.create({
+    model,
+    messages,
+    response_format: { type: "json_object" },
+  });
+  const text = response.choices[0]?.message?.content;
+  if (!text) {
+    throw new Error("Groq returned an empty response");
+  }
+  return JSON.parse(text) as T;
+}
+
+// -----------------------------------------------------------------------
+// Student import
+// -----------------------------------------------------------------------
 
 export interface MappedStudent {
   nisn?: string;
@@ -14,27 +43,6 @@ export interface MappedStudent {
   jenisKelamin: "L" | "P";
   school: string;
 }
-
-const responseSchema = {
-  type: Type.OBJECT,
-  properties: {
-    students: {
-      type: Type.ARRAY,
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          nisn: { type: Type.STRING },
-          namaLengkap: { type: Type.STRING },
-          kelas: { type: Type.STRING },
-          jenisKelamin: { type: Type.STRING, enum: ["L", "P"] },
-          school: { type: Type.STRING },
-        },
-        required: ["namaLengkap", "kelas", "jenisKelamin", "school"],
-      },
-    },
-  },
-  required: ["students"],
-};
 
 export async function mapRowsToStudents(
   rows: string[][],
@@ -54,30 +62,21 @@ export async function mapRowsToStudents(
       ? `6. Jika kolom sekolah tidak ada di data, gunakan '${defaultSchool}' sebagai school untuk semua siswa.`
       : "6. Jika kolom sekolah tidak ada di data, isi school dengan string kosong.",
     "",
+    "Kembalikan JSON dengan format: { \"students\": [ { \"nisn\": \"...\", \"namaLengkap\": \"...\", \"kelas\": \"...\", \"jenisKelamin\": \"L\"|\"P\", \"school\": \"...\" }, ... ] }",
+    "",
     "Data:",
     JSON.stringify(rows),
   ].join("\n");
 
-  const response = await gemini.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema,
-    },
-  });
+  const result = await callJson<{ students?: unknown }>([
+    { role: "user", content: prompt },
+  ]);
 
-  const text = response.text;
-  if (!text) {
-    throw new Error("Gemini returned an empty response");
+  if (!result.students || !Array.isArray(result.students)) {
+    throw new Error("Groq response missing students array");
   }
 
-  const parsed = JSON.parse(text) as { students?: unknown };
-  if (!parsed.students || !Array.isArray(parsed.students)) {
-    throw new Error("Gemini response missing students array");
-  }
-
-  return parsed.students as MappedStudent[];
+  return result.students as MappedStudent[];
 }
 
 // -----------------------------------------------------------------------
@@ -89,25 +88,6 @@ export interface MappedTPItem {
   tpNumber: number;
   description: string;
 }
-
-const tpResponseSchema = {
-  type: Type.OBJECT,
-  properties: {
-    items: {
-      type: Type.ARRAY,
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          lingkupMateri: { type: Type.INTEGER },
-          tpNumber: { type: Type.INTEGER },
-          description: { type: Type.STRING },
-        },
-        required: ["lingkupMateri", "tpNumber", "description"],
-      },
-    },
-  },
-  required: ["items"],
-};
 
 const TP_INSTRUCTIONS = [
   "Kamu adalah asisten kurikulum yang mengekstrak daftar Tujuan Pembelajaran (TP) Kurikulum Merdeka Indonesia dari dokumen guru, apa pun formatnya (tabel, daftar bernomor, paragraf, hasil OCR dari gambar/scan, dsb).",
@@ -127,12 +107,10 @@ const TP_INSTRUCTIONS = [
   "5. Abaikan judul dokumen, header/footer, informasi identitas guru/sekolah, atau bagian yang jelas bukan Tujuan Pembelajaran (misalnya kop surat, nama sekolah, tahun ajaran).",
   "6. Tulis dalam Bahasa Indonesia sesuai dokumen asli.",
   "7. Jangan pernah mengembalikan items kosong jika dokumen memuat teks apa pun yang menyerupai daftar materi/capaian belajar -- lebih baik menebak pengelompokan secara wajar daripada mengosongkan hasil.",
+  "",
+  'Kembalikan JSON dengan format: { "items": [ { "lingkupMateri": 1, "tpNumber": 1, "description": "..." }, ... ] }',
 ].join("\n");
 
-// Used only when the primary structured pass returns zero items. Much more
-// permissive: any bullet/numbered/paragraph text that looks like a learning
-// objective or topic list should be captured, even without recognizable
-// Kurikulum Merdeka terminology.
 const TP_FALLBACK_INSTRUCTIONS = [
   "Kamu adalah asisten yang mengekstrak daftar materi/topik pembelajaran dari sebuah dokumen guru Indonesia yang formatnya TIDAK baku atau tidak mengikuti terminologi Kurikulum Merdeka standar.",
   "",
@@ -143,82 +121,93 @@ const TP_FALLBACK_INSTRUCTIONS = [
   "4. Beri nomor lingkupMateri dan tpNumber secara berurutan berdasarkan urutan kemunculan.",
   "5. Hanya kembalikan items kosong jika dokumen benar-benar tidak memuat teks yang berkaitan dengan materi/topik pembelajaran sama sekali (misalnya dokumen kosong, atau sepenuhnya tidak relevan seperti surat undangan rapat).",
   "6. Tulis description dalam Bahasa Indonesia, dirapikan dari teks asli.",
+  "",
+  'Kembalikan JSON dengan format: { "items": [ { "lingkupMateri": 1, "tpNumber": 1, "description": "..." }, ... ] }',
 ].join("\n");
 
 async function runTPExtraction(
-  contents: Parameters<typeof gemini.models.generateContent>[0]["contents"],
+  messages: Groq.Chat.ChatCompletionMessageParam[],
 ): Promise<MappedTPItem[]> {
-  const response = await gemini.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: tpResponseSchema,
-    },
-  });
-
-  const text = response.text;
-  if (!text) {
-    throw new Error("Gemini returned an empty response");
+  const result = await callJson<{ items?: unknown }>(messages);
+  if (!result.items || !Array.isArray(result.items)) {
+    throw new Error("Groq response missing items array");
   }
-
-  const parsed = JSON.parse(text) as { items?: unknown };
-  if (!parsed.items || !Array.isArray(parsed.items)) {
-    throw new Error("Gemini response missing items array");
-  }
-
-  return parsed.items as MappedTPItem[];
+  return result.items as MappedTPItem[];
 }
 
-/**
- * Runs the primary structured extraction, and if it comes back empty,
- * automatically retries once with a much more permissive fallback prompt
- * before giving up. This avoids surfacing "AI tidak menemukan..." for
- * documents that use non-standard terminology (e.g. "BAB" instead of
- * "Lingkup Materi") that the strict pass didn't recognize.
- */
 async function runTPExtractionWithFallback(
-  buildContents: (
-    instructions: string,
-  ) => Parameters<typeof gemini.models.generateContent>[0]["contents"],
+  buildMessages: (instructions: string) => Groq.Chat.ChatCompletionMessageParam[],
 ): Promise<MappedTPItem[]> {
-  const primary = await runTPExtraction(buildContents(TP_INSTRUCTIONS));
+  const primary = await runTPExtraction(buildMessages(TP_INSTRUCTIONS));
   if (primary.length > 0) return primary;
-
-  return runTPExtraction(buildContents(TP_FALLBACK_INSTRUCTIONS));
+  return runTPExtraction(buildMessages(TP_FALLBACK_INSTRUCTIONS));
 }
 
 /** Spreadsheet rows (already parsed client-side, e.g. from xlsx/csv). */
 export async function mapRowsToTP(rows: string[][]): Promise<MappedTPItem[]> {
-  return runTPExtractionWithFallback((instructions) =>
-    [
-      instructions,
-      "",
-      "Berikut baris-baris mentah hasil pembacaan spreadsheet (kolom bisa dalam urutan apa pun):",
-      "",
-      "Data:",
-      JSON.stringify(rows),
-    ].join("\n"),
-  );
+  return runTPExtractionWithFallback((instructions) => [
+    {
+      role: "user",
+      content: [
+        instructions,
+        "",
+        "Berikut baris-baris mentah hasil pembacaan spreadsheet (kolom bisa dalam urutan apa pun):",
+        "",
+        "Data:",
+        JSON.stringify(rows),
+      ].join("\n"),
+    },
+  ]);
 }
 
 /** Plain extracted text (e.g. from a .docx or .txt file). */
 export async function mapTextToTP(text: string): Promise<MappedTPItem[]> {
-  return runTPExtractionWithFallback((instructions) =>
-    [instructions, "", "Berikut isi dokumen:", "", text].join("\n"),
-  );
+  return runTPExtractionWithFallback((instructions) => [
+    {
+      role: "user",
+      content: [instructions, "", "Berikut isi dokumen:", "", text].join("\n"),
+    },
+  ]);
 }
 
 /**
- * Raw file bytes for formats Gemini can read natively (PDF, images).
- * Lets the AI "see" the document directly instead of relying on
- * pre-extracted text, so scans/photos of a curriculum table still work.
+ * Raw file bytes for supported formats.
+ * - Images (png, jpeg, webp, heic, heif): sent directly to Groq's vision model.
+ * - PDFs: text is extracted with pdf-parse, then sent to the text model.
  */
 export async function mapFileToTP(fileBase64: string, mimeType: string): Promise<MappedTPItem[]> {
-  return runTPExtractionWithFallback((instructions) => [
-    { inlineData: { data: fileBase64, mimeType } },
-    { text: instructions },
-  ]);
+  const isImage =
+    mimeType === "image/png" ||
+    mimeType === "image/jpeg" ||
+    mimeType === "image/webp" ||
+    mimeType === "image/heic" ||
+    mimeType === "image/heif";
+
+  if (isImage) {
+    return runTPExtractionWithFallback((instructions) => [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url: `data:${mimeType};base64,${fileBase64}` },
+          },
+          { type: "text", text: instructions },
+        ],
+      } as Groq.Chat.ChatCompletionUserMessageParam,
+    ]);
+  }
+
+  // PDF: extract text first, then use text model
+  if (mimeType === "application/pdf") {
+    const buffer = Buffer.from(fileBase64, "base64");
+    const { text } = await pdfParse(buffer);
+    return mapTextToTP(text);
+  }
+
+  // Fallback: treat as plain text
+  const text = Buffer.from(fileBase64, "base64").toString("utf-8");
+  return mapTextToTP(text);
 }
 
 // -----------------------------------------------------------------------
@@ -271,119 +260,6 @@ export interface ModulAjarContent {
   };
 }
 
-const modulAjarResponseSchema = {
-  type: Type.OBJECT,
-  properties: {
-    judul: { type: Type.STRING },
-    informasiUmum: {
-      type: Type.OBJECT,
-      properties: {
-        namaPenyusun: { type: Type.STRING },
-        instansi: { type: Type.STRING },
-        jenjang: { type: Type.STRING },
-        kelas: { type: Type.STRING },
-        kompetensiAwal: { type: Type.STRING },
-        profilPelajarPancasila: { type: Type.ARRAY, items: { type: Type.STRING } },
-        saranaPrasarana: { type: Type.ARRAY, items: { type: Type.STRING } },
-        targetPesertaDidik: { type: Type.STRING },
-        modelPembelajaran: { type: Type.STRING },
-        jumlahPertemuan: { type: Type.INTEGER },
-      },
-      required: [
-        "namaPenyusun",
-        "instansi",
-        "jenjang",
-        "kelas",
-        "kompetensiAwal",
-        "profilPelajarPancasila",
-        "saranaPrasarana",
-        "targetPesertaDidik",
-        "modelPembelajaran",
-        "jumlahPertemuan",
-      ],
-    },
-    komponenInti: {
-      type: Type.OBJECT,
-      properties: {
-        tujuanPembelajaran: { type: Type.ARRAY, items: { type: Type.STRING } },
-        kriteriaKetercapaianTujuanPembelajaran: { type: Type.ARRAY, items: { type: Type.STRING } },
-        pemahamanBermakna: { type: Type.STRING },
-        pertanyaanPemantik: { type: Type.ARRAY, items: { type: Type.STRING } },
-        kegiatanPembelajaran: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              pertemuanKe: { type: Type.INTEGER },
-              pendahuluan: { type: Type.STRING },
-              kegiatanInti: { type: Type.STRING },
-              penutup: { type: Type.STRING },
-            },
-            required: ["pertemuanKe", "pendahuluan", "kegiatanInti", "penutup"],
-          },
-        },
-        asesmen: {
-          type: Type.OBJECT,
-          properties: {
-            asesmenDiagnostik: { type: Type.STRING },
-            asesmenFormatif: { type: Type.STRING },
-            asesmenSumatif: { type: Type.STRING },
-          },
-          required: ["asesmenDiagnostik", "asesmenFormatif", "asesmenSumatif"],
-        },
-        refleksiGuru: { type: Type.ARRAY, items: { type: Type.STRING } },
-        refleksiPesertaDidik: { type: Type.ARRAY, items: { type: Type.STRING } },
-      },
-      required: [
-        "tujuanPembelajaran",
-        "kriteriaKetercapaianTujuanPembelajaran",
-        "pemahamanBermakna",
-        "pertanyaanPemantik",
-        "kegiatanPembelajaran",
-        "asesmen",
-        "refleksiGuru",
-        "refleksiPesertaDidik",
-      ],
-    },
-    lampiran: {
-      type: Type.OBJECT,
-      properties: {
-        lkpd: { type: Type.STRING },
-        kunciJawabanLkpd: { type: Type.STRING },
-        rubrikPenilaian: { type: Type.STRING },
-        pengayaan: { type: Type.STRING },
-        remedial: { type: Type.STRING },
-        bahanBacaan: { type: Type.STRING },
-        media: { type: Type.ARRAY, items: { type: Type.STRING } },
-        glosarium: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              istilah: { type: Type.STRING },
-              definisi: { type: Type.STRING },
-            },
-            required: ["istilah", "definisi"],
-          },
-        },
-        daftarPustaka: { type: Type.ARRAY, items: { type: Type.STRING } },
-      },
-      required: [
-        "lkpd",
-        "kunciJawabanLkpd",
-        "rubrikPenilaian",
-        "pengayaan",
-        "remedial",
-        "bahanBacaan",
-        "media",
-        "glosarium",
-        "daftarPustaka",
-      ],
-    },
-  },
-  required: ["judul", "informasiUmum", "komponenInti", "lampiran"],
-};
-
 export async function generateModulAjar(params: {
   mataPelajaran: string;
   materi: string;
@@ -409,25 +285,53 @@ export async function generateModulAjar(params: {
     "4. Sertakan pengayaan untuk peserta didik yang sudah mencapai tujuan pembelajaran dan remedial untuk yang belum.",
     "5. Sertakan glosarium istilah-istilah kunci dan daftar pustaka yang relevan.",
     "6. Semua field harus terisi dengan konten yang bermakna, tidak boleh kosong atau placeholder generik.",
+    "",
+    "Kembalikan JSON dengan struktur berikut (semua field wajib diisi):",
+    JSON.stringify({
+      judul: "string",
+      informasiUmum: {
+        namaPenyusun: "string",
+        instansi: "string",
+        jenjang: "string",
+        kelas: "string",
+        kompetensiAwal: "string",
+        profilPelajarPancasila: ["string"],
+        saranaPrasarana: ["string"],
+        targetPesertaDidik: "string",
+        modelPembelajaran: "string",
+        jumlahPertemuan: "number",
+      },
+      komponenInti: {
+        tujuanPembelajaran: ["string"],
+        kriteriaKetercapaianTujuanPembelajaran: ["string"],
+        pemahamanBermakna: "string",
+        pertanyaanPemantik: ["string"],
+        kegiatanPembelajaran: [
+          { pertemuanKe: "number", pendahuluan: "string", kegiatanInti: "string", penutup: "string" },
+        ],
+        asesmen: {
+          asesmenDiagnostik: "string",
+          asesmenFormatif: "string",
+          asesmenSumatif: "string",
+        },
+        refleksiGuru: ["string"],
+        refleksiPesertaDidik: ["string"],
+      },
+      lampiran: {
+        lkpd: "string",
+        kunciJawabanLkpd: "string",
+        rubrikPenilaian: "string",
+        pengayaan: "string",
+        remedial: "string",
+        bahanBacaan: "string",
+        media: ["string"],
+        glosarium: [{ istilah: "string", definisi: "string" }],
+        daftarPustaka: ["string"],
+      },
+    }),
   ].join("\n");
 
-  const response = await gemini.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: modulAjarResponseSchema,
-      // Disable thinking: structured JSON output is more reliable without it,
-      // and the extra latency / token cost from thinking is not needed here.
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  });
-
-  const text = response.text;
-  if (!text) {
-    throw new Error("Gemini returned an empty response for modul ajar");
-  }
-  return JSON.parse(text) as ModulAjarContent;
+  return callJson<ModulAjarContent>([{ role: "user", content: prompt }]);
 }
 
 // -----------------------------------------------------------------------
@@ -449,30 +353,6 @@ export interface SoalContent {
   soal: SoalQuestion[];
 }
 
-const soalResponseSchema = {
-  type: Type.OBJECT,
-  properties: {
-    judul: { type: Type.STRING },
-    petunjukPengerjaan: { type: Type.STRING },
-    soal: {
-      type: Type.ARRAY,
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          nomor: { type: Type.INTEGER },
-          tipe: { type: Type.STRING, enum: ["pilihan_ganda", "esai"] },
-          pertanyaan: { type: Type.STRING },
-          pilihan: { type: Type.ARRAY, items: { type: Type.STRING } },
-          jawabanBenar: { type: Type.STRING },
-          pembahasan: { type: Type.STRING },
-        },
-        required: ["nomor", "tipe", "pertanyaan", "pilihan", "jawabanBenar", "pembahasan"],
-      },
-    },
-  },
-  required: ["judul", "petunjukPengerjaan", "soal"],
-};
-
 export async function generateSoal(params: {
   mataPelajaran: string;
   materi: string;
@@ -493,20 +373,9 @@ export async function generateSoal(params: {
     '4. field "pembahasan" berisi penjelasan singkat mengapa jawaban tersebut benar.',
     "5. Nomori soal berurutan mulai dari 1.",
     "6. Tulis dalam Bahasa Indonesia yang baku dan sesuai jenjang pendidikan Indonesia.",
+    "",
+    'Kembalikan JSON dengan format: { "judul": "string", "petunjukPengerjaan": "string", "soal": [ { "nomor": 1, "tipe": "pilihan_ganda"|"esai", "pertanyaan": "string", "pilihan": ["string"], "jawabanBenar": "string", "pembahasan": "string" }, ... ] }',
   ].join("\n");
 
-  const response = await gemini.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: soalResponseSchema,
-    },
-  });
-
-  const text = response.text;
-  if (!text) {
-    throw new Error("Gemini returned an empty response");
-  }
-  return JSON.parse(text) as SoalContent;
+  return callJson<SoalContent>([{ role: "user", content: prompt }]);
 }
