@@ -35,6 +35,15 @@ function applyTheme(themeId: ThemeId) {
   Object.entries(theme.vars).forEach(([key, value]) => {
     root.style.setProperty(key, value);
   });
+  // Apply geometric sidebar pattern (SVG data URI, encoded at runtime)
+  if (theme.sidebarPattern) {
+    root.style.setProperty(
+      "--sidebar-pattern",
+      `url("data:image/svg+xml,${encodeURIComponent(theme.sidebarPattern)}")`
+    );
+  } else {
+    root.style.setProperty("--sidebar-pattern", "none");
+  }
   // Toggle dark class for dark theme
   if (theme.dark) {
     root.classList.add("dark");

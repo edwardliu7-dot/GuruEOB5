@@ -10,6 +10,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Geometric sidebar pattern — set by theme-context via --sidebar-pattern CSS var */
+[data-slot="sidebar-inner"] {
+  background-image: var(--sidebar-pattern, none);
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
