@@ -114,10 +114,15 @@ interface ManualWeekGroup {
 }
 
 // ---- Week type helpers ----
-const isKBMWeek = (jenis: string) => jenis.toLowerCase() === "kbm";
+// "efektif" is the canonical active/KBM week type from the calendar.
+// "kbm" is kept for backwards compatibility.
+const isKBMWeek = (jenis: string) => {
+  const n = jenis.toLowerCase().replace(/\s+/g, "");
+  return n === "kbm" || n === "efektif";
+};
 const isExamWeek = (jenis: string) => {
   const n = jenis.toUpperCase().replace(/\s+/g, "");
-  return n === "STS" || n === "SAS";
+  return n === "STS" || n === "SAS" || n === "PTS" || n === "PAS";
 };
 const isEditableWeek = (jenis: string) => isKBMWeek(jenis);
 
@@ -222,13 +227,13 @@ function buildVerifyGroups(
 // ---- Jenis badge ----
 function JenisBadge({ jenis }: { jenis: string }) {
   const n = jenis.toUpperCase().replace(/\s+/g, "");
-  if (n === "KBM")
+  if (n === "KBM" || n === "EFEKTIF")
     return (
       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-700">
-        KBM
+        efektif
       </span>
     );
-  if (n === "STS" || n === "SAS")
+  if (n === "STS" || n === "SAS" || n === "PTS" || n === "PAS")
     return (
       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-100 text-red-700">
         {jenis}
@@ -750,7 +755,7 @@ export default function Prosem() {
     if (!hasMarks) {
       // --- Deterministic distribution: 1 materi → 1 KBM week, sequential ---
       const kbmWeeks = allWeeks
-        .filter((w) => w.jenis?.toLowerCase() === "kbm")
+        .filter((w) => isKBMWeek(w.jenis ?? ""))
         .sort((a, b) => a.pekanKe - b.pekanKe);
 
       const aiItems = materiList.map((item, idx) => ({

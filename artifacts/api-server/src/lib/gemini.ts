@@ -242,7 +242,7 @@ export async function mapMarkedToProsemItems(
   });
 
   const kbmWeeks = availableWeeks.filter(
-    (w) => w.jenis.toLowerCase() === "kbm",
+    (w) => isKBMJenis(w.jenis),
   );
 
   const prompt = [
@@ -293,9 +293,15 @@ const PROSEM_EXTRACT_PROMPT = (weeksContext: string) =>
     'Kembalikan JSON: { "items": [ { "pekanKe": number, "materi": "string", "jp": number }, ... ] }',
   ].join("\n");
 
+/** "efektif" is the canonical active/KBM week type; "kbm" kept for compatibility. */
+function isKBMJenis(jenis: string): boolean {
+  const n = jenis.toLowerCase().replace(/\s+/g, "");
+  return n === "kbm" || n === "efektif";
+}
+
 function buildWeeksContext(weeks: { pekanKe: number; jenis: string }[]): string {
   const kbmPekan = weeks
-    .filter((w) => w.jenis.toLowerCase() === "kbm")
+    .filter((w) => isKBMJenis(w.jenis))
     .map((w) => w.pekanKe);
   return `Pekan KBM yang tersedia (nomor urut): ${JSON.stringify(kbmPekan)}`;
 }

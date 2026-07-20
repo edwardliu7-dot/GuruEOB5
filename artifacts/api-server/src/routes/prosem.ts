@@ -235,8 +235,9 @@ router.post("/prosem/import-ai", requireAuth, async (req, res): Promise<void> =>
       items = await mapMarkedToProsemItems(marked, weeks);
     } else {
       // Deterministic sequential distribution: 1 materi → 1 KBM week
+      // "efektif" is the canonical active week type; "kbm" kept for compatibility
       const kbmWeeks = weeks
-        .filter((w) => w.jenis.toLowerCase() === "kbm")
+        .filter((w) => { const n = w.jenis.toLowerCase().replace(/\s+/g, ""); return n === "kbm" || n === "efektif"; })
         .sort((a, b) => a.pekanKe - b.pekanKe);
 
       items = materiList.map((item, idx) => ({
