@@ -163,9 +163,12 @@ function ProsemTopicPicker({
   return (
     <div>
       <label className="text-sm font-medium leading-none">Topik dari Prosem (Opsional)</label>
-      <Select
+      {/* Native select used intentionally — Radix Select portal conflicts with Dialog modal */}
+      <select
+        className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         value={value ?? MANUAL_TOPIC_VALUE}
-        onValueChange={(v) => {
+        onChange={(e) => {
+          const v = e.target.value;
           if (v === MANUAL_TOPIC_VALUE) {
             onPick(undefined);
             return;
@@ -174,19 +177,14 @@ function ProsemTopicPicker({
           onPick(v, item?.materi);
         }}
       >
-        <SelectTrigger className="mt-1">
-          <SelectValue placeholder="Pilih topik dari rencana pembelajaran" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={MANUAL_TOPIC_VALUE}>Materi manual (tidak ada di Prosem)</SelectItem>
-          {items.map((it: any) => (
-            <SelectItem key={it.id} value={it.id}>
-              {it.kd ? `${it.kd} — ` : ""}
-              {it.materi}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <option value={MANUAL_TOPIC_VALUE}>Materi manual (tidak ada di Prosem)</option>
+        {items.map((it: any) => (
+          <option key={it.id} value={it.id}>
+            {it.kd ? `${it.kd} — ` : ""}
+            {it.materi}
+          </option>
+        ))}
+      </select>
       <p className="text-xs text-muted-foreground mt-1">
         Memilih topik akan menandai realisasi materi ini pada Info Pekanan.
       </p>
