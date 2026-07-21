@@ -113,13 +113,14 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
   const HARI_OFFSET: Record<string, number> = {
     Senin: 0, Selasa: 1, Rabu: 2, Kamis: 3, Jumat: 4, Sabtu: 5,
   };
-  const weekStartMs = new Date(week.tanggalMulai + "T00:00:00Z").getTime();
-
-  /** Returns the ISO date (YYYY-MM-DD) of a given day name within this week, or null. */
+  /** Returns the ISO date (YYYY-MM-DD) of a given day name within this week, or null.
+   *  Uses pure UTC date arithmetic so day-boundary shifts don't cause off-by-one errors. */
   function hariToDate(hari: string): string | null {
     const offset = HARI_OFFSET[hari];
     if (offset === undefined) return null;
-    return new Date(weekStartMs + offset * 86_400_000).toISOString().slice(0, 10);
+    const base = new Date(week.tanggalMulai.slice(0, 10) + "T00:00:00Z");
+    base.setUTCDate(base.getUTCDate() + offset);
+    return base.toISOString().slice(0, 10);
   }
 
   // Fetch journal entries with explicit column selection.
@@ -206,8 +207,10 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
   const items: InfoItem[] = [];
   const matchedJournalIds = new Set<string>();
 
-  // Compare ISO date strings (YYYY-MM-DD) — they sort lexicographically.
-  const today = new Date().toISOString().slice(0, 10);
+  // Use Jakarta time (WIB = UTC+7) for all "today" comparisons so the
+  // status boundary flips at midnight Jakarta, not midnight UTC.
+  const todayJakarta = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const today = todayJakarta;
   const isWeekOver = week.tanggalSelesai.slice(0, 10) < today;
 
   for (const pi of planRows) {
