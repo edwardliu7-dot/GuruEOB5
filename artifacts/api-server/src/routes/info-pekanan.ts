@@ -172,11 +172,13 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
   const items: InfoItem[] = [];
   const matchedJournalIds = new Set<string>();
 
-  // A week that hasn't started yet must never show "tertinggal" — the teacher
-  // simply hasn't had the chance to teach those topics yet. We compare dates
-  // as ISO strings (YYYY-MM-DD) which sort lexicographically.
+  // "tertinggal" only applies once the week has completely ended.
+  // If we are still within the week (or it hasn't started yet), the teacher
+  // still has time to teach the remaining sessions — so the status is "belum",
+  // not "tertinggal". We compare ISO date strings (YYYY-MM-DD) which sort
+  // lexicographically.
   const today = new Date().toISOString().slice(0, 10);
-  const isFutureWeek = week.tanggalMulai.slice(0, 10) > today;
+  const isWeekOver = week.tanggalSelesai.slice(0, 10) < today;
 
   // Normalise kelas for comparison: trim whitespace and compare case-insensitively.
   const normKelas = (k: string) => k.trim().toLowerCase();
@@ -199,9 +201,9 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
       );
     if (match) matchedJournalIds.add(match.id);
 
-    // Future weeks with no journal yet → "belum" (not "tertinggal").
-    // "tertinggal" only applies to weeks that have already passed/started.
-    const status = match ? "sesuai" : isFutureWeek ? "belum" : "tertinggal";
+    // "tertinggal" only applies once the week has completely ended.
+    // During an ongoing week the teacher still has time — show "belum".
+    const status = match ? "sesuai" : isWeekOver ? "tertinggal" : "belum";
 
     items.push({
       prosemItemId: pi.prosemItemId,
@@ -216,10 +218,10 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     });
   }
 
-  // "di_depan" only makes sense for the current/past week — teaching a topic
-  // from a future week's prosem early is fine but we don't surface it here
-  // to avoid confusion when viewing upcoming weeks.
-  if (!isFutureWeek) {
+  // "di_depan" entries (journal without a prosem plan) only apply when the
+  // week has started. For a future week, those journals don't exist yet.
+  const weekStarted = week.tanggalMulai.slice(0, 10) <= today;
+  if (weekStarted) {
     for (const j of weekJournals) {
       if (matchedJournalIds.has(j.id)) continue;
       items.push({
