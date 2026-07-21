@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileDialog } from "@/components/profile-dialog";
 import { FeedbackWidget } from "@/components/feedback-widget";
+import { Mascot } from "@/components/mascot";
 import { WhatsNewDialog, useWhatsNew } from "@/components/whats-new-dialog";
 import { hasUnseenUpdate } from "@/lib/changelog";
 import { formatJabatan } from "@/lib/options";
@@ -259,6 +260,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
 
+      <Mascot />
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
       <WhatsNewDialog
         open={whatsNewOpen}
