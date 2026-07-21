@@ -8,6 +8,7 @@ import {
   prosemItemsTable,
   subjectsTable,
   journalEntriesTable,
+  schedulesTable,
 } from "@workspace/db";
 import { GetInfoPekananResponse } from "@workspace/api-zod";
 import { requireAuth, getCurrentGuru } from "../lib/auth";
@@ -82,11 +83,44 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const subjectRows = await db
-    .select()
-    .from(subjectsTable)
-    .where(eq(subjectsTable.teacherId, teacherId));
+  const [subjectRows, scheduleRows] = await Promise.all([
+    db.select().from(subjectsTable).where(eq(subjectsTable.teacherId, teacherId)),
+    db
+      .select({
+        subjectId: schedulesTable.subjectId,
+        kelas: schedulesTable.kelas,
+        hari: schedulesTable.hari,
+      })
+      .from(schedulesTable)
+      .where(eq(schedulesTable.teacherId, teacherId)),
+  ]);
+
   const subjectName = new Map(subjectRows.map((s) => [s.id, s.name]));
+
+  // Build a lookup: "subjectId|||normKelas" → set of hari names for this teacher.
+  // Used later to determine whether a prosem item still has an upcoming scheduled
+  // teaching slot within the current week before marking it as "tertinggal".
+  const normKelas = (k: string) => k.trim().toLowerCase();
+  const scheduleByKey = new Map<string, Set<string>>();
+  for (const s of scheduleRows) {
+    const key = `${s.subjectId}|||${normKelas(s.kelas)}`;
+    if (!scheduleByKey.has(key)) scheduleByKey.set(key, new Set());
+    scheduleByKey.get(key)!.add(s.hari);
+  }
+
+  // Map day-of-week names to their ISO date within the academic week.
+  // We assume tanggalMulai is always Monday (Senin) as is standard for school weeks.
+  const HARI_OFFSET: Record<string, number> = {
+    Senin: 0, Selasa: 1, Rabu: 2, Kamis: 3, Jumat: 4, Sabtu: 5,
+  };
+  const weekStartMs = new Date(week.tanggalMulai + "T00:00:00Z").getTime();
+
+  /** Returns the ISO date (YYYY-MM-DD) of a given day name within this week, or null. */
+  function hariToDate(hari: string): string | null {
+    const offset = HARI_OFFSET[hari];
+    if (offset === undefined) return null;
+    return new Date(weekStartMs + offset * 86_400_000).toISOString().slice(0, 10);
+  }
 
   // Fetch journal entries with explicit column selection.
   // We use CUMULATIVE matching: include all journals written on or before the
@@ -172,16 +206,9 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
   const items: InfoItem[] = [];
   const matchedJournalIds = new Set<string>();
 
-  // "tertinggal" only applies once the week has completely ended.
-  // If we are still within the week (or it hasn't started yet), the teacher
-  // still has time to teach the remaining sessions — so the status is "belum",
-  // not "tertinggal". We compare ISO date strings (YYYY-MM-DD) which sort
-  // lexicographically.
+  // Compare ISO date strings (YYYY-MM-DD) — they sort lexicographically.
   const today = new Date().toISOString().slice(0, 10);
   const isWeekOver = week.tanggalSelesai.slice(0, 10) < today;
-
-  // Normalise kelas for comparison: trim whitespace and compare case-insensitively.
-  const normKelas = (k: string) => k.trim().toLowerCase();
 
   for (const pi of planRows) {
     // Prefer an explicit link to this exact topic (set when the teacher picks
@@ -201,9 +228,29 @@ router.get("/info-pekanan", requireAuth, async (req, res): Promise<void> => {
       );
     if (match) matchedJournalIds.add(match.id);
 
-    // "tertinggal" only applies once the week has completely ended.
-    // During an ongoing week the teacher still has time — show "belum".
-    const status = match ? "sesuai" : isWeekOver ? "tertinggal" : "belum";
+    // Determine status using schedule-aware logic:
+    // 1. If there is a matching journal → "sesuai".
+    // 2. Otherwise, look up the teacher's scheduled days for this subject+kelas.
+    //    - Find the latest scheduled teaching date within this week.
+    //    - If that date is today or in the future → "belum" (still has time to teach).
+    //    - If all scheduled dates have passed → "tertinggal".
+    // 3. If no schedule is recorded for this subject+kelas, fall back to
+    //    checking whether the whole week has ended.
+    let status: string;
+    if (match) {
+      status = "sesuai";
+    } else {
+      const schedKey = `${pi.subjectId}|||${normKelas(pi.kelas)}`;
+      const haris = scheduleByKey.get(schedKey);
+      if (haris && haris.size > 0) {
+        const scheduledDates = [...haris].map(hariToDate).filter(Boolean) as string[];
+        const lastDate = scheduledDates.sort().at(-1)!;
+        status = lastDate >= today ? "belum" : "tertinggal";
+      } else {
+        // No schedule data for this subject+class — fall back to week-end check.
+        status = isWeekOver ? "tertinggal" : "belum";
+      }
+    }
 
     items.push({
       prosemItemId: pi.prosemItemId,
