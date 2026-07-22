@@ -520,6 +520,23 @@ function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
+// ── Color palette for subject cards ──────────────────────────────────────────
+const SUBJECT_COLORS = [
+  { border: "border-l-blue-500", bg: "bg-blue-50", badge: "bg-blue-100 text-blue-700" },
+  { border: "border-l-emerald-500", bg: "bg-emerald-50", badge: "bg-emerald-100 text-emerald-700" },
+  { border: "border-l-violet-500", bg: "bg-violet-50", badge: "bg-violet-100 text-violet-700" },
+  { border: "border-l-amber-500", bg: "bg-amber-50", badge: "bg-amber-100 text-amber-700" },
+  { border: "border-l-pink-500", bg: "bg-pink-50", badge: "bg-pink-100 text-pink-700" },
+  { border: "border-l-teal-500", bg: "bg-teal-50", badge: "bg-teal-100 text-teal-700" },
+  { border: "border-l-rose-500", bg: "bg-rose-50", badge: "bg-rose-100 text-rose-700" },
+] as const;
+
+function getSubjectColor(subjectId: string) {
+  let hash = 0;
+  for (let i = 0; i < subjectId.length; i++) hash = (hash * 31 + subjectId.charCodeAt(i)) & 0xffffffff;
+  return SUBJECT_COLORS[Math.abs(hash) % SUBJECT_COLORS.length];
+}
+
 // ── Jadwal card ───────────────────────────────────────────────────────────────
 function JadwalCard({
   entry,
@@ -530,28 +547,31 @@ function JadwalCard({
   onEdit: (e: JadwalEntry) => void;
   onDelete: (id: string) => void;
 }) {
+  const color = getSubjectColor(entry.subjectId);
   return (
-    <div className="group relative rounded-lg border bg-card p-3 shadow-sm hover:shadow-md transition-shadow">
-      <p className="font-semibold text-sm leading-tight pr-12">{entry.subjectName}</p>
-      <Badge variant="secondary" className="mt-1 text-[11px]">
-        {entry.kelas}
-      </Badge>
-      <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-        <Clock className="h-3 w-3 shrink-0" />
-        {entry.jamMulai} – {entry.jamSelesai}
+    <div className={`group relative rounded-lg border border-slate-200 border-l-4 ${color.border} ${color.bg} p-3 shadow-sm hover:shadow-md transition-shadow`}>
+      <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-2 font-medium">
+        <Clock className="h-3.5 w-3.5 shrink-0" />
+        <span>{entry.jamMulai} – {entry.jamSelesai}</span>
       </div>
+      <p className="font-bold text-sm text-slate-800 leading-tight mb-2">{entry.subjectName}</p>
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${color.badge}`}>
+        Kelas {entry.kelas}
+      </span>
 
       {/* Action buttons — visible on hover */}
-      <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute right-2 top-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={() => onEdit(entry)}
-          className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-foreground"
+          className="rounded-md p-1.5 hover:bg-white/80 text-slate-400 hover:text-slate-700 transition-colors"
+          title="Edit"
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => onDelete(entry.id)}
-          className="rounded p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+          className="rounded-md p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+          title="Hapus"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -660,46 +680,71 @@ export default function Jadwal() {
 
         {/* Timetable grid */}
         {!isEmpty && (
-          <div className="overflow-x-auto pb-2">
-            <div className="flex gap-3 min-w-max">
-              {HARI_LIST.map((hari) => (
-                <div key={hari} className="w-44 shrink-0">
-                  {/* Day header */}
-                  <div className="mb-2 rounded-lg bg-primary/10 px-3 py-2 text-center">
-                    <p className="text-xs font-bold text-primary uppercase tracking-wide">
-                      {hari}
-                    </p>
-                    <p className="text-[11px] text-primary/60 mt-0.5">
-                      {byHari[hari].length} kelas
-                    </p>
-                  </div>
+          <>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <div className="overflow-x-auto">
+                <div className="flex gap-4 min-w-max">
+                  {HARI_LIST.map((hari) => {
+                    const entries = byHari[hari];
+                    const totalJP = entries.length * 2;
+                    return (
+                      <div key={hari} className="w-44 shrink-0 flex flex-col">
+                        {/* Day header */}
+                        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                          <h3 className="font-semibold text-slate-800">{hari}</h3>
+                          <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                            {entries.length > 0 ? `${totalJP} JP` : "Libur"}
+                          </span>
+                        </div>
 
-                  {/* Cards */}
-                  <div className="space-y-2">
-                    {isLoading ? (
-                      <>
-                        <Skeleton className="h-20 w-full rounded-lg" />
-                        <Skeleton className="h-20 w-full rounded-lg" />
-                      </>
-                    ) : byHari[hari].length === 0 ? (
-                      <div className="flex items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/30 h-16 text-xs text-muted-foreground/60">
-                        Tidak ada kelas
+                        {/* Cards */}
+                        <div className="flex flex-col gap-3 flex-1">
+                          {isLoading ? (
+                            <>
+                              <Skeleton className="h-24 w-full rounded-lg" />
+                              <Skeleton className="h-24 w-full rounded-lg" />
+                            </>
+                          ) : entries.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-10 h-full border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50">
+                              <CalendarClock className="w-8 h-8 text-slate-300 mb-2" />
+                              <p className="text-xs text-slate-400 font-medium text-center">Tidak ada jadwal</p>
+                            </div>
+                          ) : (
+                            entries.map((entry) => (
+                              <JadwalCard
+                                key={entry.id}
+                                entry={entry}
+                                onEdit={openEdit}
+                                onDelete={handleDelete}
+                              />
+                            ))
+                          )}
+                        </div>
                       </div>
-                    ) : (
-                      byHari[hari].map((entry) => (
-                        <JadwalCard
-                          key={entry.id}
-                          entry={entry}
-                          onEdit={openEdit}
-                          onDelete={handleDelete}
-                        />
-                      ))
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
+
+            {/* Summary footer */}
+            <div className="flex items-center justify-between bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-semibold text-slate-600 mr-2">Rekap Mingguan:</span>
+                {HARI_LIST.filter((h) => byHari[h].length > 0).map((h) => (
+                  <div key={h} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-full px-3 py-1 text-xs">
+                    <span className="text-slate-500">{h}:</span>
+                    <span className="font-bold text-slate-800">{byHari[h].length * 2} JP</span>
+                  </div>
+                ))}
+              </div>
+              <div className="shrink-0 ml-4">
+                <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-slate-800 text-white text-sm font-bold shadow-sm">
+                  Total {HARI_LIST.reduce((sum, h) => sum + byHari[h].length * 2, 0)} JP / Minggu
+                </span>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

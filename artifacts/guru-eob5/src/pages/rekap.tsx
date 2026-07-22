@@ -22,7 +22,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart2, CheckCircle2, Info, AlertCircle, XCircle } from "lucide-react";
+import { BarChart2, CheckCircle2, Info, AlertCircle, XCircle, ChevronRight, Calendar, Download } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -478,32 +478,53 @@ function NilaiTab() {
 }
 
 export default function RekapPage() {
+  const [activeTab, setActiveTab] = useState<"absensi" | "nilai">("absensi");
+
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto py-8 px-4 md:px-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">
-            Rekap & Analitik
-          </h1>
-          <p className="text-muted-foreground">
-            Tren absensi dan distribusi nilai mata pelajaranmu.
-          </p>
-        </header>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center text-xs text-slate-400 mb-2">
+              <span>Dashboard</span>
+              <ChevronRight className="w-3 h-3 mx-1" />
+              <span className="text-slate-600">Rekap & Analitik</span>
+            </div>
+            <h1 className="text-xl font-bold text-slate-800">Rekap & Analitik</h1>
+            <p className="text-sm text-slate-500 mt-1">Data agregat absensi dan nilai semester ini.</p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button className="flex items-center gap-2 rounded-full bg-white border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 shadow-sm transition-colors">
+              <Calendar className="w-4 h-4" />
+              Semester ini
+            </button>
+            <button className="flex items-center gap-2 rounded-full bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 shadow-sm transition-colors">
+              <Download className="w-4 h-4" />
+              Eksport Laporan
+            </button>
+          </div>
+        </div>
 
-        <Tabs defaultValue="absensi" className="space-y-8">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="absensi">Absensi</TabsTrigger>
-            <TabsTrigger value="nilai">Nilai</TabsTrigger>
-          </TabsList>
+        {/* Pill Switcher */}
+        <div className="flex gap-2">
+          {(["absensi", "nilai"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                activeTab === tab
+                  ? "bg-slate-800 text-white shadow-sm"
+                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              {tab === "absensi" ? "Absensi" : "Nilai"}
+            </button>
+          ))}
+        </div>
 
-          <TabsContent value="absensi" className="m-0">
-            <AbsensiTab />
-          </TabsContent>
-
-          <TabsContent value="nilai" className="m-0">
-            <NilaiTab />
-          </TabsContent>
-        </Tabs>
+        {activeTab === "absensi" && <AbsensiTab />}
+        {activeTab === "nilai" && <NilaiTab />}
       </div>
     </Layout>
   );
