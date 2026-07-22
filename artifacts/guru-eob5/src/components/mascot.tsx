@@ -151,7 +151,7 @@ const ANIMS = [
 
 // ── Kuku SVG (Pak Semangat) ───────────────────────────────────────────────────
 
-function KukuSvg() {
+export function KukuSvg() {
   return (
     <svg
       viewBox="0 0 200 300"

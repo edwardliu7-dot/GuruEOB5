@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { getGetMeQueryKey } from "@workspace/api-client-react";
 import type { Teacher } from "@workspace/api-client-react";
+import { KukuSvg } from "@/components/mascot";
 import logoUrl from "@/assets/logo.png";
 
 const SEBUTAN_OPTIONS = [
@@ -65,23 +66,35 @@ export function SebetanDialog({ onDone }: { onDone: () => void }) {
     <Dialog open modal>
       <DialogContent
         // Prevent any dismissal — no close button, no outside click, no Escape
-        className="max-w-md gap-0 p-0 overflow-hidden rounded-2xl [&>button]:hidden"
+        className="max-w-md gap-0 p-0 overflow-visible rounded-2xl [&>button]:hidden"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-br from-primary/90 to-blue-600 px-6 pt-6 pb-5 text-white">
-          <img src={logoUrl} alt="GuruEOB5" className="h-8 mb-4 opacity-90" />
-          <DialogTitle className="text-lg font-bold text-white leading-snug">
+        <div className="relative bg-gradient-to-br from-primary/90 to-blue-600 px-6 pt-6 pb-5 text-white rounded-t-2xl overflow-hidden">
+          {/* Decorative circles */}
+          <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10 pointer-events-none" />
+          <div className="absolute right-20 -bottom-8 h-20 w-20 rounded-full bg-white/10 pointer-events-none" />
+
+          <img src={logoUrl} alt="GuruEOB5" className="relative h-8 mb-4 opacity-90" />
+          <DialogTitle className="relative text-lg font-bold text-white leading-snug">
             Hai, {firstName}! 👋
           </DialogTitle>
-          <DialogDescription className="mt-1 text-sm text-white/80">
+          <DialogDescription className="relative mt-1 text-sm text-white/80 pr-28">
             Sebelum mulai, pilih sapaan yang ingin Kuku gunakan saat memanggil kamu.
           </DialogDescription>
+
+          {/* Kuku character — peeking from the bottom-right of the header */}
+          <div
+            className="absolute bottom-0 right-4 translate-y-1/2 w-24 h-36 drop-shadow-xl pointer-events-none select-none z-10"
+            aria-hidden
+          >
+            <KukuSvg />
+          </div>
         </div>
 
         {/* Options grid */}
-        <div className="px-6 py-5">
+        <div className="px-6 pt-10 pb-5">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
             Pilih sapaan kamu
           </p>
