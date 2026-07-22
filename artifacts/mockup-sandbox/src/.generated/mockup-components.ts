@@ -9,6 +9,7 @@ export const modules: ModuleMap = {
   "./components/mockups/mascot-options/IbuCeria.tsx": () => import("../components/mockups/mascot-options/IbuCeria.tsx"),
   "./components/mockups/mascot-options/PakKeren.tsx": () => import("../components/mockups/mascot-options/PakKeren.tsx"),
   "./components/mockups/mascot-options/PakSemangat.tsx": () => import("../components/mockups/mascot-options/PakSemangat.tsx"),
+  "./components/mockups/presensi-harian/PresensiHarian.tsx": () => import("../components/mockups/presensi-harian/PresensiHarian.tsx"),
   "./components/mockups/tema-app/Batik.tsx": () => import("../components/mockups/tema-app/Batik.tsx"),
   "./components/mockups/tema-app/Bintang.tsx": () => import("../components/mockups/tema-app/Bintang.tsx"),
   "./components/mockups/tema-app/Gelap.tsx": () => import("../components/mockups/tema-app/Gelap.tsx"),
