@@ -297,7 +297,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
 
-      {needsSebutan && <SebetanDialog onDone={() => setSebetanDone(true)} />}
+      {needsSebutan && <SebetanDialog onDone={() => {}} />}
       <Mascot />
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
       <WhatsNewDialog

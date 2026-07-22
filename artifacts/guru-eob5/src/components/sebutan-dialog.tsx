@@ -45,13 +45,15 @@ export function SebetanDialog({ onDone }: { onDone: () => void }) {
         body: JSON.stringify({ sebutan: selected }),
       });
       if (!res.ok) throw new Error("Gagal menyimpan");
-      // Optimistically update the cache so the new Layout instance that mounts
-      // after navigation already sees the sebutan — avoids the dialog re-appearing.
+      // Optimistically update the cache immediately — the dialog gate checks
+      // user.sebutan from this cache, so this is what closes the dialog.
       qc.setQueryData<Teacher>(getGetMeQueryKey(), (old) =>
         old ? { ...old, sebutan: selected } : old,
       );
-      // Also kick off a background refetch so the cache is eventually consistent
-      qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      // Do NOT call invalidateQueries here: the server responds 304 (HTTP cache),
+      // which would overwrite our optimistic update with the stale value and
+      // re-open the dialog. The next natural refetch (after staleTime) will
+      // fetch fresh data correctly because sebutan is now saved in the DB.
       onDone();
     } catch {
       setError("Terjadi kesalahan. Coba lagi.");
