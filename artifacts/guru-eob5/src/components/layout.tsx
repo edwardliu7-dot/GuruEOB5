@@ -61,8 +61,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const isAdmin = user?.isAdmin ?? false;
 
   // ── Onboarding gate: sebutan → jadwal ──────────────────────────────────────
-  // sebutan: rely entirely on server value; dialog removes itself once user.sebutan is set
-  const needsSebutan = !!user && !user.sebutan;
+  // Sebutan is "once in a lifetime": persisted in localStorage so the dialog
+  // never re-appears even if the server returns 304 (stale HTTP cache) or the
+  // React Query cache is cold. Flag is set by SebetanDialog after a successful PATCH.
+  const [sebutanDone, setSebutanDone] = useState(
+    () =>
+      !!user?.id &&
+      (!!user.sebutan ||
+        localStorage.getItem(`sebutan_set_${user.id}`) === "1"),
+  );
+  const needsSebutan = !!user && !sebutanDone;
 
   // Jadwal onboarding: one-time check per user, persisted in localStorage.
   // Layout only mounts after ProtectedRoute confirms user is authenticated,
@@ -297,7 +305,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
 
-      {needsSebutan && <SebetanDialog onDone={() => {}} />}
+      {needsSebutan && <SebetanDialog onDone={() => setSebutanDone(true)} />}
       <Mascot />
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
       <WhatsNewDialog

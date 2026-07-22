@@ -45,15 +45,17 @@ export function SebetanDialog({ onDone }: { onDone: () => void }) {
         body: JSON.stringify({ sebutan: selected }),
       });
       if (!res.ok) throw new Error("Gagal menyimpan");
-      // Optimistically update the cache immediately — the dialog gate checks
-      // user.sebutan from this cache, so this is what closes the dialog.
+      // Persist a localStorage flag so the dialog never shows again across
+      // sessions or page navigations — even if the server returns 304 (stale
+      // HTTP cache) and React Query cache is temporarily cold.
+      if (user?.id) {
+        localStorage.setItem(`sebutan_set_${user.id}`, "1");
+      }
+      // Also update the React Query cache so the mascot picks up the sebutan
+      // immediately without waiting for the next natural refetch.
       qc.setQueryData<Teacher>(getGetMeQueryKey(), (old) =>
         old ? { ...old, sebutan: selected } : old,
       );
-      // Do NOT call invalidateQueries here: the server responds 304 (HTTP cache),
-      // which would overwrite our optimistic update with the stale value and
-      // re-open the dialog. The next natural refetch (after staleTime) will
-      // fetch fresh data correctly because sebutan is now saved in the DB.
       onDone();
     } catch {
       setError("Terjadi kesalahan. Coba lagi.");
