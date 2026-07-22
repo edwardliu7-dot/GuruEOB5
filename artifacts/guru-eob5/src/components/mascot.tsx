@@ -272,7 +272,12 @@ export function Mascot() {
   const showKuku = useCallback(
     (urgent: boolean, urgentSlots: UrgentSlot[]) => {
       const name = user?.name ?? "Guru";
-      const sebutan = user?.sebutan ?? "";
+      // Use API-returned sebutan; fall back to localStorage value saved by SebetanDialog
+      // in case the server response is cached without the latest sebutan.
+      const sebutanFromStorage = user?.id
+        ? (localStorage.getItem(`sebutan_val_${user.id}`) ?? "")
+        : "";
+      const sebutan = user?.sebutan || sebutanFromStorage;
       const msgs = buildMessages(urgentSlots, name, sebutan);
       // Urgent messages are at the top of the array; pick from relevant ones
       const pool = urgent && urgentSlots.length > 0

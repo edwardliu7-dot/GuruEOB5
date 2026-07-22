@@ -45,11 +45,11 @@ export function SebetanDialog({ onDone }: { onDone: () => void }) {
         body: JSON.stringify({ sebutan: selected }),
       });
       if (!res.ok) throw new Error("Gagal menyimpan");
-      // Persist a localStorage flag so the dialog never shows again across
-      // sessions or page navigations — even if the server returns 304 (stale
-      // HTTP cache) and React Query cache is temporarily cold.
+      // Persist the chosen sebutan and a flag so the dialog never shows again
+      // across sessions — even if the server cache is cold on next load.
       if (user?.id) {
         localStorage.setItem(`sebutan_set_${user.id}`, "1");
+        localStorage.setItem(`sebutan_val_${user.id}`, selected);
       }
       // Also update the React Query cache so the mascot picks up the sebutan
       // immediately without waiting for the next natural refetch.

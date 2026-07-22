@@ -88,9 +88,15 @@ export default function WaliKelas() {
                               {s.rataNilai != null ? s.rataNilai : "-"}
                             </TableCell>
                             <TableCell className="text-right">
-                              <Badge variant={s.totalPoin > 0 ? "destructive" : "secondary"}>
-                                {s.totalPoin}
-                              </Badge>
+                              {s.totalPoin === 0 ? (
+                                <Badge variant="secondary">{s.totalPoin}</Badge>
+                              ) : s.totalPoin > 0 ? (
+                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border border-green-200">
+                                  +{s.totalPoin}
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive">{s.totalPoin}</Badge>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}

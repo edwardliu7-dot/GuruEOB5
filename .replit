@@ -25,19 +25,3 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-
-[[ports]]
-localPort = 8080
-externalPort = 8080
-
-[[ports]]
-localPort = 8081
-externalPort = 80
-
-[[ports]]
-localPort = 19160
-externalPort = 3001
-
-[[ports]]
-localPort = 25245
-externalPort = 3000
