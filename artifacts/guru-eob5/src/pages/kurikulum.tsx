@@ -117,7 +117,7 @@ export default function Kurikulum() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex bg-white rounded-full border border-slate-200 p-1">
               <button
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
@@ -140,6 +140,10 @@ export default function Kurikulum() {
                 Jurnal
               </button>
             </div>
+            <button className="rounded-full bg-slate-800 text-white px-4 py-2 text-sm font-medium flex items-center gap-2 hover:bg-slate-700 transition-colors shadow-sm">
+              <Download className="w-4 h-4" />
+              Export Laporan
+            </button>
           </div>
         </div>
 
