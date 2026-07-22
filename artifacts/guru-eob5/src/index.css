@@ -242,3 +242,12 @@ button:not([disabled]):active {
     @apply font-serif tracking-tight;
   }
 }
+
+/* Hide scrollbar on sidebar navigation while keeping scroll functionality */
+[data-sidebar="content"] {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+[data-sidebar="content"]::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
