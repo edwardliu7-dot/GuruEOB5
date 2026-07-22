@@ -291,6 +291,12 @@ export function Mascot() {
     [user],
   );
 
+  // Always-current ref so timers scheduled with [] deps still get the latest showKuku
+  // (which captures the latest user.sebutan). Without this, the first-appearance timer
+  // captures showKuku from the initial render when user is still undefined.
+  const showKukuRef = useRef(showKuku);
+  useEffect(() => { showKukuRef.current = showKuku; }, [showKuku]);
+
   const dismiss = useCallback(() => {
     clearTimers();
     setVisible(false);
@@ -312,23 +318,26 @@ export function Mascot() {
       ? (2 + Math.random()) * 60_000
       : (4 + Math.random() * 4) * 60_000;
 
-    timerRef.current = setTimeout(() => showKuku(urgent, urgentSlots), delayMs);
+    timerRef.current = setTimeout(() => showKukuRef.current(urgent, urgentSlots), delayMs);
     return clearTimers;
-  }, [visible, jadwal, attendance, journals, showKuku]);
+  }, [visible, jadwal, attendance, journals]);
 
-  // First appearance: 6s after mount
+  // First appearance: 6s after user data is loaded (not after mount).
+  // Using user?.id as dep ensures this fires exactly once when user is ready,
+  // so sebutan is already populated in showKuku's closure via showKukuRef.
   useEffect(() => {
+    if (!user?.id) return;
     const t = setTimeout(() => {
       const urgentSlots = detectUrgentSlots(
         jadwal as any[],
         attendance as any[],
         journals as any[],
       );
-      showKuku(urgentSlots.length > 0, urgentSlots);
+      showKukuRef.current(urgentSlots.length > 0, urgentSlots);
     }, 6_000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
 
   const anim = ANIMS[animIdx];
 

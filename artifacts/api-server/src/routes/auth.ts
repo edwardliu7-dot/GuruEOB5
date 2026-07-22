@@ -129,6 +129,9 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  // Prevent browser HTTP caching (ETags / 304). User profile can change at any
+  // time (e.g. after saving sebutan), so stale cached responses must never be served.
+  res.setHeader("Cache-Control", "no-store");
   res.json(GetMeResponse.parse(guruToTeacher(guru)));
 });
 
