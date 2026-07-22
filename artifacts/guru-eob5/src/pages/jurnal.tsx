@@ -47,6 +47,7 @@ import {
   AlertTriangle,
   Calendar,
   ChevronDown,
+  ChevronRight,
   BookOpen,
   CheckCircle2,
   Clock,
@@ -503,20 +504,27 @@ export default function Jurnal() {
       {/* Page content */}
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-end">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-foreground">Jurnal Mengajar</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {journals ? `${journals.length} entri` : "Memuat..."} tercatat
+            <div className="text-xs text-slate-400 mb-2 flex items-center gap-1">
+              <span>Beranda</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-slate-600 font-medium">Jurnal Mengajar</span>
+            </div>
+            <h1 className="text-xl font-bold text-slate-800">Jurnal Mengajar</h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              {journals ? `${journals.length} entri` : "Memuat..."} tercatat bulan ini
             </p>
           </div>
-          <button
-            onClick={openNew}
-            className="rounded-full bg-slate-800 text-white px-4 py-2 text-sm font-medium flex items-center gap-2 hover:bg-slate-700 transition-colors shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Tambah Entri
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={openNew}
+              className="flex items-center gap-2 rounded-full bg-slate-800 text-white px-4 py-2 text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Tambah Entri
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-5">
@@ -635,6 +643,9 @@ export default function Jurnal() {
                       <th className="p-4 border-b border-slate-200 dark:border-border font-semibold">
                         Materi/Topik
                       </th>
+                      <th className="p-4 border-b border-slate-200 dark:border-border font-semibold whitespace-nowrap">
+                        Kehadiran
+                      </th>
                       <th className="p-4 border-b border-slate-200 dark:border-border font-semibold">
                         Catatan
                       </th>
@@ -649,7 +660,7 @@ export default function Jurnal() {
                         .fill(0)
                         .map((_, i) => (
                           <tr key={i}>
-                            <td colSpan={6} className="p-4">
+                            <td colSpan={7} className="p-4">
                               <Skeleton className="h-6 w-full" />
                             </td>
                           </tr>
@@ -657,7 +668,7 @@ export default function Jurnal() {
                     ) : filteredJournals.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={7}
                           className="p-12 text-center text-slate-400 text-sm"
                         >
                           Belum ada jurnal mengajar.
@@ -698,6 +709,9 @@ export default function Jurnal() {
                                 </Badge>
                               )}
                             </div>
+                          </td>
+                          <td className="p-4 align-top whitespace-nowrap">
+                            <span className="text-slate-500 text-sm">—</span>
                           </td>
                           <td className="p-4 align-top">
                             <p

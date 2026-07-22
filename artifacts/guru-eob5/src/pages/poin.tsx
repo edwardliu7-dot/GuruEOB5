@@ -216,25 +216,27 @@ export default function Poin() {
   return (
     <Layout>
       {/* Header */}
-      <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
-        <span>Beranda</span>
-        <ChevronRight className="w-3 h-3" />
-        <span>Kesiswaan</span>
-        <ChevronRight className="w-3 h-3" />
-        <span className="text-slate-600 font-medium">Poin Siswa</span>
-      </div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
+          <div className="text-xs text-slate-400 mb-2 flex items-center gap-1">
+            <span>Beranda</span>
+            <ChevronRight className="w-3 h-3" />
+            <span>Kesiswaan</span>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-slate-600 font-medium">Poin Siswa</span>
+          </div>
           <h1 className="text-xl font-bold text-slate-800">Poin Siswa</h1>
-          <p className="text-sm text-slate-500">Buku catatan poin pelanggaran dan prestasi.</p>
+          <p className="text-sm text-slate-500 mt-0.5">Buku catatan poin pelanggaran dan prestasi.</p>
         </div>
-        <button
-          onClick={() => setIsDialogOpen(true)}
-          className="flex items-center gap-2 rounded-full bg-slate-800 text-white px-4 py-2 text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Tambah Poin
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-2 rounded-full bg-slate-800 text-white px-4 py-2 text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Tambah Poin
+          </button>
+        </div>
       </div>
 
       {/* Pill Switcher */}

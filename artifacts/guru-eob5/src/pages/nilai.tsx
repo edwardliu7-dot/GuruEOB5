@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Download, TrendingUp, TrendingDown, Award, Percent } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, Award, Percent, ChevronRight, ChevronDown } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -435,16 +435,28 @@ export default function Nilai() {
   return (
     <Layout>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Header */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
+            <div className="text-xs text-slate-400 mb-2 flex items-center gap-1">
+              <span>Beranda</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-slate-600 font-medium">Data Nilai</span>
+            </div>
             <h1 className="text-xl font-bold text-slate-800">Data Nilai</h1>
-            <p className="text-muted-foreground mt-1">
-              Formatif (per TP), Sumatif per Lingkup Materi, Sumatif Tengah Semester (PTS), Sumatif Akhir Semester (PAS), Nilai Raport.
+            <p className="text-sm text-slate-500 mt-0.5">
+              Formatif, Sumatif LM, Sumatif Tengah Semester (PTS), Sumatif Akhir Semester (PAS), Nilai Raport.
             </p>
           </div>
-          <Button variant="outline" onClick={handleExport} disabled={!ready || !kelasStudents.length}>
-            <Download className="w-4 h-4 mr-2" /> Download Rekap Nilai
-          </Button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExport}
+              disabled={!ready || !kelasStudents.length}
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 text-sm font-medium hover:bg-slate-50 shadow-sm transition-colors disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" /> Download Rekap Nilai
+            </button>
+          </div>
         </div>
 
         {/* Stats Row */}
@@ -493,36 +505,62 @@ export default function Nilai() {
           </div>
         )}
 
-        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border bg-muted/40 flex flex-wrap gap-3">
-            <Select value={kelasFilter} onValueChange={setKelasFilter}>
-              <SelectTrigger className="w-[180px] bg-card"><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
-              <SelectContent>{kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={subjectId} onValueChange={setSubjectId}>
-              <SelectTrigger className="w-[240px] bg-card"><SelectValue placeholder="Pilih Mata Pelajaran" /></SelectTrigger>
-              <SelectContent>
+        {/* Filter Bar */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-wrap items-center gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Kelas</label>
+            <div className="relative">
+              <select
+                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800/20 pr-10 cursor-pointer w-[180px]"
+                value={kelasFilter}
+                onChange={(e) => setKelasFilter(e.target.value)}
+              >
+                <option value="">Pilih Kelas</option>
+                {kelasList.map((k) => <option key={k} value={k}>{k}</option>)}
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mata Pelajaran</label>
+            <div className="relative">
+              <select
+                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800/20 pr-10 cursor-pointer w-[240px]"
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+              >
+                <option value="">Pilih Mata Pelajaran</option>
                 {filteredSubjects.map((s: any) => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
                 {!filteredSubjects.length && (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">
-                    Tidak ada mapel untuk kelas ini
-                  </div>
+                  <option disabled>Tidak ada mapel untuk kelas ini</option>
                 )}
-              </SelectContent>
-            </Select>
-            <Select value={calendarId} onValueChange={setCalendarId}>
-              <SelectTrigger className="w-[220px] bg-card"><SelectValue placeholder="Pilih Tahun Ajaran/Semester" /></SelectTrigger>
-              <SelectContent>
-                {calendars?.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.tahunAjaran} - Semester {c.semester}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tahun Ajaran/Semester</label>
+            <div className="relative">
+              <select
+                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800/20 pr-10 cursor-pointer w-[220px]"
+                value={calendarId}
+                onChange={(e) => setCalendarId(e.target.value)}
+              >
+                <option value="">Pilih Semester</option>
+                {calendars?.map((c: any) => (
+                  <option key={c.id} value={c.id}>
+                    {c.tahunAjaran} - Semester {c.semester}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
 
           {!calendars?.length ? (
             <p className="p-8 text-center text-muted-foreground">

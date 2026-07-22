@@ -322,20 +322,18 @@ export default function Siswa() {
 
   return (
     <Layout>
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
-        <span>Dashboard</span>
-        <ChevronRight className="w-3 h-3" />
-        <span className="text-slate-600 font-medium">Manajemen Siswa</span>
-        <ChevronRight className="w-3 h-3" />
-        <span className="text-slate-600 font-medium">Data Siswa</span>
-      </div>
-
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
+          <div className="text-xs text-slate-400 mb-2 flex items-center gap-1">
+            <span>Dashboard</span>
+            <ChevronRight className="w-3 h-3" />
+            <span>Manajemen Siswa</span>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-slate-600 font-medium">Data Siswa</span>
+          </div>
           <h1 className="text-xl font-bold text-slate-800">Data Siswa</h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 mt-0.5">
             {isLoading ? "Memuat..." : `${totalSiswa} siswa terdaftar aktif`}
           </p>
         </div>
@@ -350,7 +348,7 @@ export default function Siswa() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={analyzeImport.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-60"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 text-sm font-medium hover:bg-slate-50 shadow-sm transition-colors disabled:opacity-60"
           >
             {analyzeImport.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -365,7 +363,7 @@ export default function Siswa() {
               form.reset();
               setIsDialogOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800 text-white text-sm font-medium hover:bg-slate-900 transition-colors shadow-sm"
+            className="flex items-center gap-2 rounded-full bg-slate-800 text-white px-4 py-2 text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Tambah Siswa
@@ -755,97 +753,102 @@ export default function Siswa() {
             AI telah mengidentifikasi {importRows.length} data siswa. Periksa
             dan perbaiki bila perlu sebelum disimpan.
           </p>
-          <div className="max-h-[50vh] overflow-y-auto border border-border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40">
-                  <TableHead className="w-[110px]">NISN</TableHead>
-                  <TableHead>Nama Lengkap</TableHead>
-                  <TableHead className="w-[100px]">Kelas</TableHead>
-                  <TableHead className="w-[90px]">L/P</TableHead>
-                  <TableHead className="w-[170px]">Sekolah</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          <div className="max-h-[50vh] overflow-y-auto border border-slate-200 rounded-md">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 shadow-sm z-10">
+                <tr className="text-xs uppercase text-slate-500 font-semibold">
+                  <th className="p-3 w-[110px]">NISN</th>
+                  <th className="p-3">Nama Lengkap</th>
+                  <th className="p-3 w-[100px]">Kelas</th>
+                  <th className="p-3 w-[90px]">L/P</th>
+                  <th className="p-3 w-[170px]">Sekolah</th>
+                  <th className="p-3 w-[50px]"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {importRows.map((row, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Input
+                  <tr key={i} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-2">
+                      <input
                         value={row.nisn ?? ""}
                         onChange={(e) =>
                           updateImportRow(i, { nisn: e.target.value })
                         }
-                        className="h-8"
+                        className="w-full h-8 px-2 rounded-md border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-800 text-sm"
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Input
+                    </td>
+                    <td className="p-2">
+                      <input
                         value={row.namaLengkap}
                         onChange={(e) =>
                           updateImportRow(i, { namaLengkap: e.target.value })
                         }
-                        className="h-8"
+                        className={`w-full h-8 px-2 rounded-md border ${
+                          !row.namaLengkap.trim()
+                            ? "border-red-300 bg-red-50 focus:ring-red-500"
+                            : "border-slate-200 focus:ring-slate-800"
+                        } focus:outline-none focus:ring-1 text-sm`}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Select
+                    </td>
+                    <td className="p-2">
+                      <select
                         value={row.kelas}
-                        onValueChange={(v) => updateImportRow(i, { kelas: v })}
+                        onChange={(e) =>
+                          updateImportRow(i, { kelas: e.target.value })
+                        }
+                        className={`w-full h-8 px-2 rounded-md border ${
+                          !(KELAS_OPTIONS as readonly string[]).includes(row.kelas)
+                            ? "border-red-300 bg-red-50 focus:ring-red-500"
+                            : "border-slate-200 focus:ring-slate-800"
+                        } focus:outline-none focus:ring-1 bg-white text-sm`}
                       >
-                        <SelectTrigger className="h-8">
-                          <SelectValue placeholder="Pilih" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {KELAS_OPTIONS.map((k) => (
-                            <SelectItem key={k} value={k}>
-                              {k}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Select
+                        <option value="">Pilih</option>
+                        {KELAS_OPTIONS.map((k) => (
+                          <option key={k} value={k}>
+                            {k}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-2">
+                      <select
                         value={row.jenisKelamin}
-                        onValueChange={(v) =>
+                        onChange={(e) =>
                           updateImportRow(i, {
-                            jenisKelamin: v as "L" | "P",
+                            jenisKelamin: e.target.value as "L" | "P",
                           })
                         }
+                        className="w-full h-8 px-2 rounded-md border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-800 bg-white text-sm"
                       >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="L">L</SelectItem>
-                          <SelectItem value="P">P</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
+                        <option value="L">L</option>
+                        <option value="P">P</option>
+                      </select>
+                    </td>
+                    <td className="p-2">
+                      <input
                         value={row.school}
                         onChange={(e) =>
                           updateImportRow(i, { school: e.target.value })
                         }
-                        className="h-8"
+                        className={`w-full h-8 px-2 rounded-md border ${
+                          !row.school.trim()
+                            ? "border-red-300 bg-red-50 focus:ring-red-500"
+                            : "border-slate-200 focus:ring-slate-800"
+                        } focus:outline-none focus:ring-1 text-sm`}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                    </td>
+                    <td className="p-2 text-center">
+                      <button
                         onClick={() => removeImportRow(i)}
+                        className="text-slate-400 hover:text-red-600 transition-colors p-1"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           </div>
           <DialogFooter>
             <Button

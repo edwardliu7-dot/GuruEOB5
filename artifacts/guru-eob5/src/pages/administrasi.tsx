@@ -17,8 +17,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Folder, FileText, Plus, ArrowLeft, Trash2, Edit2, MoreVertical, Upload,
-  BookOpen, Download, Loader2, ExternalLink, X, CheckCircle2, AlertCircle,
+  Folder, FolderOpen, FileText, Plus, ArrowLeft, Trash2, Edit2, MoreVertical, Upload,
+  BookOpen, Download, Loader2, ExternalLink, X, CheckCircle2, AlertCircle, ChevronRight,
+  Target, History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -515,15 +516,20 @@ export default function Administrasi() {
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
         {/* Page header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
+            <div className="text-xs text-slate-400 mb-2 flex items-center gap-1">
+              <span>Dashboard</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="text-slate-600 font-medium">Administrasi Guru</span>
+            </div>
             <div className="flex items-center gap-2">
               {selectedSubject && pageTab === "administrasi" && (
-                <Button variant="ghost" size="icon" onClick={() => setSelectedSubject(null)} className="mr-2">
+                <button onClick={() => setSelectedSubject(null)} className="mr-2 text-slate-400 hover:text-slate-600 transition-colors">
                   <ArrowLeft className="w-5 h-5" />
-                </Button>
+                </button>
               )}
-              <h1 className="text-3xl font-bold tracking-tight font-serif text-foreground">
+              <h1 className="text-xl font-bold text-slate-800">
                 {pageTab === "bahan-ajar"
                   ? "Bahan Ajar"
                   : selectedSubject
@@ -531,7 +537,7 @@ export default function Administrasi() {
                     : "Administrasi Guru"}
               </h1>
             </div>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm text-slate-500 mt-0.5">
               {pageTab === "bahan-ajar"
                 ? "Materi pembelajaran yang dapat diakses seluruh guru."
                 : selectedSubject
@@ -544,7 +550,10 @@ export default function Administrasi() {
           {pageTab === "administrasi" && !selectedSubject && (
             <Dialog open={isSubjectDialogOpen} onOpenChange={(open) => { setIsSubjectDialogOpen(open); if (!open) { setEditingSubject(null); subjectForm.reset(); } }}>
               <DialogTrigger asChild>
-                <Button><Plus className="w-4 h-4 mr-2" /> Tambah Mata Pelajaran</Button>
+                <button className="flex items-center gap-2 rounded-full bg-slate-800 text-white px-4 py-2 text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm w-max">
+                  <Plus className="w-4 h-4" />
+                  Tambah Mata Pelajaran
+                </button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>{editingSubject ? "Edit Mata Pelajaran" : "Tambah Mata Pelajaran"}</DialogTitle></DialogHeader>
@@ -564,7 +573,9 @@ export default function Administrasi() {
           {pageTab === "administrasi" && selectedSubject && innerTab === "dokumen" && (
             <Dialog open={isDocumentDialogOpen} onOpenChange={(open) => { if (!open) closeDocDialog(); else setIsDocumentDialogOpen(true); }}>
               <DialogTrigger asChild>
-                <Button><Upload className="w-4 h-4 mr-2" /> Unggah Dokumen</Button>
+                <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 text-sm font-medium hover:bg-slate-50 shadow-sm transition-colors">
+                  <Upload className="w-4 h-4" /> Unggah Dokumen
+                </button>
               </DialogTrigger>
               <DialogContent className="max-w-lg">
                 <DialogHeader>
@@ -688,58 +699,192 @@ export default function Administrasi() {
         </div>
 
         {/* Page-level tabs */}
-        <Tabs value={pageTab} onValueChange={(v) => { setPageTab(v as any); setSelectedSubject(null); }}>
-          <TabsList>
-            <TabsTrigger value="administrasi">Administrasi</TabsTrigger>
-            <TabsTrigger value="bahan-ajar">Bahan Ajar</TabsTrigger>
-          </TabsList>
+        <div className="flex bg-slate-100/50 p-1 rounded-full w-max mt-2 mb-6 border border-slate-200/50 shadow-sm">
+          <button
+            onClick={() => { setPageTab("administrasi"); setSelectedSubject(null); }}
+            className={`px-6 py-2 text-sm font-medium rounded-full transition-all ${
+              pageTab === "administrasi" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+            }`}
+          >
+            Administrasi
+          </button>
+          <button
+            onClick={() => { setPageTab("bahan-ajar"); setSelectedSubject(null); }}
+            className={`px-6 py-2 text-sm font-medium rounded-full transition-all ${
+              pageTab === "bahan-ajar" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+            }`}
+          >
+            Bahan Ajar
+          </button>
+        </div>
 
-          {/* ── Tab Administrasi ── */}
-          <TabsContent value="administrasi" className="mt-4">
+        {pageTab === "administrasi" && (
+          <div>
             {/* Subject folder grid */}
             {!selectedSubject && (
-              <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {isLoadingSubjects ? (
-                  Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
-                ) : subjects?.length === 0 ? (
-                  <div className="col-span-full py-12 text-center text-muted-foreground bg-card rounded-xl border border-dashed border-border">
-                    <Folder className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-                    <p>Belum ada mata pelajaran.</p>
-                  </div>
-                ) : (
-                  subjects?.map((subject: any) => (
-                    <StaggerItem key={subject.id}>
-                      <div
-                        className="group relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer h-full"
-                        onClick={() => setSelectedSubject(subject.id)}
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                            <Folder className="w-5 h-5 fill-current opacity-20" />
+              <>
+                {/* Stats row */}
+                {!isLoadingSubjects && (subjects?.length ?? 0) > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    {[
+                      { label: "Mata Pelajaran", count: subjects?.length ?? 0, color: "blue" },
+                      { label: "Total Dokumen", count: 0, color: "violet" },
+                      { label: "Bahan Ajar", count: 0, color: "amber" },
+                      { label: "Tujuan Pembelajaran", count: 0, color: "emerald" },
+                    ].map((stat, idx) => {
+                      const colorStyles: Record<string, { bg: string; text: string; bar: string }> = {
+                        blue:    { bg: "bg-blue-100",    text: "text-blue-600",    bar: "bg-blue-500" },
+                        violet:  { bg: "bg-violet-100",  text: "text-violet-600",  bar: "bg-violet-500" },
+                        amber:   { bg: "bg-amber-100",   text: "text-amber-600",   bar: "bg-amber-500" },
+                        emerald: { bg: "bg-emerald-100", text: "text-emerald-600", bar: "bg-emerald-500" },
+                      };
+                      const cs = colorStyles[stat.color];
+                      return (
+                        <div key={idx} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                          <div className="p-4 flex justify-between items-center">
+                            <div>
+                              <p className="text-xs font-semibold text-slate-500 mb-1">{stat.label}</p>
+                              <h3 className="text-2xl font-bold text-slate-800">{stat.count}</h3>
+                            </div>
+                            <div className={`p-2.5 rounded-xl ${cs.bg} ${cs.text}`}>
+                              <Folder className="w-5 h-5" />
+                            </div>
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                                <MoreVertical className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingSubject(subject); subjectForm.reset({ name: subject.name }); setIsSubjectDialogOpen(true); }}>
-                                <Edit2 className="w-4 h-4 mr-2" /> Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteSubject(subject.id); }}>
-                                <Trash2 className="w-4 h-4 mr-2" /> Hapus
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className={`h-1 w-full ${cs.bar}`} />
                         </div>
-                        <h3 className="font-semibold text-lg line-clamp-1">{subject.name}</h3>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-1">Guru: {me?.name}</p>
-                      </div>
-                    </StaggerItem>
-                  ))
+                      );
+                    })}
+                  </div>
                 )}
-              </StaggerContainer>
+
+                <div className="flex flex-col lg:flex-row gap-6">
+                  {/* Folder grid */}
+                  <div className="flex-1">
+                    <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {isLoadingSubjects ? (
+                        Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)
+                      ) : subjects?.length === 0 ? (
+                        <div className="col-span-full py-12 text-center text-muted-foreground bg-card rounded-xl border border-dashed border-border">
+                          <Folder className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+                          <p>Belum ada mata pelajaran.</p>
+                        </div>
+                      ) : (
+                        subjects?.map((subject: any, idx: number) => {
+                          const folderColors = ["blue", "emerald", "violet", "amber", "blue", "emerald"] as const;
+                          const colorKey = folderColors[idx % folderColors.length];
+                          const colorStyles: Record<string, { bg: string; text: string; ring: string }> = {
+                            blue:    { bg: "bg-blue-100",    text: "text-blue-600",    ring: "ring-blue-500" },
+                            emerald: { bg: "bg-emerald-100", text: "text-emerald-600", ring: "ring-emerald-500" },
+                            violet:  { bg: "bg-violet-100",  text: "text-violet-600",  ring: "ring-violet-500" },
+                            amber:   { bg: "bg-amber-100",   text: "text-amber-600",   ring: "ring-amber-500" },
+                          };
+                          const cs = colorStyles[colorKey];
+                          return (
+                            <StaggerItem key={subject.id}>
+                              <div
+                                className="group relative bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer h-full flex flex-col gap-4"
+                                onClick={() => setSelectedSubject(subject.id)}
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div className={`p-3 rounded-xl ${cs.bg} ${cs.text}`}>
+                                    <FolderOpen className="w-5 h-5" />
+                                  </div>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="ghost" size="icon"
+                                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <MoreVertical className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingSubject(subject);
+                                        subjectForm.reset({ name: subject.name });
+                                        setIsSubjectDialogOpen(true);
+                                      }}>
+                                        <Edit2 className="w-4 h-4 mr-2" /> Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem className="text-destructive" onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteSubject(subject.id);
+                                      }}>
+                                        <Trash2 className="w-4 h-4 mr-2" /> Hapus
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+
+                                <div>
+                                  <h3 className="font-bold text-lg text-slate-800 line-clamp-1">{subject.name}</h3>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className="inline-flex items-center gap-1 text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                                      <FileText className="w-3 h-3" /> Dokumen
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                                      <Target className="w-3 h-3" /> TP
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="mt-auto pt-3 border-t border-slate-100 flex items-center gap-2.5">
+                                  <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                                    {me?.name?.split(" ").map((n: string) => n[0]).join("").substring(0, 2) ?? "G"}
+                                  </div>
+                                  <span className="text-xs font-medium text-slate-600 truncate">{me?.name}</span>
+                                </div>
+                              </div>
+                            </StaggerItem>
+                          );
+                        })
+                      )}
+                    </StaggerContainer>
+                  </div>
+
+                  {/* Recent activity sidebar */}
+                  {(subjects?.length ?? 0) > 0 && (
+                    <div className="w-full lg:w-72 shrink-0">
+                      <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3 px-1">
+                        <History className="w-4 h-4 text-slate-400" />
+                        Mata Pelajaran
+                      </h2>
+                      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="divide-y divide-slate-100">
+                          {subjects?.map((subject: any, idx: number) => {
+                            const folderColors = ["blue", "emerald", "violet", "amber", "blue", "emerald"] as const;
+                            const colorKey = folderColors[idx % folderColors.length];
+                            const iconColors: Record<string, string> = {
+                              blue: "bg-blue-100 text-blue-600",
+                              emerald: "bg-emerald-100 text-emerald-600",
+                              violet: "bg-violet-100 text-violet-600",
+                              amber: "bg-amber-100 text-amber-600",
+                            };
+                            return (
+                              <div
+                                key={subject.id}
+                                className="flex items-center gap-3 p-3.5 hover:bg-slate-50 cursor-pointer transition-colors"
+                                onClick={() => setSelectedSubject(subject.id)}
+                              >
+                                <div className={`p-2 rounded-lg ${iconColors[colorKey]}`}>
+                                  <FolderOpen className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold text-slate-800 truncate">{subject.name}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5">Klik untuk buka dokumen</p>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
 
             {/* Document & TP tabs inside a subject */}
@@ -794,13 +939,12 @@ export default function Administrasi() {
                 </TabsContent>
               </Tabs>
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          {/* ── Tab Bahan Ajar ── */}
-          <TabsContent value="bahan-ajar" className="mt-4">
-            <BahanAjarTab isAdmin={isAdmin} currentUserId={(me as any)?.id} subjects={subjects} me={me} />
-          </TabsContent>
-        </Tabs>
+        {pageTab === "bahan-ajar" && (
+          <BahanAjarTab isAdmin={isAdmin} currentUserId={(me as any)?.id} subjects={subjects} me={me} />
+        )}
 
       </div>
     </Layout>
