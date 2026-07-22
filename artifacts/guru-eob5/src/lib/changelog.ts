@@ -20,6 +20,25 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: "20260722",
+    date: "22 Juli 2026",
+    title: "Ekspor Data & Perbaikan Bug",
+    items: [
+      {
+        tag: "Baru",
+        text: "Rekap & Analitik: tombol 'Ekspor CSV' kini berfungsi — unduh tren absensi atau ringkasan nilai per mata pelajaran langsung dari halaman rekap.",
+      },
+      {
+        tag: "Perbaikan",
+        text: "Menghapus import tidak terpakai di backend yang dapat menyebabkan peringatan build.",
+      },
+      {
+        tag: "Peningkatan",
+        text: "Audit menyeluruh: semua tombol, form, dan alur data telah diperiksa dan dipastikan berfungsi dengan benar.",
+      },
+    ],
+  },
+  {
     id: "20260720-3",
     date: "20 Juli 2026",
     title: "Jadwal Pelajaran & Rekap Analitik",

@@ -14,6 +14,7 @@ import {
   FileBadge,
   Search,
   Clock,
+  Download,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";

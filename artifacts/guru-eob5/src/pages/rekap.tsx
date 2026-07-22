@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Layout } from "@/components/layout";
 import {
   useGetRekapAbsensi,
@@ -22,7 +22,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart2, CheckCircle2, Info, AlertCircle, XCircle, ChevronRight, Calendar, Download } from "lucide-react";
+import { BarChart2, CheckCircle2, Info, AlertCircle, XCircle, ChevronRight, Download } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -34,6 +34,22 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+
+// ── CSV download helper ───────────────────────────────────────────────────────
+function downloadCSV(filename: string, rows: string[][]): void {
+  const csv = rows
+    .map((row) =>
+      row.map((cell) => (cell.includes(",") || cell.includes('"') ? `"${cell.replace(/"/g, '""')}"` : cell)).join(",")
+    )
+    .join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const formatMonth = (yyyyMM: string) => {
   if (!yyyyMM) return "";
@@ -110,6 +126,13 @@ function AbsensiTab() {
     );
   }, [aggregatedAbsensi]);
 
+  const handleExport = useCallback(() => {
+    const header = ["Bulan", "Kelas", "Hadir", "Izin", "Sakit", "Alpa", "Total"];
+    const filtered = selectedKelas === "all" ? (data?.data ?? []) : (data?.data ?? []).filter((d) => d.kelas === selectedKelas);
+    const rows = filtered.map((r) => [r.bulan, r.kelas, String(r.hadir), String(r.izin), String(r.sakit), String(r.alpa), String(r.total)]);
+    downloadCSV(`rekap-absensi-${selectedKelas === "all" ? "semua" : selectedKelas}.csv`, [header, ...rows]);
+  }, [data, selectedKelas]);
+
   if (isLoading) {
     return <Skeleton className="h-[400px] w-full" />;
   }
@@ -140,6 +163,15 @@ function AbsensiTab() {
             ))}
           </SelectContent>
         </Select>
+        {aggregatedAbsensi.length > 0 && (
+          <button
+            onClick={handleExport}
+            className="ml-auto flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Ekspor CSV
+          </button>
+        )}
       </div>
 
       <Card className="border-none shadow-sm ring-1 ring-black/5">
@@ -349,9 +381,22 @@ function NilaiTab() {
     );
   }
 
+  const handleExportNilai = useCallback(() => {
+    const header = ["Mata Pelajaran", "Kelas", "Rata-rata", "Min", "Max", "Jumlah Nilai"];
+    const rows = filteredSubjects.map((s) => [
+      s.subjectName,
+      s.kelas,
+      s.rataRata != null ? String(s.rataRata) : "-",
+      s.nilaiMin != null ? String(s.nilaiMin) : "-",
+      s.nilaiMax != null ? String(s.nilaiMax) : "-",
+      String(s.jumlahNilai),
+    ]);
+    downloadCSV(`rekap-nilai-${selectedKelas === "all" ? "semua" : selectedKelas}.csv`, [header, ...rows]);
+  }, [filteredSubjects, selectedKelas]);
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 flex-wrap">
         <p className="text-sm font-medium text-muted-foreground">Filter Kelas:</p>
         <Select value={selectedKelas} onValueChange={setSelectedKelas}>
           <SelectTrigger className="w-[180px]">
@@ -366,6 +411,15 @@ function NilaiTab() {
             ))}
           </SelectContent>
         </Select>
+        {filteredSubjects.length > 0 && (
+          <button
+            onClick={handleExportNilai}
+            className="ml-auto flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Ekspor CSV
+          </button>
+        )}
       </div>
 
       {filteredSubjects.length === 0 ? (
@@ -494,16 +548,7 @@ export default function RekapPage() {
             <h1 className="text-xl font-bold text-slate-800">Rekap & Analitik</h1>
             <p className="text-sm text-slate-500 mt-1">Data agregat absensi dan nilai semester ini.</p>
           </div>
-          <div className="flex gap-2 shrink-0">
-            <button className="flex items-center gap-2 rounded-full bg-white border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 shadow-sm transition-colors">
-              <Calendar className="w-4 h-4" />
-              Semester ini
-            </button>
-            <button className="flex items-center gap-2 rounded-full bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 shadow-sm transition-colors">
-              <Download className="w-4 h-4" />
-              Eksport Laporan
-            </button>
-          </div>
+          <div />
         </div>
 
         {/* Pill Switcher */}
