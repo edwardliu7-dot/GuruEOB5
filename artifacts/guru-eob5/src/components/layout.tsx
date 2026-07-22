@@ -65,16 +65,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const needsSebutan = !!user && !user.sebutan;
 
   // Jadwal onboarding: one-time check per user, persisted in localStorage.
-  // Key is derived inside the initializer so it's always read correctly.
-  const [jadwalOnboarded, setJadwalOnboarded] = useState(false);
-  // Sync with localStorage once user.id is known (runs at most once per mount)
-  useEffect(() => {
-    if (user?.id) {
-      const done = localStorage.getItem(`jadwal_onboarded_${user.id}`) === "1";
-      setJadwalOnboarded(done);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  // Layout only mounts after ProtectedRoute confirms user is authenticated,
+  // so user.id is available synchronously — safe to read localStorage here.
+  const [jadwalOnboarded, setJadwalOnboarded] = useState(
+    () => !!user?.id && localStorage.getItem(`jadwal_onboarded_${user.id}`) === "1",
+  );
 
   // Only check jadwal once sebutan step is cleared, and only if not yet onboarded
   const { data: jadwal = [], isLoading: jadwalLoading } = useListJadwal(undefined, {
