@@ -94,7 +94,7 @@ export function Variasi2() {
           </div>
         )}
 
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
           {[
             { name: "Dashboard", icon: Grid },
             { name: "Data Siswa", icon: Users },
