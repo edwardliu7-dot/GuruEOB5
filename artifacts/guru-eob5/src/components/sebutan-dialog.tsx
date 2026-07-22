@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import { getGetMeQueryKey } from "@workspace/api-client-react";
+import type { Teacher } from "@workspace/api-client-react";
 import logoUrl from "@/assets/logo.png";
 
 const SEBUTAN_OPTIONS = [
@@ -42,8 +44,13 @@ export function SebetanDialog({ onDone }: { onDone: () => void }) {
         body: JSON.stringify({ sebutan: selected }),
       });
       if (!res.ok) throw new Error("Gagal menyimpan");
-      // Refresh user data so onboarding gate re-evaluates
-      await qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      // Optimistically update the cache so the new Layout instance that mounts
+      // after navigation already sees the sebutan — avoids the dialog re-appearing.
+      qc.setQueryData<Teacher>(getGetMeQueryKey(), (old) =>
+        old ? { ...old, sebutan: selected } : old,
+      );
+      // Also kick off a background refetch so the cache is eventually consistent
+      qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
       onDone();
     } catch {
       setError("Terjadi kesalahan. Coba lagi.");

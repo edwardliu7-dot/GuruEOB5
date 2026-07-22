@@ -272,7 +272,7 @@ export function Mascot() {
   const showKuku = useCallback(
     (urgent: boolean, urgentSlots: UrgentSlot[]) => {
       const name = user?.name ?? "Guru";
-      const sebutan = (user as any)?.sebutan ?? "";
+      const sebutan = user?.sebutan ?? "";
       const msgs = buildMessages(urgentSlots, name, sebutan);
       // Urgent messages are at the top of the array; pick from relevant ones
       const pool = urgent && urgentSlots.length > 0

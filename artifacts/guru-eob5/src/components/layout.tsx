@@ -61,23 +61,38 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const isAdmin = user?.isAdmin ?? false;
 
   // ── Onboarding gate: sebutan → jadwal ──────────────────────────────────────
-  const [sebetanDone, setSebetanDone] = useState(!!user?.sebutan);
+  // sebutan: rely entirely on server value; dialog removes itself once user.sebutan is set
+  const needsSebutan = !!user && !user.sebutan;
 
-  // Sync when user data loads (e.g. after page refresh with sebutan already set)
+  // Jadwal onboarding: one-time check per user, persisted in localStorage.
+  // Key is derived inside the initializer so it's always read correctly.
+  const [jadwalOnboarded, setJadwalOnboarded] = useState(false);
+  // Sync with localStorage once user.id is known (runs at most once per mount)
   useEffect(() => {
-    if (user?.sebutan) setSebetanDone(true);
-  }, [user?.sebutan]);
+    if (user?.id) {
+      const done = localStorage.getItem(`jadwal_onboarded_${user.id}`) === "1";
+      setJadwalOnboarded(done);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
-  const needsSebutan = !!user && !user.sebutan && !sebetanDone;
-
-  // Only check jadwal once sebutan step is cleared
+  // Only check jadwal once sebutan step is cleared, and only if not yet onboarded
   const { data: jadwal = [], isLoading: jadwalLoading } = useListJadwal(undefined, {
     query: {
-      enabled: !!user && !needsSebutan,
+      enabled: !!user && !needsSebutan && !jadwalOnboarded,
       staleTime: 60_000,
     },
   });
-  const needsJadwal = !needsSebutan && !jadwalLoading && jadwal.length === 0;
+
+  // Mark onboarded once jadwal has at least 1 entry
+  useEffect(() => {
+    if (user?.id && !jadwalOnboarded && jadwal.length > 0) {
+      localStorage.setItem(`jadwal_onboarded_${user.id}`, "1");
+      setJadwalOnboarded(true);
+    }
+  }, [jadwal.length, jadwalOnboarded, user?.id]);
+
+  const needsJadwal = !needsSebutan && !jadwalOnboarded && !jadwalLoading && jadwal.length === 0;
 
   // Redirect to /jadwal page when in jadwal step
   const [, navigate] = useLocation();
