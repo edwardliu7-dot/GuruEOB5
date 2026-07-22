@@ -17,7 +17,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarCheck2, Trash2, X } from "lucide-react";
+import {
+  CalendarCheck2,
+  Trash2,
+  X,
+  CheckCircle2,
+  Thermometer,
+  Mail,
+  AlertTriangle,
+  Search,
+  Check,
+  Users,
+  History,
+  Calendar,
+} from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
@@ -28,8 +41,8 @@ type AttendanceStatus = "hadir" | "izin" | "sakit" | "alpa";
 
 const STATUS_OPTIONS: { value: AttendanceStatus; label: string }[] = [
   { value: "hadir", label: "Hadir" },
-  { value: "izin", label: "Izin" },
   { value: "sakit", label: "Sakit" },
+  { value: "izin", label: "Izin" },
   { value: "alpa", label: "Alpa" },
 ];
 
@@ -40,11 +53,19 @@ const statusColors: Record<AttendanceStatus, string> = {
   alpa: "bg-rose-500/10 text-rose-600 border-rose-500/20",
 };
 
-const statusTextColors: Record<AttendanceStatus, string> = {
-  hadir: "text-emerald-600",
-  izin: "text-blue-600",
-  sakit: "text-amber-600",
-  alpa: "text-rose-600",
+const statusActiveClass: Record<AttendanceStatus, string> = {
+  hadir: "bg-emerald-500 text-white shadow-sm",
+  sakit: "bg-orange-500 text-white shadow-sm",
+  izin: "bg-blue-500 text-white shadow-sm",
+  alpa: "bg-red-500 text-white shadow-sm",
+};
+
+const STATUS_BUTTON_ORDER: AttendanceStatus[] = ["hadir", "sakit", "izin", "alpa"];
+const STATUS_LABELS: Record<AttendanceStatus, string> = {
+  hadir: "Hadir",
+  sakit: "Sakit",
+  izin: "Izin",
+  alpa: "Alpa",
 };
 
 function todayStr() {
@@ -56,6 +77,7 @@ export default function Absensi() {
   const { data: students } = useListStudents();
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [activeTab, setActiveTab] = useState("riwayat");
+  const [search, setSearch] = useState("");
 
   const subjectFilter = selectedSubject && selectedSubject !== "all" ? selectedSubject : undefined;
   const { data: attendanceList, isLoading } = useListAttendance(
@@ -103,6 +125,28 @@ export default function Absensi() {
       return next;
     });
   }, [bulkStudents]);
+
+  const filteredBulkStudents = useMemo(() => {
+    if (!search.trim()) return bulkStudents as any[];
+    const q = search.toLowerCase();
+    return (bulkStudents as any[]).filter(
+      (s) =>
+        s.namaLengkap?.toLowerCase().includes(q) ||
+        s.namaPanggilan?.toLowerCase().includes(q)
+    );
+  }, [bulkStudents, search]);
+
+  const stats = useMemo(() => {
+    const list = bulkStudents as any[];
+    return {
+      hadir: list.filter((s) => bulkRows[s.id] === "hadir").length,
+      sakit: list.filter((s) => bulkRows[s.id] === "sakit").length,
+      izin: list.filter((s) => bulkRows[s.id] === "izin").length,
+      alpa: list.filter((s) => bulkRows[s.id] === "alpa").length,
+    };
+  }, [bulkRows, bulkStudents]);
+
+  const totalStudents = (bulkStudents as any[]).length;
 
   const setAllBulkStatus = (status: AttendanceStatus) => {
     setBulkRows((prev) => {
@@ -186,7 +230,6 @@ export default function Absensi() {
     return [...groups.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
   })();
 
-  // Group rekap by date for display
   const rekapByDate = useMemo(() => {
     if (!rekapData?.groups) return [];
     const map = new Map<string, typeof rekapData.groups>();
@@ -198,113 +241,346 @@ export default function Absensi() {
     return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
   }, [rekapData]);
 
+  // Recent history for the sidebar panel (last 4 date groups)
+  const recentHistory = rekapByDate.slice(0, 4);
+
   return (
     <Layout>
       <div className="space-y-6">
-        <FadeIn className="flex justify-between items-center">
+
+        {/* ── Page header ── */}
+        <FadeIn className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold font-serif">Absensi</h1>
-            <p className="text-muted-foreground mt-1">Kelola kehadiran siswa.</p>
+            <p className="text-muted-foreground mt-1">Pencatatan kehadiran siswa per sesi.</p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant={isBulkMode ? "secondary" : "outline"}
-              onClick={() => setIsBulkMode((v) => !v)}
-            >
-              <CalendarCheck2 className="w-4 h-4 mr-2" />
-              Catat Serentak
-            </Button>
-          </div>
+          <Button
+            variant={isBulkMode ? "secondary" : "default"}
+            onClick={() => setIsBulkMode((v) => !v)}
+            className="w-full sm:w-auto"
+          >
+            {isBulkMode ? (
+              <><X className="w-4 h-4 mr-2" />Tutup Entri</>
+            ) : (
+              <><CalendarCheck2 className="w-4 h-4 mr-2" />Catat Serentak</>
+            )}
+          </Button>
         </FadeIn>
 
-        {/* ---- Catat Serentak panel ---- */}
+        {/* ══════════════════════════════════════════
+            BULK ENTRY MODE — redesigned with mockup UI
+           ══════════════════════════════════════════ */}
         {isBulkMode && (
-          <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-border bg-muted/40 flex flex-wrap gap-3 items-end">
+          <FadeIn className="space-y-5">
+
+            {/* Selectors row */}
+            <div className="bg-card border border-border rounded-xl p-4 flex flex-wrap gap-3 items-end shadow-sm">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Kelas</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kelas</label>
                 <Select value={bulkKelas} onValueChange={setBulkKelas}>
-                  <SelectTrigger className="w-[180px] bg-card"><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
+                  <SelectTrigger className="w-[180px] bg-background"><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
                   <SelectContent>
                     {kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Mata Pelajaran</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Mata Pelajaran</label>
                 <Select value={bulkSubjectId} onValueChange={setBulkSubjectId}>
-                  <SelectTrigger className="w-[210px] bg-card"><SelectValue placeholder="Pilih Mapel" /></SelectTrigger>
+                  <SelectTrigger className="w-[220px] bg-background"><SelectValue placeholder="Pilih Mapel" /></SelectTrigger>
                   <SelectContent>
                     {subjects?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Tanggal</label>
-                <Input type="date" className="w-[150px] bg-card" value={bulkTanggal} onChange={(e) => setBulkTanggal(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Tandai semua</label>
-                <div className="flex gap-1">
-                  {STATUS_OPTIONS.map((opt) => (
-                    <Button key={opt.value} type="button" variant="outline" size="sm" onClick={() => setAllBulkStatus(opt.value)}>
-                      {opt.label}
-                    </Button>
-                  ))}
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tanggal</label>
+                <div className="flex items-center gap-2 bg-background border border-input rounded-md px-3 py-2 text-sm font-medium text-foreground shadow-sm">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="date"
+                    className="bg-transparent focus:outline-none text-sm"
+                    value={bulkTanggal}
+                    onChange={(e) => setBulkTanggal(e.target.value)}
+                  />
                 </div>
               </div>
-              <div className="ml-auto flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setIsBulkMode(false)}>
-                  <X className="w-4 h-4 mr-1" /> Batal
-                </Button>
-                <Button onClick={handleBulkSave} disabled={bulkMixedAttendance.isPending}>
+              <div className="ml-auto flex gap-2 items-end">
+                <Button
+                  onClick={handleBulkSave}
+                  disabled={bulkMixedAttendance.isPending}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
                   <CalendarCheck2 className="w-4 h-4 mr-2" />
                   {bulkMixedAttendance.isPending ? "Menyimpan..." : `Simpan ${(bulkStudents as any[]).length} Siswa`}
                 </Button>
               </div>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40">
-                  <TableHead>Nama Siswa</TableHead>
-                  <TableHead className="w-[130px]">Status Kehadiran</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(bulkStudents as any[]).length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={2} className="h-24 text-center text-muted-foreground">
-                      {kelasList.length === 0 ? "Belum ada data siswa." : "Tidak ada siswa pada kelas ini."}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  (bulkStudents as any[]).map((s) => {
-                    const status = bulkRows[s.id] ?? "hadir";
-                    return (
-                      <TableRow key={s.id}>
-                        <TableCell className="font-medium">{s.namaLengkap}</TableCell>
-                        <TableCell>
-                          <Select value={status} onValueChange={(v) => setBulkRows((prev) => ({ ...prev, [s.id]: v as AttendanceStatus }))}>
-                            <SelectTrigger className={`h-8 w-[110px] font-medium ${statusTextColors[status]}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {STATUS_OPTIONS.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+
+            {/* Stat Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Hadir */}
+              <div className="bg-card rounded-xl border border-emerald-100 p-4 shadow-sm flex items-center gap-4 relative overflow-hidden">
+                <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-3xl font-black text-emerald-700">{stats.hadir}</div>
+                  <div className="text-xs font-bold text-emerald-600/80 uppercase tracking-wide">Hadir</div>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-100">
+                  <div
+                    className="h-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: totalStudents ? `${(stats.hadir / totalStudents) * 100}%` : "0%" }}
+                  />
+                </div>
+              </div>
+              {/* Sakit */}
+              <div className="bg-card rounded-xl border border-orange-100 p-4 shadow-sm flex items-center gap-4 relative overflow-hidden">
+                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500 flex-shrink-0">
+                  <Thermometer className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-3xl font-black text-orange-600">{stats.sakit}</div>
+                  <div className="text-xs font-bold text-orange-500/80 uppercase tracking-wide">Sakit</div>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-orange-100">
+                  <div
+                    className="h-full bg-orange-500 transition-all duration-500"
+                    style={{ width: totalStudents ? `${(stats.sakit / totalStudents) * 100}%` : "0%" }}
+                  />
+                </div>
+              </div>
+              {/* Izin */}
+              <div className="bg-card rounded-xl border border-blue-100 p-4 shadow-sm flex items-center gap-4 relative overflow-hidden">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                  <Mail className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-3xl font-black text-blue-700">{stats.izin}</div>
+                  <div className="text-xs font-bold text-blue-600/80 uppercase tracking-wide">Izin</div>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-100">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-500"
+                    style={{ width: totalStudents ? `${(stats.izin / totalStudents) * 100}%` : "0%" }}
+                  />
+                </div>
+              </div>
+              {/* Alpa */}
+              <div className="bg-card rounded-xl border border-red-100 p-4 shadow-sm flex items-center gap-4 relative overflow-hidden">
+                <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-3xl font-black text-red-600">{stats.alpa}</div>
+                  <div className="text-xs font-bold text-red-500/80 uppercase tracking-wide">Alpa</div>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-100">
+                  <div
+                    className="h-full bg-red-500 transition-all duration-500"
+                    style={{ width: totalStudents ? `${(stats.alpa / totalStudents) * 100}%` : "0%" }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Bar */}
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative flex-1 max-w-md w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari nama siswa..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted text-muted-foreground rounded-full text-xs font-semibold border border-border">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {totalStudents} / {totalStudents} tercatat
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                onClick={() => setAllBulkStatus("hadir")}
+              >
+                <Check className="w-4 h-4 mr-1.5" />
+                Set Semua Hadir
+              </Button>
+            </div>
+
+            {/* Table + History Panel */}
+            <div className="flex flex-col lg:flex-row gap-5 items-start">
+
+              {/* Student Table */}
+              <div className="flex-1 bg-card border border-border rounded-xl shadow-sm overflow-hidden w-full">
+                <div className="px-5 py-4 border-b border-border">
+                  <h2 className="font-bold text-foreground flex items-center gap-2 text-sm">
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    Daftar Siswa
+                    {bulkKelas && <Badge variant="secondary" className="text-xs ml-1">{bulkKelas}</Badge>}
+                  </h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left min-w-[500px]">
+                    <thead className="text-xs text-muted-foreground bg-muted/40 border-b border-border">
+                      <tr>
+                        <th className="px-5 py-3 font-semibold uppercase tracking-wider w-14">No</th>
+                        <th className="px-5 py-3 font-semibold uppercase tracking-wider">Nama Siswa</th>
+                        <th className="px-5 py-3 font-semibold uppercase tracking-wider text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredBulkStudents.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="h-24 text-center text-muted-foreground text-sm">
+                            {totalStudents === 0
+                              ? "Belum ada data siswa pada kelas ini."
+                              : "Tidak ada siswa yang sesuai pencarian."}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredBulkStudents.map((s: any, idx: number) => {
+                          const status = bulkRows[s.id] ?? "hadir";
+                          return (
+                            <tr
+                              key={s.id}
+                              className={`hover:bg-muted/30 transition-colors ${idx % 2 === 1 ? "bg-muted/10" : ""}`}
+                            >
+                              <td className="px-5 py-3 text-muted-foreground font-medium">{idx + 1}</td>
+                              <td className="px-5 py-3">
+                                <div className="font-semibold text-foreground">{s.namaLengkap}</div>
+                                {s.namaPanggilan && (
+                                  <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                    <span className="px-1.5 py-0.5 bg-muted rounded text-xs font-medium">
+                                      {s.namaPanggilan}
+                                    </span>
+                                    {s.jenisKelamin && (
+                                      <><span>&bull;</span><span>{s.jenisKelamin}</span></>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-5 py-3">
+                                <div className="flex items-center justify-center">
+                                  <div className="inline-flex items-center bg-muted rounded-lg p-0.5 border border-border">
+                                    {STATUS_BUTTON_ORDER.map((st) => (
+                                      <button
+                                        key={st}
+                                        onClick={() =>
+                                          setBulkRows((prev) => ({ ...prev, [s.id]: st }))
+                                        }
+                                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                                          status === st
+                                            ? statusActiveClass[st]
+                                            : "text-muted-foreground hover:bg-background/60"
+                                        }`}
+                                      >
+                                        {STATUS_LABELS[st]}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* History Panel */}
+              <div className="w-full lg:w-[300px] bg-card border border-border rounded-xl shadow-sm flex flex-col shrink-0">
+                <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+                  <History className="w-4 h-4 text-muted-foreground" />
+                  <h2 className="font-bold text-foreground text-sm uppercase tracking-wide">Rekap Riwayat</h2>
+                </div>
+                <div className="p-5 space-y-5">
+                  {rekapLoading ? (
+                    Array(3).fill(0).map((_, i) => (
+                      <div key={i} className="pl-4 border-l-2 border-border space-y-2">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-5 w-16 rounded" />
+                      </div>
+                    ))
+                  ) : recentHistory.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">Belum ada riwayat absensi.</p>
+                  ) : (
+                    recentHistory.map(([tanggal, groups]) => {
+                      const totalHadir = groups.reduce((acc: number, g: any) => acc + (g.hadir ?? 0), 0);
+                      const totalSiswa = groups.reduce((acc: number, g: any) => acc + (g.total ?? 0), 0);
+                      const tidakHadir = totalSiswa - totalHadir;
+                      const allHadir = tidakHadir === 0;
+                      return (
+                        <div
+                          key={tanggal}
+                          className={`relative pl-4 border-l-2 ${allHadir ? "border-emerald-200" : "border-orange-200"}`}
+                        >
+                          <div
+                            className={`absolute w-2.5 h-2.5 rounded-full -left-[6px] top-1.5 ring-4 ring-background ${
+                              allHadir ? "bg-emerald-400" : "bg-orange-400"
+                            }`}
+                          />
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-xs font-bold text-muted-foreground">
+                              {format(new Date(tanggal), "EEE, dd MMM", { locale: idLocale })}
+                            </div>
+                            <div
+                              className={`text-xs font-semibold ${allHadir ? "text-emerald-600" : "text-muted-foreground"}`}
+                            >
+                              {totalHadir}/{totalSiswa}
+                            </div>
+                          </div>
+                          {allHadir ? (
+                            <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                              Semua Hadir
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">
+                              {tidakHadir} Tidak Hadir
+                            </div>
+                          )}
+                          {groups.length > 0 && (
+                            <div className="mt-1.5 flex flex-wrap gap-1">
+                              {groups.map((g: any) => (
+                                <span
+                                  key={g.subjectId}
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium border border-border"
+                                >
+                                  {g.subjectName} · {g.kelas}
+                                </span>
                               ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                <div className="mt-auto border-t border-border px-5 py-3 text-center">
+                  <button
+                    className="text-sm font-semibold text-primary hover:opacity-80 transition-opacity w-full"
+                    onClick={() => {
+                      setIsBulkMode(false);
+                      setActiveTab("rekap");
+                    }}
+                  >
+                    Lihat Riwayat Lengkap →
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </FadeIn>
         )}
 
-        {/* ---- Tabs: Riwayat & Rekap ---- */}
+        {/* ══════════════════════════════════════════
+            NORMAL MODE — Tabs: Riwayat & Rekap
+           ══════════════════════════════════════════ */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="riwayat">Riwayat Per Siswa</TabsTrigger>
@@ -313,8 +589,8 @@ export default function Absensi() {
 
           {/* ─── Tab: Riwayat ─── */}
           <TabsContent value="riwayat">
-            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-              <div className="p-4 border-b border-border bg-muted/40 flex gap-4">
+            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border bg-muted/30 flex gap-4">
                 <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                   <SelectTrigger className="w-[250px] bg-card"><SelectValue placeholder="Semua Mata Pelajaran" /></SelectTrigger>
                   <SelectContent>
@@ -325,7 +601,7 @@ export default function Absensi() {
               </div>
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/40">
+                  <TableRow className="bg-muted/30">
                     <TableHead>Nama Siswa</TableHead>
                     <TableHead>Mata Pelajaran</TableHead>
                     <TableHead>Status</TableHead>
@@ -334,13 +610,21 @@ export default function Absensi() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    Array(3).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell></TableRow>)
+                    Array(3).fill(0).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell colSpan={4}><Skeleton className="h-6 w-full" /></TableCell>
+                      </TableRow>
+                    ))
                   ) : !attendanceList?.length ? (
-                    <TableRow><TableCell colSpan={4} className="h-24 text-center text-muted-foreground">Belum ada data kehadiran.</TableCell></TableRow>
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                        Belum ada data kehadiran.
+                      </TableCell>
+                    </TableRow>
                   ) : (
                     groupedByDate.map(([tanggal, records]) => (
                       <>
-                        <TableRow key={`date-${tanggal}`} className="bg-gray-100/80 hover:bg-gray-100/80">
+                        <TableRow key={`date-${tanggal}`} className="bg-muted/30 hover:bg-muted/30">
                           <TableCell colSpan={4} className="font-semibold text-sm py-2">
                             {format(new Date(tanggal), "EEEE, dd MMMM yyyy", { locale: idLocale })}
                             <span className="ml-2 font-normal text-muted-foreground">({records.length} siswa)</span>
@@ -348,8 +632,12 @@ export default function Absensi() {
                         </TableRow>
                         {records.map((a: any) => (
                           <TableRow key={a.id}>
-                            <TableCell className="font-medium">{students?.find((s: any) => s.id === a.studentId)?.namaLengkap}</TableCell>
-                            <TableCell>{subjects?.find((s: any) => s.id === a.subjectId)?.name}</TableCell>
+                            <TableCell className="font-medium">
+                              {students?.find((s: any) => s.id === a.studentId)?.namaLengkap}
+                            </TableCell>
+                            <TableCell>
+                              {subjects?.find((s: any) => s.id === a.subjectId)?.name}
+                            </TableCell>
                             <TableCell>
                               <Select value={a.status} onValueChange={(status) => handleStatusChange(a.id, status)}>
                                 <SelectTrigger className="w-[110px] h-8">
@@ -358,12 +646,19 @@ export default function Absensi() {
                                   </Badge>
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                                  {STATUS_OPTIONS.map((o) => (
+                                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteAttendance(a.id)}>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive"
+                                onClick={() => handleDeleteAttendance(a.id)}
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </TableCell>
@@ -381,7 +676,8 @@ export default function Absensi() {
           <TabsContent value="rekap">
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Rekapitulasi kehadiran per sesi (tanggal · kelas · mata pelajaran). Klik <strong>Hapus Absensi</strong> untuk menghapus seluruh sesi dan mengulang input dari awal.
+                Rekapitulasi kehadiran per sesi (tanggal · kelas · mata pelajaran). Klik{" "}
+                <strong>Hapus Absensi</strong> untuk menghapus seluruh sesi dan mengulang input dari awal.
               </p>
 
               {rekapLoading ? (
@@ -395,14 +691,14 @@ export default function Absensi() {
               ) : (
                 rekapByDate.map(([tanggal, groups]) => (
                   <div key={tanggal} className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-                    <div className="px-4 py-2.5 bg-gray-50/80 border-b border-border">
+                    <div className="px-4 py-2.5 bg-muted/30 border-b border-border">
                       <p className="font-semibold text-sm">
                         {format(new Date(tanggal), "EEEE, dd MMMM yyyy", { locale: idLocale })}
                       </p>
                     </div>
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-gray-50/40 text-xs">
+                        <TableRow className="bg-muted/20 text-xs">
                           <TableHead>Mata Pelajaran</TableHead>
                           <TableHead>Kelas</TableHead>
                           <TableHead className="text-center text-emerald-600">Hadir</TableHead>
@@ -414,7 +710,7 @@ export default function Absensi() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {groups.map((g) => (
+                        {groups.map((g: any) => (
                           <TableRow key={`${g.tanggal}|${g.kelas}|${g.subjectId}`}>
                             <TableCell className="font-medium">{g.subjectName}</TableCell>
                             <TableCell>
@@ -452,6 +748,7 @@ export default function Absensi() {
             </div>
           </TabsContent>
         </Tabs>
+
       </div>
     </Layout>
   );
