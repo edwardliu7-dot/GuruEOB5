@@ -11,6 +11,8 @@ import {
   Clock,
   BookOpen,
   ChevronRight,
+  Download,
+  Filter,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -107,6 +109,16 @@ export default function Kepsek() {
             <div>
               <h1 className="text-xl font-bold text-slate-800">Progres Kinerja Guru</h1>
               <p className="text-sm text-slate-500 mt-1">Pemantauan kinerja seluruh pendidik</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                <Download size={16} />
+                <span>Unduh Laporan</span>
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800 text-white text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm">
+                <Filter size={16} />
+                <span>Filter Periode</span>
+              </button>
             </div>
           </div>
 
