@@ -71,7 +71,8 @@ export default function Poin() {
   const updatePoint = useUpdatePoint();
   const deletePoint = useDeletePoint();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [kelasFilter, setKelasFilter] = useState<string>("all");
+  const [kelasFilter, setKelasFilter] = useState<string>("all");     // used inside dialog
+  const [rekapKelasFilter, setRekapKelasFilter] = useState<string>("all"); // used in Rekap tab
   const [activeTab, setActiveTab] = useState<"Riwayat" | "Rekap Siswa">("Riwayat");
   const [editingPoint, setEditingPoint] = useState<string | null>(null);
   const { toast } = useToast();
@@ -145,6 +146,11 @@ export default function Poin() {
       })
       .sort((a, b) => b.negatif - a.negatif);
   }, [students, pointsList]);
+
+  const filteredRekapRows = useMemo(
+    () => rekapRows.filter((r: any) => rekapKelasFilter === "all" || r.kelas === rekapKelasFilter),
+    [rekapRows, rekapKelasFilter],
+  );
 
   // ---- Edit dialog ----
   const editForm = useForm<z.infer<typeof editPointSchema>>({
@@ -456,6 +462,28 @@ export default function Poin() {
 
       {/* Rekap Siswa Tab */}
       {activeTab === "Rekap Siswa" && (
+        <>
+          {/* Filter bar */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <span className="text-sm font-medium text-slate-500">Filter Kelas:</span>
+            <Select value={rekapKelasFilter} onValueChange={setRekapKelasFilter}>
+              <SelectTrigger className="w-[160px] h-8 text-sm">
+                <SelectValue placeholder="Semua Kelas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Kelas</SelectItem>
+                {kelasList.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {rekapKelasFilter !== "all" && (
+              <button
+                onClick={() => setRekapKelasFilter("all")}
+                className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                Reset
+              </button>
+            )}
+          </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -473,11 +501,13 @@ export default function Poin() {
                   Array(5).fill(0).map((_, i) => (
                     <tr key={i}><td colSpan={5} className="p-4"><Skeleton className="h-6 w-full" /></td></tr>
                   ))
-                ) : rekapRows.length === 0 ? (
+                ) : filteredRekapRows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-12 text-center text-slate-400">Belum ada data poin.</td>
+                    <td colSpan={5} className="p-12 text-center text-slate-400">
+                      {rekapKelasFilter !== "all" ? `Tidak ada siswa di kelas ${rekapKelasFilter}.` : "Belum ada data poin."}
+                    </td>
                   </tr>
-                ) : rekapRows.map((s: any) => (
+                ) : filteredRekapRows.map((s: any) => (
                   <tr key={s.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -519,6 +549,7 @@ export default function Poin() {
             </table>
           </div>
         </div>
+        </>
       )}
 
       {/* Input Poin Dialog */}

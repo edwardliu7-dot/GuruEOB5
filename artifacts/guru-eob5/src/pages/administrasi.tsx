@@ -119,6 +119,7 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [presentingId, setPresentingId] = useState<string | null>(null);
 
   // Build dropdown options from existing data
   const subjectOptions: string[] = subjects?.map((s: any) => s.name).filter(Boolean) ?? [];
@@ -178,6 +179,23 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
       toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat mengunduh berkas" });
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleOpen = async (item: any) => {
+    setPresentingId(item.id);
+    try {
+      const res = await fetch(`/api/bahan-ajar/${item.id}/file`, { credentials: "include" });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      // Beri waktu tab baru memuat berkas sebelum URL di-revoke
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat membuka berkas" });
+    } finally {
+      setPresentingId(null);
     }
   };
 
@@ -318,22 +336,35 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
                   </span>
                   <div className="flex gap-1">
                     {item.linkUrl && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Buka tautan" asChild>
                         <a href={item.linkUrl} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="w-4 h-4" />
                         </a>
                       </Button>
                     )}
                     {item.fileName && (
-                      <Button
-                        variant="ghost" size="icon" className="h-8 w-8"
-                        disabled={downloadingId === item.id}
-                        onClick={() => handleDownload(item)}
-                      >
-                        {downloadingId === item.id
-                          ? <Loader2 className="w-4 h-4 animate-spin" />
-                          : <Download className="w-4 h-4" />}
-                      </Button>
+                      <>
+                        <Button
+                          variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                          title="Buka / Presentasikan"
+                          disabled={presentingId === item.id}
+                          onClick={() => handleOpen(item)}
+                        >
+                          {presentingId === item.id
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : <ExternalLink className="w-4 h-4" />}
+                        </Button>
+                        <Button
+                          variant="ghost" size="icon" className="h-8 w-8"
+                          title="Unduh"
+                          disabled={downloadingId === item.id}
+                          onClick={() => handleDownload(item)}
+                        >
+                          {downloadingId === item.id
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : <Download className="w-4 h-4" />}
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>

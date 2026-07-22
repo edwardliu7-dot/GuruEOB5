@@ -363,6 +363,20 @@ function NilaiTab() {
     return data.subjects.filter((s) => s.kelas === selectedKelas);
   }, [data, selectedKelas]);
 
+  // ← Hook harus dipanggil SEBELUM early return (Rules of Hooks)
+  const handleExportNilai = useCallback(() => {
+    const header = ["Mata Pelajaran", "Kelas", "Rata-rata", "Min", "Max", "Jumlah Nilai"];
+    const rows = filteredSubjects.map((s) => [
+      s.subjectName,
+      s.kelas,
+      s.rataRata != null ? String(s.rataRata) : "-",
+      s.nilaiMin != null ? String(s.nilaiMin) : "-",
+      s.nilaiMax != null ? String(s.nilaiMax) : "-",
+      String(s.jumlahNilai),
+    ]);
+    downloadCSV(`rekap-nilai-${selectedKelas === "all" ? "semua" : selectedKelas}.csv`, [header, ...rows]);
+  }, [filteredSubjects, selectedKelas]);
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -380,19 +394,6 @@ function NilaiTab() {
       </div>
     );
   }
-
-  const handleExportNilai = useCallback(() => {
-    const header = ["Mata Pelajaran", "Kelas", "Rata-rata", "Min", "Max", "Jumlah Nilai"];
-    const rows = filteredSubjects.map((s) => [
-      s.subjectName,
-      s.kelas,
-      s.rataRata != null ? String(s.rataRata) : "-",
-      s.nilaiMin != null ? String(s.nilaiMin) : "-",
-      s.nilaiMax != null ? String(s.nilaiMax) : "-",
-      String(s.jumlahNilai),
-    ]);
-    downloadCSV(`rekap-nilai-${selectedKelas === "all" ? "semua" : selectedKelas}.csv`, [header, ...rows]);
-  }, [filteredSubjects, selectedKelas]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

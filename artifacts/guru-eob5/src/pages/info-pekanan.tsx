@@ -402,19 +402,46 @@ export default function InfoPekanan() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <div
-                  className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors min-w-[180px]"
-                  onClick={() => setWeekDropOpen((v) => !v)}
-                >
-                  <span className="text-sm font-medium text-slate-500">Pekan:</span>
-                  {calLoading || !activeWeek ? (
-                    <Skeleton className="h-4 w-28 inline-block" />
-                  ) : (
-                    <span className="text-sm font-bold text-slate-800">
-                      Pekan {activeWeek.pekanKe} ({dateRange})
-                    </span>
+                <div className="relative">
+                  <div
+                    className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors min-w-[180px]"
+                    onClick={() => setWeekDropOpen((v) => !v)}
+                  >
+                    <span className="text-sm font-medium text-slate-500">Pekan:</span>
+                    {calLoading || !activeWeek ? (
+                      <Skeleton className="h-4 w-28 inline-block" />
+                    ) : (
+                      <span className="text-sm font-bold text-slate-800">
+                        Pekan {activeWeek.pekanKe} ({dateRange})
+                      </span>
+                    )}
+                    <ChevronDown className={`w-4 h-4 text-slate-400 ml-auto transition-transform ${weekDropOpen ? "rotate-180" : ""}`} />
+                  </div>
+                  {weekDropOpen && weeks?.length && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 min-w-[240px] max-h-72 overflow-y-auto">
+                      {(weeks as any[]).map((w: any, i: number) => {
+                        const fmt = (d: string) => {
+                          const [y, m, day] = d.split("-");
+                          const MONTHS = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+                          return `${parseInt(day)} ${MONTHS[parseInt(m) - 1]}`;
+                        };
+                        const range = `${fmt(w.tanggalMulai)} – ${fmt(w.tanggalSelesai)}`;
+                        return (
+                          <button
+                            key={w.id}
+                            onClick={() => { setWeekIndex(i); setWeekDropOpen(false); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors first:rounded-t-xl last:rounded-b-xl ${
+                              i === weekIndex
+                                ? "bg-slate-800 text-white font-semibold"
+                                : "text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            Pekan {w.pekanKe} <span className="opacity-70 text-xs ml-1">({range})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
-                  <ChevronDown className="w-4 h-4 text-slate-400 ml-auto" />
                 </div>
                 <button
                   onClick={() => setWeekIndex((i) => Math.min((weeks?.length ?? 1) - 1, i + 1))}

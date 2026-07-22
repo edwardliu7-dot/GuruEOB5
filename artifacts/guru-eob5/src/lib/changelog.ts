@@ -20,6 +20,37 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: "20260722-2",
+    date: "22 Juli 2026",
+    title: "Perbaikan & Peningkatan Fitur",
+    items: [
+      {
+        tag: "Perbaikan",
+        text: "Halaman Rekap & Analitik tidak lagi crash saat membuka tab Nilai — bug React hooks diperbaiki.",
+      },
+      {
+        tag: "Perbaikan",
+        text: "Dropdown 'Pekan' di Info Pekanan kini berfungsi — bisa klik untuk memilih pekan secara langsung dari daftar.",
+      },
+      {
+        tag: "Perbaikan",
+        text: "Filter kelas kembali tampil di tab Rekap Siswa (halaman Poin Siswa).",
+      },
+      {
+        tag: "Baru",
+        text: "Bahan Ajar: tombol 'Buka/Presentasikan' tersedia — klik untuk membuka file langsung di browser atau aplikasi bawaan perangkat.",
+      },
+      {
+        tag: "Peningkatan",
+        text: "Target jurnal di Direktori Guru kini dinamis sesuai beban mengajar masing-masing guru (tidak lagi sama rata 18 untuk semua).",
+      },
+      {
+        tag: "Baru",
+        text: "Rekap & Analitik: tombol 'Ekspor CSV' tersedia di tab Absensi dan Nilai.",
+      },
+    ],
+  },
+  {
     id: "20260722",
     date: "22 Juli 2026",
     title: "Ekspor Data & Perbaikan Bug",
@@ -31,10 +62,6 @@ export const RELEASES: Release[] = [
       {
         tag: "Perbaikan",
         text: "Menghapus import tidak terpakai di backend yang dapat menyebabkan peringatan build.",
-      },
-      {
-        tag: "Peningkatan",
-        text: "Audit menyeluruh: semua tombol, form, dan alur data telah diperiksa dan dipastikan berfungsi dengan benar.",
       },
     ],
   },

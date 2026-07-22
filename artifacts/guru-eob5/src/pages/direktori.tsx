@@ -215,7 +215,9 @@ export default function Direktori() {
           {filtered.map((t: any, idx: number) => {
             const prog = progressById.get(t.id);
             const jurnalCurrent = prog?.jurnalBulanIni ?? 0;
-            const jurnalTotal = 18;
+            // Target jurnal: jumlah jadwal (mata pelajaran) × 4 minggu per bulan
+            // dok total = mapel × 5; sehingga mapel = dokumenTotal/5
+            const jurnalTotal = prog ? Math.round((prog.dokumenTotal / 5) * 4) : 0;
             const jurnalPct = Math.min(Math.round((jurnalCurrent / jurnalTotal) * 100), 100);
             const dokumenCurrent = prog?.dokumenSelesai ?? 0;
             const dokumenTotal = prog?.dokumenTotal ?? 10;
