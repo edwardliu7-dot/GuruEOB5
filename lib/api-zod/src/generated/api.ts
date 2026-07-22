@@ -418,7 +418,8 @@ export const UpdateTeacherBody = zod.object({
   "kelasDiampu": zod.array(zod.string()).optional(),
   "school": zod.string().optional(),
   "bio": zod.string().max(updateTeacherBodyBioMax).optional(),
-  "photoUrl": zod.string().max(updateTeacherBodyPhotoUrlMax).regex(updateTeacherBodyPhotoUrlRegExp).optional()
+  "photoUrl": zod.string().max(updateTeacherBodyPhotoUrlMax).regex(updateTeacherBodyPhotoUrlRegExp).optional(),
+  "sebutan": zod.string().optional()
 })
 
 export const UpdateTeacherResponse = zod.object({
@@ -433,6 +434,7 @@ export const UpdateTeacherResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
+  "sebutan": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "isAdmin": zod.boolean()
 })

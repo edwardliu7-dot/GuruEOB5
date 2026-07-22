@@ -22,4 +22,5 @@ export interface UpdateTeacherInput {
      * @pattern ^$|^data:image/(jpeg|png|webp);base64,|^https?://
      */
   photoUrl?: string;
+  sebutan?: string;
 }

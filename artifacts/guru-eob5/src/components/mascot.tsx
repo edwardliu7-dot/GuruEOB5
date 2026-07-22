@@ -91,30 +91,33 @@ function detectUrgentSlots(
 function buildMessages(
   urgentSlots: UrgentSlot[],
   userName: string,
+  sebutan: string,
 ): string[] {
-  const name = userName.split(" ")[0];
+  const firstName = userName.split(" ")[0];
+  // Full address: "Pak Budi", "Bu Ani", etc. — or just first name if no sebutan
+  const addr = sebutan ? `${sebutan} ${firstName}` : firstName;
   const msgs: string[] = [];
 
   for (const s of urgentSlots) {
     const both = s.missingAbsensi && s.missingJurnal;
     const kelasStr = `${s.subjectName} - ${s.kelas}`;
     if (both) {
-      msgs.push(`${kelasStr} sudah selesai tapi absensi & jurnal belum diisi, ${name}! Yuk cepat!`);
-      msgs.push(`Hei ${name}! ${kelasStr} tadi belum ada absensi dan jurnal nih. Jangan sampai ketinggalan!`);
+      msgs.push(`${kelasStr} sudah selesai tapi absensi & jurnal belum diisi, ${addr}! Yuk cepat!`);
+      msgs.push(`Hei ${addr}! ${kelasStr} tadi belum ada absensi dan jurnal nih. Jangan sampai ketinggalan!`);
     } else if (s.missingAbsensi) {
-      msgs.push(`Absensi ${kelasStr} belum diisi nih, ${name}! Segera rekap kehadiran siswa ya.`);
+      msgs.push(`Absensi ${kelasStr} belum diisi nih, ${addr}! Segera rekap kehadiran siswa ya.`);
     } else {
-      msgs.push(`Jurnal mengajar ${kelasStr} belum dicatat, ${name}. Isi sekarang sebelum lupa!`);
+      msgs.push(`Jurnal mengajar ${kelasStr} belum dicatat, ${addr}. Isi sekarang sebelum lupa!`);
     }
   }
 
   // Fallback general reminders (non-urgent mode)
   msgs.push(
-    `Hei ${name}! Sudah cek Info Pekanan hari ini? Pantau progres mengajar pekan ini!`,
-    `Semangat terus, ${name}! Jurnal yang rutin bikin laporan akhir semester jadi gampang.`,
-    `${name}, jangan lupa isi absensi kalau ada kelas tadi ya!`,
-    `Cek Prosem-mu, ${name} — pastikan materi pekan ini sudah terencana dengan baik!`,
-    `Guru kece selalu tepat waktu isi administrasi. Kamu pasti bisa, ${name}!`,
+    `Hei ${addr}! Sudah cek Info Pekanan hari ini? Pantau progres mengajar pekan ini!`,
+    `Semangat terus, ${addr}! Jurnal yang rutin bikin laporan akhir semester jadi gampang.`,
+    `${addr}, jangan lupa isi absensi kalau ada kelas tadi ya!`,
+    `Cek Prosem-mu, ${addr} — pastikan materi pekan ini sudah terencana dengan baik!`,
+    `Guru kece selalu tepat waktu isi administrasi. Kamu pasti bisa, ${addr}!`,
   );
 
   return msgs;
@@ -269,7 +272,8 @@ export function Mascot() {
   const showKuku = useCallback(
     (urgent: boolean, urgentSlots: UrgentSlot[]) => {
       const name = user?.name ?? "Guru";
-      const msgs = buildMessages(urgentSlots, name);
+      const sebutan = (user as any)?.sebutan ?? "";
+      const msgs = buildMessages(urgentSlots, name, sebutan);
       // Urgent messages are at the top of the array; pick from relevant ones
       const pool = urgent && urgentSlots.length > 0
         ? msgs.slice(0, urgentSlots.length * 2)  // pick from urgent-specific

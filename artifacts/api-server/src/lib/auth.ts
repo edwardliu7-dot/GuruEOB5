@@ -82,6 +82,7 @@ export function guruToTeacher(guru: Guru): Record<string, unknown> {
     school: guru.school,
     photoUrl: guru.photoUrl,
     bio: guru.bio,
+    sebutan: guru.sebutan,
     createdAt: guru.createdAt,
     isAdmin: isSchoolAdmin(guru),
   };

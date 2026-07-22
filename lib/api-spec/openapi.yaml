@@ -2035,6 +2035,9 @@ components:
         bio:
           type: string
           nullable: true
+        sebutan:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -2114,6 +2117,8 @@ components:
           type: string
           maxLength: 400000
           pattern: "^$|^data:image/(jpeg|png|webp);base64,|^https?://"
+        sebutan:
+          type: string
 
     GenerateStudentAccountInput:
       type: object

@@ -49,6 +49,7 @@ export const gurusTable = pgTable("gurus", {
   wakasekBidang: text("wakasek_bidang"),
   waliKelasKelas: text("wali_kelas_kelas"),
   school: text("school"),
+  sebutan: text("sebutan"),
 });
 
 export const insertGuruSchema = createInsertSchema(gurusTable).omit({

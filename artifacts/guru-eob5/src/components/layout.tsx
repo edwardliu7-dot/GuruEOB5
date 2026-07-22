@@ -1,15 +1,17 @@
 import { Link, useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AnimatePresence, PageTransition } from "@/components/motion";
 import { useAuth } from "@/lib/auth";
-import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox, Bell, Settings2, Contact, CalendarClock, PieChart } from "lucide-react";
+import { LogOut, LayoutDashboard, FolderOpen, Users, BookOpen, ClipboardCheck, GraduationCap, Star, BarChart3, ClipboardList, ShieldCheck, Home, CalendarDays, CalendarRange, Megaphone, Sparkles, ListChecks, KeyRound, Inbox, Bell, Settings2, Contact, CalendarClock, PieChart, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ProfileDialog } from "@/components/profile-dialog";
 import { FeedbackWidget } from "@/components/feedback-widget";
 import { Mascot } from "@/components/mascot";
 import { WhatsNewDialog, useWhatsNew } from "@/components/whats-new-dialog";
+import { SebetanDialog } from "@/components/sebutan-dialog";
 import { hasUnseenUpdate } from "@/lib/changelog";
+import { useListJadwal } from "@workspace/api-client-react";
 import { formatJabatan } from "@/lib/options";
 import logoUrl from "@/assets/logo.png";
 import { useQuery } from "@tanstack/react-query";
@@ -57,6 +59,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const isAdmin = user?.isAdmin ?? false;
+
+  // ── Onboarding gate: sebutan → jadwal ──────────────────────────────────────
+  const [sebetanDone, setSebetanDone] = useState(!!user?.sebutan);
+
+  // Sync when user data loads (e.g. after page refresh with sebutan already set)
+  useEffect(() => {
+    if (user?.sebutan) setSebetanDone(true);
+  }, [user?.sebutan]);
+
+  const needsSebutan = !!user && !user.sebutan && !sebetanDone;
+
+  // Only check jadwal once sebutan step is cleared
+  const { data: jadwal = [], isLoading: jadwalLoading } = useListJadwal(undefined, {
+    query: {
+      enabled: !!user && !needsSebutan,
+      staleTime: 60_000,
+    },
+  });
+  const needsJadwal = !needsSebutan && !jadwalLoading && jadwal.length === 0;
+
+  // Redirect to /jadwal page when in jadwal step
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    if (needsJadwal && location !== "/jadwal") navigate("/jadwal");
+  }, [needsJadwal, location, navigate]);
 
   // Fetch unread feedback count for admin badge
   const { data: unreadData } = useQuery<{ count: number }>({
@@ -124,7 +151,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <img src={logoUrl} alt="GuruEOB5" className="h-10 w-auto group-data-[collapsible=icon]:h-7" />
         </SidebarHeader>
 
-        <SidebarContent className="px-2 py-4">
+        <SidebarContent className={`px-2 py-4${needsJadwal ? " pointer-events-none select-none opacity-50" : ""}`}>
           <SidebarGroup>
             <SidebarGroupLabel>Utama</SidebarGroupLabel>
             <SidebarMenu>
@@ -260,6 +287,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
 
+      {needsSebutan && <SebetanDialog onDone={() => setSebetanDone(true)} />}
       <Mascot />
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
       <WhatsNewDialog
@@ -276,6 +304,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <SidebarTrigger />
           <img src={logoUrl} alt="GuruEOB5" className="h-8 w-auto md:hidden" />
         </div>
+
+        {/* Jadwal onboarding banner — blocks app until at least 1 jadwal exists */}
+        {needsJadwal && (
+          <div className="shrink-0 flex items-center gap-3 px-5 py-3 bg-orange-50 border-b border-orange-200 text-orange-800">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-orange-500" />
+            <p className="text-sm font-medium flex-1">
+              Satu langkah lagi! Isi jadwal pelajaran kamu dulu sebelum menggunakan fitur lainnya.
+            </p>
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10">
           <div className="max-w-6xl mx-auto">
             <AnimatePresence mode="wait" initial={false}>

@@ -19,6 +19,7 @@ export interface Teacher {
   school?: string | null;
   photoUrl?: string | null;
   bio?: string | null;
+  sebutan?: string | null;
   createdAt: Date;
   isAdmin: boolean;
 }
