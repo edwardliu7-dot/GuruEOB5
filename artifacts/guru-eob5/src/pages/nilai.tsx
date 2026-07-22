@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Download } from "lucide-react";
+import { Download, TrendingUp, TrendingDown, Award, Percent } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -420,12 +420,24 @@ export default function Nilai() {
     URL.revokeObjectURL(url);
   };
 
+  // ---- Stats row computed from gradesList ----
+  const nilaiStats = useMemo(() => {
+    const allNilai = (gradesList as any[] ?? []).map((g: any) => g.nilai as number);
+    if (!allNilai.length) return null;
+    const avg = allNilai.reduce((a, b) => a + b, 0) / allNilai.length;
+    const max = Math.max(...allNilai);
+    const min = Math.min(...allNilai);
+    const tuntas = allNilai.filter((v) => v >= 75).length;
+    const pctTuntas = Math.round((tuntas / allNilai.length) * 100);
+    return { avg: avg.toFixed(1), max, min, pctTuntas };
+  }, [gradesList]);
+
   return (
     <Layout>
       <div className="space-y-6 animate-in fade-in duration-500">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold font-serif">Data Nilai</h1>
+            <h1 className="text-xl font-bold text-slate-800">Data Nilai</h1>
             <p className="text-muted-foreground mt-1">
               Formatif (per TP), Sumatif per Lingkup Materi, Sumatif Tengah Semester (PTS), Sumatif Akhir Semester (PAS), Nilai Raport.
             </p>
@@ -434,6 +446,52 @@ export default function Nilai() {
             <Download className="w-4 h-4 mr-2" /> Download Rekap Nilai
           </Button>
         </div>
+
+        {/* Stats Row */}
+        {nilaiStats && ready && !isLoading && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4 relative overflow-hidden">
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">Rata-rata</div>
+                <div className="text-3xl font-black text-slate-800">{nilaiStats.avg}</div>
+              </div>
+              <div className="h-1 absolute bottom-0 left-0 right-0 bg-emerald-500" style={{ width: `${nilaiStats.avg}%` }} />
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4 relative overflow-hidden">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                <Award className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">Tertinggi</div>
+                <div className="text-3xl font-black text-slate-800">{nilaiStats.max}</div>
+              </div>
+              <div className="h-1 absolute bottom-0 left-0 right-0 bg-blue-500" style={{ width: `${nilaiStats.max}%` }} />
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4 relative overflow-hidden">
+              <div className="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                <TrendingDown className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">Terendah</div>
+                <div className="text-3xl font-black text-slate-800">{nilaiStats.min}</div>
+              </div>
+              <div className="h-1 absolute bottom-0 left-0 right-0 bg-orange-500" style={{ width: `${nilaiStats.min}%` }} />
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-center gap-4 relative overflow-hidden">
+              <div className="w-12 h-12 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
+                <Percent className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">Tuntas KKM</div>
+                <div className="text-3xl font-black text-slate-800">{nilaiStats.pctTuntas}%</div>
+              </div>
+              <div className="h-1 absolute bottom-0 left-0 right-0 bg-violet-500" style={{ width: `${nilaiStats.pctTuntas}%` }} />
+            </div>
+          </div>
+        )}
 
         <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
           <div className="p-4 border-b border-border bg-muted/40 flex flex-wrap gap-3">

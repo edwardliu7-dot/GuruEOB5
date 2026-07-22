@@ -17,7 +17,22 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Download, Trash2, Loader2, FileText, Clock, AlertTriangle } from "lucide-react";
+import {
+  Sparkles,
+  Download,
+  Trash2,
+  Loader2,
+  FileText,
+  Clock,
+  AlertTriangle,
+  History,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Target,
+  BookMarked,
+  List,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,13 +62,16 @@ class PreviewErrorBoundary extends Component<{ children: ReactNode }, { hasError
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center py-16 text-center gap-3 text-muted-foreground">
-          <AlertTriangle className="w-10 h-10 text-destructive/60" />
-          <p className="font-medium text-destructive">Gagal menampilkan preview</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3 text-slate-500">
+          <AlertTriangle className="w-10 h-10 text-red-400" />
+          <p className="font-medium text-red-600">Gagal menampilkan preview</p>
           <p className="text-xs max-w-sm">{this.state.message}</p>
-          <Button variant="outline" size="sm" onClick={() => this.setState({ hasError: false, message: "" })}>
+          <button
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50"
+            onClick={() => this.setState({ hasError: false, message: "" })}
+          >
             Coba lagi
-          </Button>
+          </button>
         </div>
       );
     }
@@ -74,106 +92,150 @@ type FormValues = z.infer<typeof formSchema>;
 function toArr(val: unknown): any[] {
   if (Array.isArray(val)) return val;
   if (val == null) return [];
-  // AI sometimes returns a single item instead of an array
   return [val];
 }
 
 function ModulPreview({ modul }: { modul: ModulAjar }) {
+  const [expandedSection, setExpandedSection] = useState<string | null>("tujuan");
   const content = (modul.content ?? {}) as any;
-  // Guard: if content is not a plain object (e.g. null, string, etc.) show fallback
+
   if (!content || typeof content !== "object" || Array.isArray(content)) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center gap-2 text-muted-foreground">
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-2 text-slate-500">
         <AlertTriangle className="w-8 h-8 text-amber-500" />
         <p>Konten modul ajar tidak dapat ditampilkan.</p>
       </div>
     );
   }
-  const iu = (typeof content.informasiUmum === "object" && content.informasiUmum ? content.informasiUmum : {}) as any;
+
   const ki = (typeof content.komponenInti === "object" && content.komponenInti ? content.komponenInti : {}) as any;
+  const iu = (typeof content.informasiUmum === "object" && content.informasiUmum ? content.informasiUmum : {}) as any;
   const lp = (typeof content.lampiran === "object" && content.lampiran ? content.lampiran : {}) as any;
 
-  return (
-    <div className="space-y-6 text-sm">
-      <h2 className="text-xl font-bold font-serif text-center">{content.judul}</h2>
+  const toggleSection = (section: string) => {
+    setExpandedSection((prev) => (prev === section ? null : section));
+  };
 
-      <section>
-        <h3 className="font-semibold text-primary mb-2">A. Informasi Umum</h3>
-        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
-          <div><dt className="text-muted-foreground">Nama Penyusun</dt><dd>{iu.namaPenyusun}</dd></div>
-          <div><dt className="text-muted-foreground">Instansi</dt><dd>{iu.instansi}</dd></div>
-          <div><dt className="text-muted-foreground">Jenjang</dt><dd>{iu.jenjang}</dd></div>
-          <div><dt className="text-muted-foreground">Kelas</dt><dd>{iu.kelas}</dd></div>
-          <div><dt className="text-muted-foreground">Alokasi Waktu</dt><dd>{modul.alokasiWaktu}</dd></div>
-          <div><dt className="text-muted-foreground">Jumlah Pertemuan</dt><dd>{iu.jumlahPertemuan}</dd></div>
-        </dl>
-        <p className="mt-2"><span className="text-muted-foreground">Kompetensi Awal: </span>{iu.kompetensiAwal}</p>
-        <p className="mt-1"><span className="text-muted-foreground">Model Pembelajaran: </span>{iu.modelPembelajaran}</p>
-      </section>
-
-      <section>
-        <h3 className="font-semibold text-primary mb-2">B. Komponen Inti</h3>
-        <p className="font-medium mt-2">1. Tujuan Pembelajaran</p>
-        <ul className="list-disc pl-5">
-          {toArr(ki.tujuanPembelajaran).map((t: string, i: number) => <li key={i}>{t}</li>)}
+  const sections = [
+    {
+      id: "tujuan",
+      title: "Tujuan Pembelajaran",
+      icon: Target,
+      content: (
+        <ul className="list-disc pl-5 space-y-1.5 text-sm text-slate-600">
+          {toArr(ki.tujuanPembelajaran).map((t: string, i: number) => (
+            <li key={i}>{t}</li>
+          ))}
         </ul>
-        <p className="font-medium mt-3">2. Kriteria Ketercapaian Tujuan Pembelajaran</p>
-        <ul className="list-disc pl-5">
-          {toArr(ki.kriteriaKetercapaianTujuanPembelajaran).map((t: string, i: number) => <li key={i}>{t}</li>)}
-        </ul>
-        <p className="font-medium mt-3">3. Pemahaman Bermakna</p>
-        <p>{ki.pemahamanBermakna}</p>
-        <p className="font-medium mt-3">4. Pertanyaan Pemantik</p>
-        <ul className="list-disc pl-5">
-          {toArr(ki.pertanyaanPemantik).map((t: string, i: number) => <li key={i}>{t}</li>)}
-        </ul>
-        <p className="font-medium mt-3">5. Kegiatan Pembelajaran</p>
+      ),
+    },
+    {
+      id: "materi",
+      title: "Materi Inti",
+      icon: BookMarked,
+      content: (
+        <div className="text-sm text-slate-600 space-y-2">
+          <p>{iu.kompetensiAwal}</p>
+          <p className="text-xs text-slate-400">Model: {iu.modelPembelajaran}</p>
+        </div>
+      ),
+    },
+    {
+      id: "langkah",
+      title: "Langkah Pembelajaran",
+      icon: List,
+      content: (
         <div className="space-y-3">
           {toArr(ki.kegiatanPembelajaran).map((k: any, idx: number) => (
-            <div key={k?.pertemuanKe ?? idx} className="border border-border rounded-md p-3 bg-muted/40">
-              <p className="font-medium mb-1">Pertemuan ke-{k?.pertemuanKe ?? idx + 1}</p>
-              <p><span className="text-muted-foreground">Pendahuluan: </span>{k?.pendahuluan}</p>
-              <p><span className="text-muted-foreground">Kegiatan Inti: </span>{k?.kegiatanInti}</p>
-              <p><span className="text-muted-foreground">Penutup: </span>{k?.penutup}</p>
+            <div key={k?.pertemuanKe ?? idx}>
+              <h4 className="text-xs font-bold text-slate-700 mb-1">
+                Pertemuan ke-{k?.pertemuanKe ?? idx + 1}
+              </h4>
+              <p className="text-sm text-slate-600">
+                <span className="font-medium">Pendahuluan: </span>{k?.pendahuluan}
+              </p>
+              <p className="text-sm text-slate-600">
+                <span className="font-medium">Inti: </span>{k?.kegiatanInti}
+              </p>
+              <p className="text-sm text-slate-600">
+                <span className="font-medium">Penutup: </span>{k?.penutup}
+              </p>
             </div>
           ))}
         </div>
-        <p className="font-medium mt-3">6. Asesmen</p>
-        <p><span className="text-muted-foreground">Diagnostik: </span>{ki.asesmen?.asesmenDiagnostik}</p>
-        <p><span className="text-muted-foreground">Formatif: </span>{ki.asesmen?.asesmenFormatif}</p>
-        <p><span className="text-muted-foreground">Sumatif: </span>{ki.asesmen?.asesmenSumatif}</p>
-        <p className="font-medium mt-3">7. Refleksi Guru</p>
-        <ul className="list-disc pl-5">
-          {toArr(ki.refleksiGuru).map((t: string, i: number) => <li key={i}>{t}</li>)}
+      ),
+    },
+    {
+      id: "penilaian",
+      title: "Penilaian (Asesmen)",
+      icon: FileText,
+      content: (
+        <ul className="list-disc pl-5 space-y-1.5 text-sm text-slate-600">
+          {ki.asesmen?.asesmenDiagnostik && <li><strong>Diagnostik:</strong> {ki.asesmen.asesmenDiagnostik}</li>}
+          {ki.asesmen?.asesmenFormatif && <li><strong>Formatif:</strong> {ki.asesmen.asesmenFormatif}</li>}
+          {ki.asesmen?.asesmenSumatif && <li><strong>Sumatif:</strong> {ki.asesmen.asesmenSumatif}</li>}
+          {toArr(lp.rubrikPenilaian).map((r: string, i: number) => <li key={i}>{r}</li>)}
         </ul>
-        <p className="font-medium mt-3">8. Refleksi Peserta Didik</p>
-        <ul className="list-disc pl-5">
-          {toArr(ki.refleksiPesertaDidik).map((t: string, i: number) => <li key={i}>{t}</li>)}
-        </ul>
-      </section>
+      ),
+    },
+  ];
 
-      <section>
-        <h3 className="font-semibold text-primary mb-2">C. Lampiran</h3>
-        <p className="font-medium mt-2">LKPD</p>
-        <p className="whitespace-pre-line">{lp.lkpd}</p>
-        <p className="font-medium mt-3">Kunci Jawaban LKPD</p>
-        <p className="whitespace-pre-line">{lp.kunciJawabanLkpd}</p>
-        <p className="font-medium mt-3">Rubrik Penilaian</p>
-        <p className="whitespace-pre-line">{lp.rubrikPenilaian}</p>
-        <p className="font-medium mt-3">Pengayaan &amp; Remedial</p>
-        <p>{lp.pengayaan}</p>
-        <p>{lp.remedial}</p>
-        <p className="font-medium mt-3">Glosarium</p>
-        <ul className="list-disc pl-5">
-          {toArr(lp.glosarium).map((g: any, i: number) => (
-            <li key={i}><span className="font-medium">{g?.istilah}:</span> {g?.definisi}</li>
-          ))}
-        </ul>
-        <p className="font-medium mt-3">Daftar Pustaka</p>
-        <ul className="list-disc pl-5">
-          {toArr(lp.daftarPustaka).map((t: string, i: number) => <li key={i}>{t}</li>)}
-        </ul>
-      </section>
+  return (
+    <div className="flex flex-col gap-0">
+      {/* Header */}
+      <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="rounded-full bg-blue-100 text-blue-700 px-2.5 py-0.5 text-xs font-medium">
+                {modul.subjectName ?? "Modul Ajar"}
+              </span>
+              {modul.kelas && (
+                <span className="rounded-full bg-slate-100 text-slate-600 px-2.5 py-0.5 text-xs font-medium">
+                  {modul.kelas}
+                </span>
+              )}
+              <span className="rounded-full bg-slate-100 text-slate-600 px-2.5 py-0.5 text-xs font-medium">
+                {modul.alokasiWaktu}
+              </span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800">
+              {content.judul ?? `Modul Ajar: ${modul.materi}`}
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      {/* Collapsible sections */}
+      <div className="p-5 space-y-3">
+        {sections.map((section) => {
+          const Icon = section.icon;
+          return (
+            <div key={section.id} className="border border-slate-200 rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection(section.id)}
+                className="w-full flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-2.5 text-sm font-semibold text-slate-700">
+                  <Icon className="w-4 h-4 text-slate-400" />
+                  {section.title}
+                </div>
+                {expandedSection === section.id ? (
+                  <ChevronUp className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                )}
+              </button>
+              {expandedSection === section.id && (
+                <div className="p-4 border-t border-slate-100 bg-slate-50/30">
+                  {section.content}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -202,9 +264,6 @@ export default function ModulAjarPage() {
   const onSubmit = async (values: FormValues) => {
     try {
       const result = await generate.mutateAsync({ data: values });
-      // Pre-fill the cache so useGetModulAjar shows content immediately
-      // without a second network round-trip (which could fail and leave the
-      // panel blank even though generation succeeded).
       queryClient.setQueryData(getGetModulAjarQueryKey(result.id), result);
       setSelectedId(result.id);
       queryClient.invalidateQueries({ queryKey: ["/api/modul-ajar"] });
@@ -231,7 +290,7 @@ export default function ModulAjarPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e) {
+    } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat mengunduh berkas" });
     } finally {
       setDownloadingId(null);
@@ -245,54 +304,51 @@ export default function ModulAjarPage() {
       if (selectedId === id) setSelectedId(null);
       queryClient.invalidateQueries({ queryKey: ["/api/modul-ajar"] });
       toast({ title: "Berhasil", description: "Dihapus" });
-    } catch (e) {
+    } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
     }
   };
 
   return (
     <Layout>
-      <div className="space-y-6 animate-in fade-in duration-500">
-        <div>
-          <h1 className="text-3xl font-bold font-serif">Buat Modul Ajar</h1>
-          <p className="text-muted-foreground mt-1">
-            Hasilkan modul ajar Kurikulum Merdeka secara otomatis dengan AI, lengkap dengan LKPD, asesmen, dan lampiran.
-          </p>
-        </div>
+      {/* Page header */}
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Buat Modul Ajar AI</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Generate modul ajar Kurikulum Merdeka secara otomatis.</p>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
-              <h2 className="font-semibold mb-4 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Detail Modul</h2>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <div className="flex gap-5 items-start">
+        {/* Left panel */}
+        <div className="flex-1 flex flex-col gap-5 min-w-0">
+          {/* Form card */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <h2 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              Parameter Modul
+            </h2>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="subjectId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mata Pelajaran</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Mata Pelajaran
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Pilih mata pelajaran" /></SelectTrigger>
+                            <SelectTrigger className="rounded-lg border-slate-200 bg-white text-sm text-slate-800 focus:ring-2 focus:ring-slate-800/20 focus:border-slate-800">
+                              <SelectValue placeholder="Pilih mata pelajaran" />
+                            </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {subjects?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                            {subjects?.map((s: any) => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="materi"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Materi/Topik</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Misal: Sistem Ekskresi Manusia" {...field} />
-                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -302,107 +358,199 @@ export default function ModulAjarPage() {
                     name="kelas"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Kelas (Opsional)</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Kelas (Opsional)
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Misal: XI" {...field} />
+                          <Input
+                            placeholder="Misal: VII"
+                            className="rounded-lg border-slate-200 text-sm text-slate-800 focus:ring-2 focus:ring-slate-800/20 focus:border-slate-800"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="materi"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            Topik / Materi
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Contoh: Sistem Pencernaan Manusia"
+                              className="rounded-lg border-slate-200 text-sm text-slate-800 focus:ring-2 focus:ring-slate-800/20 focus:border-slate-800"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormField
                     control={form.control}
                     name="alokasiWaktu"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Alokasi Waktu</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Alokasi Waktu
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Misal: 2 x 45 menit (2 pertemuan)" {...field} />
+                          <Input
+                            placeholder="Misal: 2 JP"
+                            className="rounded-lg border-slate-200 text-sm text-slate-800 focus:ring-2 focus:ring-slate-800/20 focus:border-slate-800"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full" disabled={generate.isPending}>
-                    {generate.isPending ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Membuat Modul...</>
-                    ) : (
-                      <><Sparkles className="w-4 h-4 mr-2" /> Generate Modul</>
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-border bg-muted/40">
-                <h2 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4" /> Riwayat</h2>
-              </div>
-              {isLoadingHistory ? (
-                <div className="p-4 space-y-2">{Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
-              ) : !history?.length ? (
-                <p className="p-6 text-center text-sm text-muted-foreground">Belum ada modul ajar yang dibuat.</p>
-              ) : (
-                <div className="divide-y divide-border max-h-[420px] overflow-y-auto">
-                  {history.map((h: any) => (
-                    <button
-                      key={h.id}
-                      onClick={() => setSelectedId(h.id)}
-                      className={`w-full text-left p-3 hover:bg-muted/30 transition-colors flex items-start justify-between gap-2 ${selectedId === h.id ? "bg-primary/5" : ""}`}
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{h.materi}</p>
-                        <p className="text-xs text-muted-foreground">{safeFormat(h.createdAt, "dd MMM yyyy HH:mm")}</p>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={downloadingId === h.id}
-                          onClick={(e) => { e.stopPropagation(); handleDownload(h.id); }}
-                        >
-                          {downloadingId === h.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive"
-                          onClick={(e) => { e.stopPropagation(); handleDelete(h.id); }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </button>
-                  ))}
                 </div>
-              )}
-            </div>
+
+                <button
+                  type="submit"
+                  disabled={generate.isPending}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 text-white px-4 py-3 text-sm font-bold shadow-sm hover:from-slate-700 hover:to-slate-600 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {generate.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Memproses dengan AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>Generate Modul Ajar</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            </Form>
           </div>
 
-          <div className="lg:col-span-2 bg-card border border-border rounded-xl shadow-sm p-6 min-h-[500px]">
-            {isLoadingSelected ? (
-              <div className="space-y-3">{Array(8).fill(0).map((_, i) => <Skeleton key={i} className="h-5 w-full" />)}</div>
-            ) : selectedModul ? (
-              <>
-                <div className="flex justify-end mb-4">
-                  <Button variant="outline" size="sm" onClick={() => handleDownload(selectedModul.id)} disabled={downloadingId === selectedModul.id}>
-                    {downloadingId === selectedModul.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                    Unduh .docx
-                  </Button>
-                </div>
-                <PreviewErrorBoundary>
-                  <ModulPreview modul={selectedModul} />
-                </PreviewErrorBoundary>
-              </>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground py-20">
-                <FileText className="w-12 h-12 mb-3 text-muted-foreground/30" />
-                <p>Isi form di sebelah kiri lalu klik "Generate Modul" untuk membuat modul ajar baru,</p>
-                <p>atau pilih salah satu riwayat untuk melihat kembali.</p>
+          {/* Generated preview card */}
+          {isLoadingSelected ? (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">
+              {Array(6).fill(0).map((_, i) => (
+                <Skeleton key={i} className="h-5 w-full" />
+              ))}
+            </div>
+          ) : selectedModul ? (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+              <PreviewErrorBoundary>
+                <ModulPreview modul={selectedModul} />
+              </PreviewErrorBoundary>
+              <div className="p-5 border-t border-slate-100 bg-slate-50/50">
+                <button
+                  type="button"
+                  onClick={() => handleDownload(selectedModul.id)}
+                  disabled={downloadingId === selectedModul.id}
+                  className="w-full flex items-center justify-center gap-2 rounded-full bg-white border border-slate-300 text-slate-700 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-60"
+                >
+                  {downloadingId === selectedModul.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  <span>Download DOCX</span>
+                </button>
               </div>
-            )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 flex flex-col items-center justify-center text-center text-slate-400">
+              <FileText className="w-12 h-12 mb-3 text-slate-200" />
+              <p className="text-sm">Isi form di atas lalu klik "Generate Modul Ajar" untuk membuat modul baru,</p>
+              <p className="text-sm">atau pilih salah satu riwayat untuk melihat kembali.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right sidebar */}
+        <div className="w-72 bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col sticky top-6 shrink-0" style={{ maxHeight: "calc(100vh - 8rem)" }}>
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+            <History className="w-4 h-4 text-slate-500" />
+            <h3 className="text-sm font-bold text-slate-800">Riwayat Modul</h3>
           </div>
+
+          {isLoadingHistory ? (
+            <div className="space-y-2">
+              {Array(3).fill(0).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : !history?.length ? (
+            <p className="text-sm text-slate-400 text-center py-8">Belum ada modul yang dibuat.</p>
+          ) : (
+            <div className="flex-1 overflow-y-auto -mx-2 px-2 space-y-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-slate-200">
+              {history.map((h: any) => (
+                <div
+                  key={h.id}
+                  className={`group flex flex-col gap-1.5 p-3 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100 relative ${selectedId === h.id ? "bg-slate-50 border-slate-100" : ""}`}
+                  onClick={() => setSelectedId(h.id)}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <div className="mt-0.5 bg-blue-50 p-1.5 rounded-md text-blue-600 shrink-0">
+                      <BookOpen className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-sm font-semibold text-slate-700 truncate group-hover:text-slate-900">
+                        {h.materi}
+                      </h4>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        {h.subjectName && (
+                          <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                            {h.subjectName}
+                          </span>
+                        )}
+                        {h.kelas && (
+                          <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                            {h.kelas}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-1 pl-[2.2rem]">
+                    <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                      <Clock className="w-3 h-3" />
+                      <span>{safeFormat(h.createdAt, "dd MMM yyyy HH:mm")}</span>
+                    </div>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleDownload(h.id); }}
+                        disabled={downloadingId === h.id}
+                        className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded"
+                      >
+                        {downloadingId === h.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(h.id); }}
+                        className="text-slate-400 hover:text-red-600 transition-colors p-1 rounded"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Layout>

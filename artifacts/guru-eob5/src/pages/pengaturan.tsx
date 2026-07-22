@@ -1,164 +1,210 @@
-import { Check, Palette, Type } from "lucide-react";
+import { Check, Palette, Type, Settings2, ChevronRight, Home, Sparkles, Moon, Save } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { useTheme } from "@/lib/theme-context";
 import { THEMES, FONTS, type ThemeId, type FontId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Pengaturan() {
   const { themeId, fontId, setTheme, setFont } = useTheme();
+  const { toast } = useToast();
+
+  const handleSave = () => {
+    toast({ title: "Tersimpan", description: "Preferensi tampilan berhasil disimpan." });
+  };
 
   return (
     <Layout>
-      <div className="max-w-3xl space-y-10">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pengaturan Tampilan</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Pilihan tema dan font tersimpan otomatis per akun di perangkat ini.
-          </p>
+      <div className="min-h-screen font-sans text-slate-800 p-0">
+        {/* Top Section */}
+        <div className="mb-8">
+          <div className="flex items-center text-xs text-slate-400 mb-2">
+            <Home className="w-3 h-3 mr-1" />
+            <span>Beranda</span>
+            <ChevronRight className="w-3 h-3 mx-1" />
+            <span className="text-slate-600 font-medium">Pengaturan</span>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <Settings2 className="w-6 h-6 text-primary" />
+                Pengaturan
+              </h1>
+              <p className="text-sm text-slate-500 mt-1">Personalisasi tampilan dan preferensi aplikasi</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSave}
+                className="rounded-full bg-slate-800 text-white px-5 py-2 text-sm font-medium flex items-center gap-2 hover:bg-slate-700 transition-colors shadow-sm"
+              >
+                <Save className="w-4 h-4" />
+                Simpan Perubahan
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* ── Tema Warna ── */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Palette className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-base">Tema Warna</h2>
-          </div>
+        <div className="max-w-4xl space-y-8 pb-12">
+          {/* Tema Warna Section */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Palette className="w-4 h-4 text-slate-400" />
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tema Warna</h2>
+            </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {THEMES.map((theme) => {
-              const active = themeId === theme.id;
-              return (
-                <button
-                  key={theme.id}
-                  type="button"
-                  onClick={() => setTheme(theme.id as ThemeId)}
-                  className={cn(
-                    "group relative rounded-xl overflow-hidden border-2 transition-all duration-150 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    active
-                      ? "border-primary shadow-md shadow-primary/20 scale-[1.02]"
-                      : "border-border hover:border-primary/40 hover:shadow-sm",
-                  )}
-                >
-                  {/* Mini app preview */}
-                  <div className="flex h-24 w-full">
-                    {/* Sidebar strip */}
-                    <div
-                      className="w-8 h-full flex-shrink-0 flex flex-col items-center pt-2 gap-1.5"
-                      style={{ background: theme.sidebarHex }}
-                    >
-                      <div className="w-3.5 h-3.5 rounded-full opacity-80" style={{ background: theme.primaryHex }} />
-                      {[1, 2, 3, 4].map((i) => (
-                        <div
-                          key={i}
-                          className="w-4 h-1 rounded-sm opacity-40"
-                          style={{ background: "white", opacity: i === 1 ? 0.8 : 0.3 }}
-                        />
-                      ))}
-                    </div>
-                    {/* Content area */}
-                    <div
-                      className="flex-1 p-1.5 flex flex-col gap-1"
-                      style={{ background: theme.bgHex }}
-                    >
-                      {/* Header bar */}
-                      <div
-                        className="h-2.5 rounded-sm w-full"
-                        style={{ background: theme.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)" }}
-                      />
-                      {/* Primary button */}
-                      <div
-                        className="h-2 rounded-sm w-8 self-end"
-                        style={{ background: theme.primaryHex }}
-                      />
-                      {/* Table rows */}
-                      {[0.8, 0.5, 0.5, 0.5].map((op, i) => (
-                        <div
-                          key={i}
-                          className="h-1.5 rounded-sm"
-                          style={{
-                            background: theme.dark ? `rgba(255,255,255,${op * 0.15})` : `rgba(0,0,0,${op * 0.08})`,
-                            width: i === 0 ? "100%" : `${70 + i * 5}%`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Label */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {THEMES.map((theme) => {
+                const isActive = themeId === theme.id;
+                return (
                   <div
-                    className="px-2 py-1.5"
-                    style={{
-                      background: theme.dark ? "#0a0f1e" : "white",
-                      color: theme.dark ? "rgba(255,255,255,0.85)" : "inherit",
-                    }}
+                    key={theme.id}
+                    onClick={() => setTheme(theme.id as ThemeId)}
+                    className={cn(
+                      "bg-white rounded-xl border p-3 cursor-pointer transition-all duration-200 relative overflow-hidden group",
+                      isActive
+                        ? "border-slate-800 shadow-md ring-1 ring-slate-800"
+                        : "border-slate-200 shadow-sm hover:border-slate-300",
+                    )}
                   >
-                    <span className="text-xs font-semibold">
-                      {theme.emoji} {theme.label}
-                    </span>
-                    <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 truncate">
-                      {theme.description}
-                    </p>
+                    {/* Mini app preview using theme hex colours */}
+                    <div className="w-full h-20 rounded-lg mb-3 shadow-inner relative overflow-hidden flex items-center justify-center" style={{ background: theme.primaryHex }}>
+                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent" />
+                      {isActive && (
+                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-1.5 shadow-sm">
+                          <Check className="w-6 h-6 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between px-1">
+                      <span className={cn("text-sm font-medium", isActive ? "text-slate-800" : "text-slate-600")}>
+                        {theme.emoji} {theme.label}
+                      </span>
+                      <div
+                        className={cn("w-3 h-3 rounded-full")}
+                        style={{ background: isActive ? theme.primaryHex : "transparent" }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400 px-1 mt-0.5 truncate">{theme.description}</p>
                   </div>
+                );
+              })}
+            </div>
+          </section>
 
-                  {/* Active checkmark */}
-                  {active && (
-                    <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow">
-                      <Check className="w-3 h-3 text-primary-foreground" />
+          {/* Font Section */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Type className="w-4 h-4 text-slate-400" />
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Font Teks</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {FONTS.map((font) => {
+                const isActive = fontId === font.id;
+                return (
+                  <div
+                    key={font.id}
+                    onClick={() => setFont(font.id as FontId)}
+                    className={cn(
+                      "bg-white rounded-xl border p-4 cursor-pointer transition-all duration-200 flex items-center justify-between",
+                      isActive
+                        ? "border-slate-800 shadow-md ring-1 ring-slate-800"
+                        : "border-slate-200 shadow-sm hover:border-slate-300",
+                    )}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-50 border border-slate-100 text-base font-medium text-slate-700"
+                        style={{ fontFamily: font.family }}
+                      >
+                        Aa
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-slate-800">{font.label}</div>
+                        <div className="text-xs text-slate-500 truncate max-w-[120px]">{font.sample}</div>
+                      </div>
                     </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
 
-        {/* ── Font Teks ── */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Type className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-base">Font Teks</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {FONTS.map((font) => {
-              const active = fontId === font.id;
-              return (
-                <button
-                  key={font.id}
-                  type="button"
-                  onClick={() => setFont(font.id as FontId)}
-                  className={cn(
-                    "relative rounded-xl border-2 p-4 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    active
-                      ? "border-primary bg-primary/5 shadow-sm shadow-primary/10 scale-[1.02]"
-                      : "border-border bg-card hover:border-primary/40 hover:shadow-sm",
-                  )}
-                  style={{ fontFamily: font.family }}
-                >
-                  <p className="text-lg font-semibold leading-tight text-foreground">
-                    {font.label}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">{font.sample}</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    Aa Bb Cc — 0123456789
-                  </p>
-
-                  {active && (
-                    <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow">
-                      <Check className="w-3 h-3 text-primary-foreground" />
+                    {/* Radio button indicator */}
+                    <div
+                      className={cn(
+                        "w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0",
+                        isActive ? "border-slate-800 bg-slate-800" : "border-slate-300",
+                      )}
+                    >
+                      {isActive && <div className="w-2 h-2 rounded-full bg-white" />}
                     </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
 
-        {/* Hint */}
-        <p className="text-xs text-muted-foreground border-t border-border pt-4">
-          Preferensi disimpan di perangkat ini. Jika login di perangkat berbeda, tema dan font kembali ke bawaan.
-        </p>
+          {/* Preferensi Lainnya Section */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Settings2 className="w-4 h-4 text-slate-400" />
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Preferensi Lainnya</h2>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm divide-y divide-slate-100">
+              {/* Animasi Transisi — note: animations always on in this app */}
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">Animasi Transisi</div>
+                    <div className="text-xs text-slate-500 mt-0.5">Aktifkan efek animasi pada antarmuka</div>
+                  </div>
+                </div>
+                {/* Always-on toggle */}
+                <div className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors bg-primary">
+                  <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
+                </div>
+              </div>
+
+              {/* Mode Gelap */}
+              <div className="p-4 flex items-center justify-between opacity-60">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                    <Moon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-medium text-slate-800">Mode Gelap</div>
+                      <span className="rounded-full bg-slate-100 text-slate-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                        Gunakan tema Gelap
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">Ganti ke tampilan latar belakang gelap</div>
+                  </div>
+                </div>
+                <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-200 cursor-not-allowed">
+                  <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Bottom Note & Actions */}
+          <div className="pt-4 border-t border-slate-200">
+            <p className="text-xs text-slate-400 mb-4">
+              Preferensi disimpan di perangkat ini. Jika login di perangkat berbeda, tema dan font kembali ke bawaan.
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={handleSave}
+                className="rounded-full bg-slate-800 text-white px-8 py-2.5 text-sm font-medium flex items-center gap-2 hover:bg-slate-700 transition-colors shadow-sm w-full md:w-auto justify-center"
+              >
+                <Save className="w-4 h-4" />
+                Simpan Pengaturan
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </Layout>
   );

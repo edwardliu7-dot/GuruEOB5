@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout";
 import {
   useGetRekapAbsensi,
   useGetRekapNilai,
+  useGetKesiswaanOverview,
 } from "@workspace/api-client-react";
 import {
   Card,
@@ -44,9 +45,25 @@ const formatMonth = (yyyyMM: string) => {
 
 function AbsensiTab() {
   const { data, isLoading, error } = useGetRekapAbsensi();
+  const { data: kesiswaanData } = useGetKesiswaanOverview();
   const [selectedKelas, setSelectedKelas] = useState("all");
 
   const kelasOptions = data?.kelasOptions || [];
+
+  // Kelas Terbaik: aggregate per-kelas across all months, sort by hadir %
+  const kelasTerbaik = useMemo(() => {
+    if (!data?.data) return [];
+    const byKelas = data.data.reduce((acc, curr) => {
+      if (!acc[curr.kelas]) acc[curr.kelas] = { kelas: curr.kelas, hadir: 0, total: 0 };
+      acc[curr.kelas].hadir += curr.hadir;
+      acc[curr.kelas].total += curr.hadir + curr.izin + curr.sakit + curr.alpa;
+      return acc;
+    }, {} as Record<string, { kelas: string; hadir: number; total: number }>);
+    return Object.values(byKelas)
+      .map((k) => ({ ...k, pctHadir: k.total > 0 ? Math.round((k.hadir / k.total) * 100) : 0 }))
+      .sort((a, b) => b.pctHadir - a.pctHadir)
+      .slice(0, 5);
+  }, [data]);
 
   const aggregatedAbsensi = useMemo(() => {
     if (!data?.data) return [];
@@ -225,6 +242,77 @@ function AbsensiTab() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Bottom: Kelas Terbaik & Siswa Perlu Perhatian */}
+      {(kelasTerbaik.length > 0 || (kesiswaanData?.siswaPoinTerbanyak?.length ?? 0) > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {kelasTerbaik.length > 0 && (
+            <Card className="border-none shadow-sm ring-1 ring-black/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </span>
+                  Kelas Terbaik
+                </CardTitle>
+                <CardDescription>Berdasarkan persentase kehadiran</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {kelasTerbaik.map((k, idx) => (
+                  <div key={k.kelas}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-muted-foreground w-4">{idx + 1}</span>
+                        <span className="font-medium text-sm">{k.kelas}</span>
+                        <span className="text-xs text-muted-foreground">{k.total} sesi</span>
+                      </div>
+                      <span className={`text-xs font-bold ${k.pctHadir >= 85 ? "text-emerald-600" : k.pctHadir >= 70 ? "text-amber-600" : "text-rose-600"}`}>
+                        {k.pctHadir}%
+                      </span>
+                    </div>
+                    <div className="ml-6 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${k.pctHadir >= 85 ? "bg-emerald-500" : k.pctHadir >= 70 ? "bg-amber-500" : "bg-rose-500"}`}
+                        style={{ width: `${k.pctHadir}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {(kesiswaanData?.siswaPoinTerbanyak?.length ?? 0) > 0 && (
+            <Card className="border-none shadow-sm ring-1 ring-black/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <AlertCircle className="w-4 h-4" />
+                  </span>
+                  Siswa Perlu Perhatian
+                </CardTitle>
+                <CardDescription>Poin pelanggaran terbanyak lintas kelas</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {kesiswaanData!.siswaPoinTerbanyak.slice(0, 5).map((s: any, idx: number) => (
+                  <div key={s.studentId} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-muted-foreground w-4">{idx + 1}</span>
+                      <div>
+                        <div className="font-medium text-sm">{s.namaLengkap}</div>
+                        <div className="text-xs text-muted-foreground">{s.kelas}</div>
+                      </div>
+                    </div>
+                    <span className="inline-flex rounded-full bg-rose-100 text-rose-700 px-2.5 py-0.5 text-xs font-bold">
+                      -{s.totalPoin} poin
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

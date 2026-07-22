@@ -17,7 +17,20 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Download, Trash2, Loader2, ListChecks, Clock, AlertTriangle } from "lucide-react";
+import {
+  Sparkles,
+  Download,
+  Trash2,
+  Loader2,
+  ListChecks,
+  Clock,
+  AlertTriangle,
+  History,
+  FileText,
+  ClipboardList,
+  Wand2,
+  CheckCircle2,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,13 +58,16 @@ class PreviewErrorBoundary extends Component<{ children: ReactNode }, { hasError
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center py-16 text-center gap-3 text-muted-foreground">
-          <AlertTriangle className="w-10 h-10 text-destructive/60" />
-          <p className="font-medium text-destructive">Gagal menampilkan preview</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3 text-slate-500">
+          <AlertTriangle className="w-10 h-10 text-red-400" />
+          <p className="font-medium text-red-600">Gagal menampilkan preview</p>
           <p className="text-xs max-w-sm">{this.state.message}</p>
-          <Button variant="outline" size="sm" onClick={() => this.setState({ hasError: false, message: "" })}>
+          <button
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50"
+            onClick={() => this.setState({ hasError: false, message: "" })}
+          >
             Coba lagi
-          </Button>
+          </button>
         </div>
       );
     }
@@ -81,39 +97,100 @@ function SoalPreview({ soal }: { soal: SoalOtomatis }) {
   const content = (soal.content ?? {}) as any;
   if (!content || typeof content !== "object" || Array.isArray(content)) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center gap-2 text-muted-foreground">
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-2 text-slate-500">
         <AlertTriangle className="w-8 h-8 text-amber-500" />
         <p>Konten soal tidak dapat ditampilkan.</p>
       </div>
     );
   }
+
+  const soalArr = toArr(content.soal);
+  const previewSoal = soalArr.slice(0, 3);
+  const remainingCount = soalArr.length - previewSoal.length;
+
   return (
-    <div className="space-y-5 text-sm">
-      <h2 className="text-xl font-bold font-serif text-center">{content.judul}</h2>
-      <p className="italic text-muted-foreground text-center">{content.petunjukPengerjaan}</p>
-      <div className="space-y-4">
-        {toArr(content.soal).map((q: any, idx: number) => (
-          <div key={q?.nomor ?? idx} className="border border-border rounded-md p-4">
-            <p className="font-medium mb-2">{q?.nomor ?? idx + 1}. {q?.pertanyaan}</p>
-            {q?.tipe === "pilihan_ganda" ? (
-              <ul className="space-y-1 pl-2">
-                {toArr(q?.pilihan).map((opt: string, i: number) => (
-                  <li key={i} className={opt === q?.jawabanBenar ? "font-semibold text-emerald-700" : ""}>
-                    {LETTERS[i] ?? i + 1}. {opt}
-                  </li>
-                ))}
-              </ul>
+    <div className="flex flex-col">
+      {/* Header */}
+      <div className="bg-slate-50 border-b border-slate-200 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+            <FileText className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-800">{content.judul}</h3>
+            <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
+              {content.petunjukPengerjaan && (
+                <span className="italic">{content.petunjukPengerjaan}</span>
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600">
+            {soalArr.length} Soal
+          </span>
+        </div>
+      </div>
+
+      {/* Questions */}
+      <div className="p-5 flex flex-col gap-6">
+        {previewSoal.map((q: any, idx: number) => (
+          <div key={q?.nomor ?? idx}>
+            <p className="text-sm font-medium text-slate-800 mb-3 flex gap-2">
+              <span className="text-slate-400">{q?.nomor ?? idx + 1}.</span>
+              <span>{q?.pertanyaan}</span>
+            </p>
+            {q?.tipe === "pilihan_ganda" || soal.jenisSoal === "pilihan_ganda" ? (
+              <div className="pl-5 grid grid-cols-2 gap-2 text-sm">
+                {toArr(q?.pilihan).map((opt: string, i: number) => {
+                  const isCorrect = opt === q?.jawabanBenar;
+                  return (
+                    <div
+                      key={i}
+                      className={`border rounded-lg p-2.5 flex items-center gap-3 relative overflow-hidden ${
+                        isCorrect
+                          ? "border-green-500 bg-green-50"
+                          : "border-slate-200"
+                      }`}
+                    >
+                      {isCorrect && <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500" />}
+                      <div
+                        className={`w-6 h-6 rounded-md text-xs flex items-center justify-center font-medium ${
+                          isCorrect
+                            ? "bg-green-200 text-green-800"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {LETTERS[i] ?? i + 1}
+                      </div>
+                      <span className={isCorrect ? "font-medium text-green-900" : ""}>{opt}</span>
+                      {isCorrect && <CheckCircle2 className="w-4 h-4 text-green-500 ml-auto" />}
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <p className="text-muted-foreground">
-                <span className="font-medium text-foreground">Kunci Jawaban: </span>{q?.jawabanBenar}
-              </p>
+              <div className="pl-5 border border-slate-200 rounded-lg p-3 bg-slate-50">
+                <p className="text-xs text-slate-500 mb-1 font-semibold uppercase tracking-wider">Kunci Jawaban</p>
+                <p className="text-sm text-slate-700">{q?.jawabanBenar}</p>
+              </div>
             )}
             {q?.pembahasan && (
-              <p className="mt-2 text-xs text-muted-foreground"><span className="font-medium">Pembahasan: </span>{q?.pembahasan}</p>
+              <p className="mt-2 pl-5 text-xs text-slate-500">
+                <span className="font-medium">Pembahasan: </span>{q.pembahasan}
+              </p>
             )}
           </div>
         ))}
       </div>
+
+      {remainingCount > 0 && (
+        <div className="bg-slate-50 p-3 border-t border-slate-200 text-center">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            Dan {remainingCount} soal lainnya (unduh untuk melihat semua)
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -136,13 +213,21 @@ export default function SoalOtomatisPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { subjectId: "", materi: "", jumlahSoal: 10, jenisSoal: "pilihan_ganda", tingkatKesulitan: "sedang" },
+    defaultValues: {
+      subjectId: "",
+      materi: "",
+      jumlahSoal: 10,
+      jenisSoal: "pilihan_ganda",
+      tingkatKesulitan: "sedang",
+    },
   });
+
+  const tipeSoal = form.watch("jenisSoal");
+  const kesulitan = form.watch("tingkatKesulitan");
 
   const onSubmit = async (values: FormValues) => {
     try {
       const result = await generate.mutateAsync({ data: values });
-      // Pre-fill cache so the detail view shows instantly without a second fetch
       queryClient.setQueryData(getGetSoalOtomatisQueryKey(result.id), result);
       setSelectedId(result.id);
       queryClient.invalidateQueries({ queryKey: ["/api/soal-otomatis"] });
@@ -169,7 +254,7 @@ export default function SoalOtomatisPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e) {
+    } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat mengunduh berkas" });
     } finally {
       setDownloadingId(null);
@@ -183,39 +268,54 @@ export default function SoalOtomatisPage() {
       if (selectedId === id) setSelectedId(null);
       queryClient.invalidateQueries({ queryKey: ["/api/soal-otomatis"] });
       toast({ title: "Berhasil", description: "Dihapus" });
-    } catch (e) {
+    } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
     }
   };
 
   return (
     <Layout>
-      <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-serif">Buat Soal Otomatis</h1>
-          <p className="text-muted-foreground mt-1">
-            Hasilkan soal latihan pilihan ganda atau esai secara otomatis dengan AI, lengkap dengan kunci jawaban.
+          <h1 className="text-xl font-bold text-slate-800">Soal Otomatis</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Buat soal latihan dan ujian dalam hitungan detik menggunakan AI.
           </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-card border border-border rounded-xl shadow-sm p-5">
-              <h2 className="font-semibold mb-4 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Detail Soal</h2>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <div className="flex gap-5 items-start">
+        {/* Left panel */}
+        <div className="flex-1 flex flex-col gap-5 min-w-0">
+          {/* Form card */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <h2 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-500" />
+              Parameter Pembuatan Soal
+            </h2>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="subjectId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mata Pelajaran</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Mata Pelajaran
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Pilih mata pelajaran" /></SelectTrigger>
+                            <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg text-sm text-slate-700">
+                              <SelectValue placeholder="Pilih mata pelajaran" />
+                            </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {subjects?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                            {subjects?.map((s: any) => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -227,148 +327,216 @@ export default function SoalOtomatisPage() {
                     name="materi"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Materi/Topik</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Topik / Materi Spesifik
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Misal: Persamaan Kuadrat" {...field} />
+                          <Input
+                            placeholder="Misal: Sistem pencernaan manusia..."
+                            className="bg-slate-50 border-slate-200 rounded-lg text-sm text-slate-700"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="jumlahSoal"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Jumlah Soal</FormLabel>
+                        <FormLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                          Jumlah Soal
+                        </FormLabel>
                         <FormControl>
-                          <Input type="number" min={1} max={50} {...field} />
+                          <Input
+                            type="number"
+                            min={1}
+                            max={50}
+                            className="bg-slate-50 border-slate-200 rounded-lg text-sm text-slate-700"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="jenisSoal"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Jenis Soal</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="pilihan_ganda">Pilihan Ganda</SelectItem>
-                            <SelectItem value="esai">Esai</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tingkatKesulitan"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tingkat Kesulitan</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="mudah">Mudah</SelectItem>
-                            <SelectItem value="sedang">Sedang</SelectItem>
-                            <SelectItem value="sulit">Sulit</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={generate.isPending}>
-                    {generate.isPending ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Membuat Soal...</>
-                    ) : (
-                      <><Sparkles className="w-4 h-4 mr-2" /> Generate Soal</>
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Tipe Soal
+                    </p>
+                    <div className="flex bg-slate-100/50 p-1 rounded-lg border border-slate-200">
+                      {(["pilihan_ganda", "esai"] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => form.setValue("jenisSoal", t)}
+                          className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-colors ${
+                            tipeSoal === t
+                              ? "bg-white shadow-sm text-slate-800 border border-slate-200/50"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          {t === "pilihan_ganda" ? "Pilihan Ganda" : "Esai"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Kesulitan
+                    </p>
+                    <div className="flex bg-slate-100/50 p-1 rounded-lg border border-slate-200">
+                      {(["mudah", "sedang", "sulit"] as const).map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => form.setValue("tingkatKesulitan", k)}
+                          className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-colors capitalize ${
+                            kesulitan === k
+                              ? "bg-white shadow-sm text-slate-800 border border-slate-200/50"
+                              : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          {k.charAt(0).toUpperCase() + k.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
-            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-border bg-muted/40">
-                <h2 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4" /> Riwayat</h2>
+                <button
+                  type="submit"
+                  disabled={generate.isPending}
+                  className="w-full rounded-full bg-slate-800 text-white px-4 py-2.5 text-sm font-medium hover:bg-slate-700 flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {generate.isPending ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4" />
+                  )}
+                  {generate.isPending ? "Menyusun Soal..." : "Generate Soal dengan AI"}
+                </button>
+              </form>
+            </Form>
+          </div>
+
+          {/* Generated preview */}
+          {isLoadingSelected ? (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">
+              {Array(6).fill(0).map((_, i) => (
+                <Skeleton key={i} className="h-5 w-full" />
+              ))}
+            </div>
+          ) : selectedSoal ? (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+              <PreviewErrorBoundary>
+                <SoalPreview soal={selectedSoal} />
+              </PreviewErrorBoundary>
+              <div className="p-4 border-t border-slate-200 bg-slate-50/50">
+                <button
+                  type="button"
+                  onClick={() => handleDownload(selectedSoal.id)}
+                  disabled={downloadingId === selectedSoal.id}
+                  className="rounded-full bg-white border border-slate-200 text-slate-700 px-4 py-2 text-sm font-medium hover:bg-slate-50 flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-60 mx-auto"
+                >
+                  {downloadingId === selectedSoal.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" />
+                  )}
+                  Unduh DOCX
+                </button>
               </div>
-              {isLoadingHistory ? (
-                <div className="p-4 space-y-2">{Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
-              ) : !history?.length ? (
-                <p className="p-6 text-center text-sm text-muted-foreground">Belum ada soal yang dibuat.</p>
-              ) : (
-                <div className="divide-y divide-border max-h-[420px] overflow-y-auto">
-                  {history.map((h: any) => (
-                    <button
-                      key={h.id}
-                      onClick={() => setSelectedId(h.id)}
-                      className={`w-full text-left p-3 hover:bg-muted/30 transition-colors flex items-start justify-between gap-2 ${selectedId === h.id ? "bg-primary/5" : ""}`}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 flex flex-col items-center justify-center text-center text-slate-400">
+              <ListChecks className="w-12 h-12 mb-3 text-slate-200" />
+              <p className="text-sm">Isi form di atas lalu klik "Generate Soal" untuk membuat soal baru,</p>
+              <p className="text-sm">atau pilih salah satu riwayat untuk melihat kembali.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right sidebar */}
+        <div className="w-72 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col shrink-0">
+          <div className="p-4 border-b border-slate-200 flex items-center gap-2 bg-slate-50/50">
+            <History className="w-4 h-4 text-slate-500" />
+            <h2 className="text-sm font-bold text-slate-800">Riwayat Soal</h2>
+          </div>
+
+          {isLoadingHistory ? (
+            <div className="p-4 space-y-2">
+              {Array(3).fill(0).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : !history?.length ? (
+            <p className="p-6 text-center text-sm text-slate-400">Belum ada soal yang dibuat.</p>
+          ) : (
+            <div className="flex flex-col divide-y divide-slate-100">
+              {history.map((h: any) => {
+                const isPG = h.jenisSoal === "pilihan_ganda";
+                const colors: string[] = [
+                  "bg-blue-100 text-blue-700",
+                  "bg-orange-100 text-orange-700",
+                  "bg-green-100 text-green-700",
+                  "bg-indigo-100 text-indigo-700",
+                  "bg-rose-100 text-rose-700",
+                ];
+                // stable color per id
+                const colorIdx = h.id
+                  ? Math.abs(h.id.charCodeAt(0) - 65) % colors.length
+                  : 0;
+                const colorClass = colors[colorIdx];
+                return (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => setSelectedId(h.id)}
+                    className={`p-4 text-left hover:bg-slate-50 transition-colors group flex items-start gap-3 ${selectedId === h.id ? "bg-slate-50" : ""}`}
+                  >
+                    <div
+                      className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}
                     >
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{h.materi}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {h.jumlahSoal} soal &middot; {h.jenisSoal === "pilihan_ganda" ? "PG" : "Esai"} &middot; {safeFormat(h.createdAt, "dd MMM yyyy")}
-                        </p>
+                      {isPG ? (
+                        <ClipboardList className="w-4 h-4" />
+                      ) : (
+                        <FileText className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-tight">
+                        {h.materi}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                          {isPG ? "Pilihan Ganda" : "Esai"}
+                        </span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                        <span className="text-[10px] font-medium text-slate-500">{h.jumlahSoal} Soal</span>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={downloadingId === h.id}
-                          onClick={(e) => { e.stopPropagation(); handleDownload(h.id); }}
-                        >
-                          {downloadingId === h.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive"
-                          onClick={(e) => { e.stopPropagation(); handleDelete(h.id); }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                      <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
+                        <Clock className="w-3 h-3" />
+                        {safeFormat(h.createdAt, "dd MMM yyyy")}
                       </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(h.id); }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
-                  ))}
-                </div>
-              )}
+                  </button>
+                );
+              })}
             </div>
-          </div>
-
-          <div className="lg:col-span-2 bg-card border border-border rounded-xl shadow-sm p-6 min-h-[500px]">
-            {isLoadingSelected ? (
-              <div className="space-y-3">{Array(8).fill(0).map((_, i) => <Skeleton key={i} className="h-5 w-full" />)}</div>
-            ) : selectedSoal ? (
-              <>
-                <div className="flex justify-end mb-4">
-                  <Button variant="outline" size="sm" onClick={() => handleDownload(selectedSoal.id)} disabled={downloadingId === selectedSoal.id}>
-                    {downloadingId === selectedSoal.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                    Unduh .docx
-                  </Button>
-                </div>
-                <PreviewErrorBoundary>
-                  <SoalPreview soal={selectedSoal} />
-                </PreviewErrorBoundary>
-              </>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground py-20">
-                <ListChecks className="w-12 h-12 mb-3 text-muted-foreground/30" />
-                <p>Isi form di sebelah kiri lalu klik "Generate Soal" untuk membuat soal baru,</p>
-                <p>atau pilih salah satu riwayat untuk melihat kembali.</p>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </Layout>
