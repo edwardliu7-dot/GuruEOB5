@@ -407,7 +407,7 @@ export default function Administrasi() {
   const [innerTab, setInnerTab] = useState<"dokumen" | "tp">("dokumen");
   const [pageTab, setPageTab] = useState<"administrasi" | "bahan-ajar">("administrasi");
 
-  const { data: documents, isLoading: isLoadingDocuments } = useListDocuments(
+  const { data: documents, isLoading: isLoadingDocuments, isError: isErrorDocuments } = useListDocuments(
     { subjectId: selectedSubject || undefined },
     { query: { enabled: !!selectedSubject, queryKey: getListDocumentsQueryKey({ subjectId: selectedSubject || undefined }) } },
   );
@@ -963,14 +963,20 @@ export default function Administrasi() {
                   <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                     {isLoadingDocuments ? (
                       <div className="p-4 space-y-4"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
-                    ) : documents?.length === 0 ? (
+                    ) : isErrorDocuments ? (
+                      <div className="py-16 text-center text-muted-foreground">
+                        <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+                        <p className="font-medium">Gagal memuat dokumen.</p>
+                        <p className="text-sm mt-1">Coba muat ulang halaman ini.</p>
+                      </div>
+                    ) : !documents || documents.length === 0 ? (
                       <div className="py-16 text-center text-muted-foreground">
                         <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
                         <p>Belum ada dokumen untuk mata pelajaran ini.</p>
                       </div>
                     ) : (
                       <div className="divide-y divide-border">
-                        {documents?.map((doc: any) => (
+                        {documents.map((doc: any) => (
                           <div key={doc.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                             <div className="flex items-center gap-4">
                               <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-500">
