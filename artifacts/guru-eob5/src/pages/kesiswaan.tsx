@@ -17,6 +17,7 @@ import {
   Search,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function getProgressColor(pct: number) {
   if (pct >= 93) return "bg-emerald-500";
@@ -60,6 +61,7 @@ export default function Kesiswaan() {
   const { data: siswaAbsensi, isLoading: isLoadingSiswa } = useGetKesiswaanAbsensiSiswa();
   const [activeTab, setActiveTab] = useState<"ringkasan" | "siswa">("ringkasan");
   const [searchSiswa, setSearchSiswa] = useState("");
+  const [filterKelas, setFilterKelas] = useState<string>("semua");
 
   const summary = useMemo(() => {
     if (!data?.perKelas?.length) return null;
@@ -84,18 +86,27 @@ export default function Kesiswaan() {
 
   const enrichedKelas = useMemo(() => {
     if (!data?.perKelas?.length) return [];
-    return data.perKelas.map((k: any) => {
-      const total = k.hadir + k.izin + k.sakit + k.alpa;
-      const pctHadir = total > 0 ? Math.round((k.hadir / total) * 100) : 0;
-      const status =
-        pctHadir >= 93 && k.totalPoinNegatif <= 50
-          ? "Baik"
-          : pctHadir < 85 || k.totalPoinNegatif > 100
-          ? "Kritis"
-          : "Perhatian";
-      return { ...k, pctHadir, status };
-    });
+    return data.perKelas
+      .map((k: any) => {
+        const total = k.hadir + k.izin + k.sakit + k.alpa;
+        const pctHadir = total > 0 ? Math.round((k.hadir / total) * 100) : 0;
+        const status =
+          pctHadir >= 93 && k.totalPoinNegatif <= 50
+            ? "Baik"
+            : pctHadir < 85 || k.totalPoinNegatif > 100
+            ? "Kritis"
+            : "Perhatian";
+        return { ...k, pctHadir, status };
+      })
+      .sort((a: any, b: any) => a.kelas.localeCompare(b.kelas, "id"));
   }, [data]);
+
+  const kelasOptions = useMemo(() => {
+    if (!siswaAbsensi?.length) return [];
+    return [...new Set((siswaAbsensi as any[]).map((s: any) => s.kelas))].sort((a, b) =>
+      a.localeCompare(b, "id"),
+    );
+  }, [siswaAbsensi]);
 
   const topPelanggaran = (data?.siswaPoinTerbanyak ?? []).slice(0, 6);
   const topPrestasi = (data?.siswaPoinPositifTerbanyak ?? []).slice(0, 6);
@@ -207,8 +218,8 @@ export default function Kesiswaan() {
 
       {activeTab === "siswa" && (
         <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <div className="relative flex-1 min-w-48 max-w-sm">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input
                 placeholder="Cari nama siswa..."
@@ -217,6 +228,19 @@ export default function Kesiswaan() {
                 onChange={(e) => setSearchSiswa(e.target.value)}
               />
             </div>
+            {kelasOptions.length > 0 && (
+              <Select value={filterKelas} onValueChange={setFilterKelas}>
+                <SelectTrigger className="h-9 w-52 rounded-full">
+                  <SelectValue placeholder="Semua Kelas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua Kelas</SelectItem>
+                  {kelasOptions.map((k: string) => (
+                    <SelectItem key={k} value={k}>{k}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <table className="w-full text-left border-collapse">
@@ -242,7 +266,10 @@ export default function Kesiswaan() {
                   <tr><td colSpan={9} className="p-12 text-center text-slate-400">Belum ada data siswa.</td></tr>
                 ) : (
                   siswaAbsensi
-                    .filter((s: any) => !searchSiswa || s.namaLengkap.toLowerCase().includes(searchSiswa.toLowerCase()) || s.kelas.toLowerCase().includes(searchSiswa.toLowerCase()))
+                    .filter((s: any) =>
+                      (filterKelas === "semua" || s.kelas === filterKelas) &&
+                      (!searchSiswa || s.namaLengkap.toLowerCase().includes(searchSiswa.toLowerCase()) || s.kelas.toLowerCase().includes(searchSiswa.toLowerCase()))
+                    )
                     .map((s: any) => (
                       <tr key={s.studentId} className="hover:bg-slate-50 transition-colors">
                         <td className="p-4 font-medium text-slate-800">{s.namaLengkap}</td>

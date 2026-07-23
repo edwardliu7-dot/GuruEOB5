@@ -436,7 +436,14 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
           <div className="divide-y divide-border">
             {grouped.map(([lm, items]) => (
               <div key={lm} className="p-4">
-                <h4 className="font-semibold text-sm text-primary mb-2">Lingkup Materi {lm}</h4>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-sm text-primary">Lingkup Materi {lm}</h4>
+                  {items.length > 1 && (
+                    <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1">
+                      <GripVertical className="w-3 h-3" /> Seret untuk ubah urutan
+                    </span>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {items.map((item: any) => (
                     <div

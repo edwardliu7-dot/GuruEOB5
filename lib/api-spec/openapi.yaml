@@ -178,6 +178,13 @@ paths:
       operationId: getKesiswaanAbsensiSiswa
       tags: [dashboard]
       summary: Per-student attendance breakdown for wakasek kesiswaan
+      parameters:
+        - name: calendarId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter attendance to the date range of this academic calendar semester.
       responses:
         "200":
           description: Per-student attendance data

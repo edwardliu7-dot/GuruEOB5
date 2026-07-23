@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte, max, min } from "drizzle-orm";
 import {
   db,
   studentsTable,
@@ -12,6 +12,7 @@ import {
   prosemTable,
   neonDb,
   gurusTable,
+  academicWeeksTable,
   type Guru,
 } from "@workspace/db";
 import {
@@ -242,6 +243,21 @@ router.get("/kesiswaan/absensi-siswa", requireAuth, async (req, res): Promise<vo
     return;
   }
 
+  // Optional: filter attendance to a specific academic semester's date range
+  const calendarId = typeof req.query.calendarId === "string" ? req.query.calendarId : null;
+  let dateFrom: string | null = null;
+  let dateTo: string | null = null;
+  if (calendarId) {
+    const [range] = await db
+      .select({ from: min(academicWeeksTable.tanggalMulai), to: max(academicWeeksTable.tanggalSelesai) })
+      .from(academicWeeksTable)
+      .where(eq(academicWeeksTable.calendarId, calendarId));
+    if (range?.from && range?.to) {
+      dateFrom = range.from;
+      dateTo = range.to;
+    }
+  }
+
   const studentFilter = schoolStudentsFilter(guru);
   const students = studentFilter
     ? await db.select().from(studentsTable).where(studentFilter)
@@ -251,7 +267,13 @@ router.get("/kesiswaan/absensi-siswa", requireAuth, async (req, res): Promise<vo
   const [attendance, points] =
     scopedStudentIds.length > 0
       ? await Promise.all([
-          db.select().from(attendanceTable).where(inArray(attendanceTable.studentId, scopedStudentIds)),
+          db.select().from(attendanceTable).where(
+            and(
+              inArray(attendanceTable.studentId, scopedStudentIds),
+              ...(dateFrom ? [gte(attendanceTable.tanggal, dateFrom)] : []),
+              ...(dateTo ? [lte(attendanceTable.tanggal, dateTo)] : []),
+            ),
+          ),
           db.select().from(pointsTable).where(inArray(pointsTable.studentId, scopedStudentIds)),
         ])
       : [[], []];

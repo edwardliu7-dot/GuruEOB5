@@ -47,6 +47,7 @@ import type {
   GenerateSoalOtomatisInput,
   GenerateStudentAccountInput,
   GetInfoPekananParams,
+  GetKesiswaanAbsensiSiswaParams,
   GetRekapAbsensiParams,
   GetRekapNilaiParams,
   Grade,
@@ -818,20 +819,27 @@ export function useGetKesiswaanOverview<TData = Awaited<ReturnType<typeof getKes
 
 
 
-export const getGetKesiswaanAbsensiSiswaUrl = () => {
+export const getGetKesiswaanAbsensiSiswaUrl = (params?: GetKesiswaanAbsensiSiswaParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/kesiswaan/absensi-siswa`
+  return stringifiedParams.length > 0 ? `/api/kesiswaan/absensi-siswa?${stringifiedParams}` : `/api/kesiswaan/absensi-siswa`
 }
 
 /**
  * @summary Per-student attendance breakdown for wakasek kesiswaan
  */
-export const getKesiswaanAbsensiSiswa = async ( options?: RequestInit): Promise<KesiswaanSiswaAbsensi[]> => {
+export const getKesiswaanAbsensiSiswa = async (params?: GetKesiswaanAbsensiSiswaParams, options?: RequestInit): Promise<KesiswaanSiswaAbsensi[]> => {
 
-  return customFetch<KesiswaanSiswaAbsensi[]>(getGetKesiswaanAbsensiSiswaUrl(),
+  return customFetch<KesiswaanSiswaAbsensi[]>(getGetKesiswaanAbsensiSiswaUrl(params),
   {
     ...options,
     method: 'GET'
@@ -844,23 +852,23 @@ export const getKesiswaanAbsensiSiswa = async ( options?: RequestInit): Promise<
 
 
 
-export const getGetKesiswaanAbsensiSiswaQueryKey = () => {
+export const getGetKesiswaanAbsensiSiswaQueryKey = (params?: GetKesiswaanAbsensiSiswaParams,) => {
     return [
-    `/api/kesiswaan/absensi-siswa`
+    `/api/kesiswaan/absensi-siswa`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetKesiswaanAbsensiSiswaQueryOptions = <TData = Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetKesiswaanAbsensiSiswaQueryOptions = <TData = Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError = ErrorType<unknown>>(params?: GetKesiswaanAbsensiSiswaParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetKesiswaanAbsensiSiswaQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetKesiswaanAbsensiSiswaQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>> = ({ signal }) => getKesiswaanAbsensiSiswa({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>> = ({ signal }) => getKesiswaanAbsensiSiswa(params, { signal, ...requestOptions });
 
 
 
@@ -878,11 +886,11 @@ export type GetKesiswaanAbsensiSiswaQueryError = ErrorType<unknown>
  */
 
 export function useGetKesiswaanAbsensiSiswa<TData = Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetKesiswaanAbsensiSiswaParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetKesiswaanAbsensiSiswaQueryOptions(options)
+  const queryOptions = getGetKesiswaanAbsensiSiswaQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

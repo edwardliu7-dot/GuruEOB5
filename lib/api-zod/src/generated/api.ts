@@ -202,6 +202,10 @@ export const GetKesiswaanOverviewResponse = zod.object({
 /**
  * @summary Per-student attendance breakdown for wakasek kesiswaan
  */
+export const GetKesiswaanAbsensiSiswaQueryParams = zod.object({
+  "calendarId": zod.coerce.string().optional().describe('Filter attendance to the date range of this academic calendar semester.')
+})
+
 export const GetKesiswaanAbsensiSiswaResponseItem = zod.object({
   "studentId": zod.string(),
   "namaLengkap": zod.string(),

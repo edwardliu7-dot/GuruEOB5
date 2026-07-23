@@ -120,10 +120,12 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
   const [isUploading, setIsUploading] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [presentingId, setPresentingId] = useState<string | null>(null);
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string; fileType?: string | null } | null>(null);
 
   // Build dropdown options from existing data
   const subjectOptions: string[] = subjects?.map((s: any) => s.name).filter(Boolean) ?? [];
-  const kelasOptions: string[] = (me?.kelasDiampu as string[] | undefined) ?? [];
+  const kelasOptions: string[] = [...((me?.kelasDiampu as string[] | undefined) ?? [])].sort((a, b) => a.localeCompare(b, "id"));
 
   const form = useForm<BahanAjarFormValues>({
     resolver: zodResolver(bahanAjarSchema),
@@ -199,7 +201,44 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
     }
   };
 
+  const handleView = async (item: any) => {
+    setPreviewingId(item.id);
+    try {
+      const res = await fetch(`/api/bahan-ajar/${item.id}/file`, { credentials: "include" });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setPreviewDoc({ name: item.judul, url, fileType: item.fileType });
+    } catch {
+      toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat membuka berkas" });
+    } finally {
+      setPreviewingId(null);
+    }
+  };
+
   return (
+    <>
+    {/* Embedded file viewer dialog for Bahan Ajar */}
+    {previewDoc && (
+      <Dialog open={!!previewDoc} onOpenChange={(open) => {
+        if (!open) { URL.revokeObjectURL(previewDoc.url); setPreviewDoc(null); }
+      }}>
+        <DialogContent className="max-w-5xl w-full p-0 overflow-hidden flex flex-col" style={{ height: "85vh" }}>
+          <DialogHeader className="px-6 pt-5 pb-3 border-b flex-shrink-0">
+            <DialogTitle className="truncate">{previewDoc.name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {previewDoc.fileType?.startsWith("image/") ? (
+              <div className="w-full h-full flex items-center justify-center bg-muted/30 p-4">
+                <img src={previewDoc.url} alt={previewDoc.name} className="max-h-full max-w-full object-contain rounded" />
+              </div>
+            ) : (
+              <iframe src={previewDoc.url} className="w-full h-full" title={previewDoc.name} style={{ border: "none" }} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -346,13 +385,13 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
                       <>
                         <Button
                           variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                          title="Buka / Presentasikan"
-                          disabled={presentingId === item.id}
-                          onClick={() => handleOpen(item)}
+                          title="Lihat berkas"
+                          disabled={previewingId === item.id}
+                          onClick={() => handleView(item)}
                         >
-                          {presentingId === item.id
+                          {previewingId === item.id
                             ? <Loader2 className="w-4 h-4 animate-spin" />
-                            : <ExternalLink className="w-4 h-4" />}
+                            : <Eye className="w-4 h-4" />}
                         </Button>
                         <Button
                           variant="ghost" size="icon" className="h-8 w-8"
@@ -374,6 +413,7 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
         </div>
       )}
     </div>
+    </>
   );
 }
 
@@ -385,6 +425,7 @@ export default function Administrasi() {
     {},
     { query: { queryKey: getListDocumentsQueryKey({}) } },
   );
+  const { data: bahanAjarList } = useBahanAjar();
   const createSubject = useCreateSubject();
   const updateSubject = useUpdateSubject();
   const deleteSubject = useDeleteSubject();
@@ -794,7 +835,7 @@ export default function Administrasi() {
                     {[
                       { label: "Mata Pelajaran", count: subjects?.length ?? 0, color: "blue" },
                       { label: "Modul Ajar", count: allDocuments?.length ?? 0, color: "violet" },
-                      { label: "Bahan Ajar", count: 0, color: "amber" },
+                      { label: "Bahan Ajar", count: (bahanAjarList as any)?.length ?? 0, color: "amber" },
                       { label: "Tujuan Pembelajaran", count: 0, color: "emerald" },
                     ].map((stat, idx) => {
                       const colorStyles: Record<string, { bg: string; text: string; bar: string }> = {
@@ -834,7 +875,7 @@ export default function Administrasi() {
                           <p>Belum ada mata pelajaran.</p>
                         </div>
                       ) : (
-                        subjects?.map((subject: any, idx: number) => {
+                        [...(subjects ?? [])].sort((a: any, b: any) => a.name.localeCompare(b.name, "id")).map((subject: any, idx: number) => {
                           const folderColors = ["blue", "emerald", "violet", "amber", "blue", "emerald"] as const;
                           const colorKey = folderColors[idx % folderColors.length];
                           const colorStyles: Record<string, { bg: string; text: string; ring: string }> = {
@@ -886,9 +927,14 @@ export default function Administrasi() {
                                 <div>
                                   <h3 className="font-bold text-lg text-slate-800 line-clamp-1">{subject.name}</h3>
                                   <div className="flex items-center gap-2 mt-2">
-                                    <span className="inline-flex items-center gap-1 text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
-                                      <FileText className="w-3 h-3" /> Modul Ajar
-                                    </span>
+                                    {(() => {
+                                      const cnt = allDocuments?.filter((d: any) => d.subjectId === subject.id).length ?? 0;
+                                      return (
+                                        <span className="inline-flex items-center gap-1 text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                                          <FileText className="w-3 h-3" /> {cnt} Modul Ajar
+                                        </span>
+                                      );
+                                    })()}
                                     <span className="inline-flex items-center gap-1 text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
                                       <Target className="w-3 h-3" /> TP
                                     </span>
@@ -918,7 +964,7 @@ export default function Administrasi() {
                       </h2>
                       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         <div className="divide-y divide-slate-100">
-                          {subjects?.map((subject: any, idx: number) => {
+                          {[...(subjects ?? [])].sort((a: any, b: any) => a.name.localeCompare(b.name, "id")).map((subject: any, idx: number) => {
                             const folderColors = ["blue", "emerald", "violet", "amber", "blue", "emerald"] as const;
                             const colorKey = folderColors[idx % folderColors.length];
                             const iconColors: Record<string, string> = {
@@ -938,7 +984,12 @@ export default function Administrasi() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-bold text-slate-800 truncate">{subject.name}</p>
-                                  <p className="text-xs text-slate-400 mt-0.5">Klik untuk buka dokumen</p>
+                                  <p className="text-xs text-slate-400 mt-0.5">
+                                    {(() => {
+                                      const cnt = allDocuments?.filter((d: any) => d.subjectId === subject.id).length ?? 0;
+                                      return cnt > 0 ? `${cnt} modul ajar` : "Belum ada modul ajar";
+                                    })()}
+                                  </p>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
                               </div>

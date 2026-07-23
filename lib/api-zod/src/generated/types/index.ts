@@ -48,6 +48,7 @@ export * from './generateSoalOtomatisInputJenisSoal';
 export * from './generateSoalOtomatisInputTingkatKesulitan';
 export * from './generateStudentAccountInput';
 export * from './getInfoPekananParams';
+export * from './getKesiswaanAbsensiSiswaParams';
 export * from './getRekapAbsensiParams';
 export * from './getRekapNilaiParams';
 export * from './grade';

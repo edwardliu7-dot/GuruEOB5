@@ -1058,6 +1058,13 @@ export interface RoleJurnalResponse {
   entries: RoleJurnalEntry[];
 }
 
+export type GetKesiswaanAbsensiSiswaParams = {
+/**
+ * Filter attendance to the date range of this academic calendar semester.
+ */
+calendarId?: string;
+};
+
 export type ListStudentAccounts200Item = {
   studentId: string;
   namaLengkap: string;
