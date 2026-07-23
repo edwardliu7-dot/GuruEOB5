@@ -385,7 +385,19 @@ export default function Administrasi() {
   const updateSubject = useUpdateSubject();
   const deleteSubject = useDeleteSubject();
 
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [selectedSubject, setSelectedSubjectRaw] = useState<string | null>(() => {
+    // Restore last-opened subject so documents are visible immediately on re-visit
+    return localStorage.getItem("administrasi_selectedSubject") ?? null;
+  });
+
+  const setSelectedSubject = useCallback((id: string | null) => {
+    setSelectedSubjectRaw(id);
+    if (id) {
+      localStorage.setItem("administrasi_selectedSubject", id);
+    } else {
+      localStorage.removeItem("administrasi_selectedSubject");
+    }
+  }, []);
   const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<any | null>(null);
   const [innerTab, setInnerTab] = useState<"dokumen" | "tp">("dokumen");
