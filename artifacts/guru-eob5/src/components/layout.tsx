@@ -117,6 +117,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const utamaNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/direktori", label: "Direktori Guru", icon: Contact },
+    { href: "/direktori-siswa", label: "Direktori Siswa", icon: Users },
     { href: "/pengaturan", label: "Pengaturan Tampilan", icon: Settings2 },
   ];
 

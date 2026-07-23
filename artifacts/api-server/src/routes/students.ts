@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, studentsTable, type InsertStudent, type Student } from "@workspace/db";
+import { eq, inArray } from "drizzle-orm";
+import { db, neonDb, studentsTable, studentAccountsTable, tomatStudentsTable, type InsertStudent, type Student } from "@workspace/db";
 import {
   ListStudentsResponse,
   CreateStudentBody,
@@ -149,6 +149,79 @@ router.post("/students/bulk", requireAuth, requireSchoolAdmin, async (req, res):
       : [];
   skipped += toInsert.length - inserted.length;
   res.json(BulkCreateStudentsResponse.parse({ count: inserted.length, skipped }));
+});
+
+// ── Direktori Siswa ──────────────────────────────────────────────────────────
+// Returns all students in the school enriched with account status and
+// BLP/Tomat progress (level, coins, exp) from the shared Neon DB.
+// Must be registered BEFORE /students/:id so "directory" is not treated as an id.
+router.get("/students/directory", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!guru.school) {
+    res.json([]);
+    return;
+  }
+
+  // 1. All students in the school (local DB), ordered by kelas then name
+  const students = await db
+    .select()
+    .from(studentsTable)
+    .where(eq(studentsTable.school, guru.school));
+
+  if (students.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  // 2. Student accounts that have been generated (local DB)
+  const studentIds = students.map((s) => s.id);
+  const accounts = await db
+    .select()
+    .from(studentAccountsTable)
+    .where(inArray(studentAccountsTable.studentId, studentIds));
+
+  const accountByStudentId = new Map(accounts.map((a) => [a.studentId, a]));
+
+  // 3. BLP/Tomat progress from shared Neon DB (only for students with accounts)
+  const tomatIds = accounts.map((a) => a.tomatStudentId);
+  const tomatRows =
+    tomatIds.length > 0
+      ? await neonDb
+          .select({
+            id: tomatStudentsTable.id,
+            coins: tomatStudentsTable.coins,
+            level: tomatStudentsTable.level,
+            exp: tomatStudentsTable.exp,
+            totalCoinsEarned: tomatStudentsTable.totalCoinsEarned,
+          })
+          .from(tomatStudentsTable)
+          .where(inArray(tomatStudentsTable.id, tomatIds))
+      : [];
+  const tomatById = new Map(tomatRows.map((r) => [r.id, r]));
+
+  const result = students.map((s) => {
+    const account = accountByStudentId.get(s.id);
+    const tomat = account ? tomatById.get(account.tomatStudentId) : undefined;
+    return {
+      id: s.id,
+      namaLengkap: s.namaLengkap,
+      kelas: s.kelas,
+      nisn: s.nisn ?? null,
+      jenisKelamin: s.jenisKelamin,
+      hasAccount: !!account,
+      username: account?.username ?? null,
+      coins: tomat?.coins ?? null,
+      level: tomat?.level ?? null,
+      exp: tomat?.exp ?? null,
+      totalCoinsEarned: tomat?.totalCoinsEarned ?? null,
+    };
+  });
+
+  res.json(result);
 });
 
 router.get("/students/:id", requireAuth, async (req, res): Promise<void> => {

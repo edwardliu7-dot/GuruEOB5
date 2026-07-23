@@ -30,6 +30,7 @@ import SoalOtomatis from "@/pages/soal-otomatis";
 import FeedbackAdmin from "@/pages/feedback";
 import Pengaturan from "@/pages/pengaturan";
 import Direktori from "@/pages/direktori";
+import DirektoriSiswa from "@/pages/direktori-siswa";
 import Jadwal from "@/pages/jadwal";
 import Rekap from "@/pages/rekap";
 import NotFound from "@/pages/not-found";
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/feedback" component={() => <ProtectedRoute component={FeedbackAdmin} adminOnly />} />
       <Route path="/pengaturan" component={() => <ProtectedRoute component={Pengaturan} />} />
       <Route path="/direktori" component={() => <ProtectedRoute component={Direktori} />} />
+      <Route path="/direktori-siswa" component={() => <ProtectedRoute component={DirektoriSiswa} />} />
       <Route path="/jadwal" component={() => <ProtectedRoute component={Jadwal} />} />
       <Route path="/rekap" component={() => <ProtectedRoute component={Rekap} />} />
       <Route component={NotFound} />
