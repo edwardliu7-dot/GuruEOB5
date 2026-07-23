@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as gurusSchema from "./gurus";
 import * as tomatStudentsSchema from "./tomat-students";
+import * as blpSchema from "./blp-daily-records";
 
 const { Pool } = pg;
 
@@ -14,7 +15,8 @@ if (!process.env.NEON_DATABASE_URL) {
 export const neonPool = new Pool({
   connectionString: process.env.NEON_DATABASE_URL,
 });
-export const neonDb = drizzle(neonPool, { schema: { ...gurusSchema, ...tomatStudentsSchema } });
+export const neonDb = drizzle(neonPool, { schema: { ...gurusSchema, ...tomatStudentsSchema, ...blpSchema } });
 
 export * from "./gurus";
 export * from "./tomat-students";
+export * from "./blp-daily-records";

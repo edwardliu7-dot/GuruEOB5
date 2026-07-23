@@ -23,11 +23,16 @@ type StudentDirectoryItem = {
   jenisKelamin: "L" | "P";
   hasAccount: boolean;
   username: string | null;
+  photoUrl: string | null;
+  // TOMAT gamification
   coins: number | null;
   level: number | null;
   exp: number | null;
   totalCoinsEarned: number | null;
   bestSurvivalStreak: number | null;
+  // BLP progress (current month)
+  blpDaysActive: number | null;
+  blpActivitiesTotal: number | null;
 };
 
 type AppMode = "blp" | "tomat";
@@ -306,9 +311,15 @@ export default function DirektoriSiswa() {
           {filtered.map((s, idx) => {
             const avatarColor = AVATAR_PALETTES[idx % AVATAR_PALETTES.length];
             const kelasColor = KELAS_COLORS[kelasColorIdx(s.kelas)];
-            const isActive = s.hasAccount && (s.level ?? 0) > 0;
+            const isActive = s.hasAccount && ((s.level ?? 0) > 0 || (s.blpDaysActive ?? 0) > 0);
             const ep = expPct(s.exp);
             const barColor = levelBarColor(s.level);
+            // BLP: days elapsed in current month for progress bar
+            const today = new Date();
+            const daysInMonthSoFar = today.getDate();
+            const blpPct = s.blpDaysActive != null && daysInMonthSoFar > 0
+              ? Math.min(Math.round((s.blpDaysActive / daysInMonthSoFar) * 100), 100)
+              : 0;
 
             return (
               <div
@@ -317,10 +328,12 @@ export default function DirektoriSiswa() {
               >
                 {/* Header */}
                 <div className="flex items-start gap-4 mb-4">
-                  <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl shrink-0 ${avatarColor}`}
-                  >
-                    {initials(s.namaLengkap)}
+                  <div className={`w-14 h-14 rounded-full shrink-0 overflow-hidden flex items-center justify-center font-bold text-xl ${s.photoUrl ? "" : avatarColor}`}>
+                    {s.photoUrl ? (
+                      <img src={s.photoUrl} alt={s.namaLengkap} className="w-full h-full object-cover" />
+                    ) : (
+                      initials(s.namaLengkap)
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
                     <h3 className="font-semibold text-slate-800 truncate leading-tight">
@@ -372,36 +385,37 @@ export default function DirektoriSiswa() {
                       )}
                     </div>
                   ) : appMode === "blp" ? (
-                    /* BLP progress */
+                    /* BLP progress — daily_records this month */
                     <div className="space-y-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1.5">
-                          <Star className="w-3 h-3 text-blue-500" />
-                          <span className="text-xs font-bold text-blue-700">Lv {s.level}</span>
+                      {(s.blpDaysActive == null || s.blpDaysActive === 0) ? (
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
+                          <Zap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="text-xs text-slate-500 font-medium">Belum ada aktivitas BLP bulan ini</span>
                         </div>
-                        {s.coins != null && (
-                          <div className="flex items-center gap-1 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
-                            <Coins className="w-3 h-3 text-amber-500" />
-                            <span className="text-xs font-bold text-amber-700">{s.coins.toLocaleString("id")}</span>
+                      ) : (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1.5">
+                            <Star className="w-3 h-3 text-blue-500" />
+                            <span className="text-xs font-bold text-blue-700">{s.blpDaysActive} hari aktif</span>
                           </div>
-                        )}
-                        {s.exp != null && (
-                          <div className="flex items-center gap-1 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5">
-                            <Zap className="w-3 h-3 text-emerald-500" />
-                            <span className="text-xs font-bold text-emerald-700">{s.exp} XP</span>
-                          </div>
-                        )}
-                      </div>
+                          {s.blpActivitiesTotal != null && s.blpActivitiesTotal > 0 && (
+                            <div className="flex items-center gap-1 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5">
+                              <Zap className="w-3 h-3 text-emerald-500" />
+                              <span className="text-xs font-bold text-emerald-700">{s.blpActivitiesTotal} aktivitas</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div>
                         <div className="flex items-center justify-between text-[10px] mb-1 text-slate-500">
                           <span className="font-medium flex items-center gap-1">
-                            <Zap className="w-2.5 h-2.5" />
-                            Progres ke Level {(s.level ?? 0) + 1}
+                            <Star className="w-2.5 h-2.5" />
+                            Keaktifan bulan ini
                           </span>
-                          <span>{ep}%</span>
+                          <span>{blpPct}%</span>
                         </div>
                         <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                          <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${ep}%` }} />
+                          <div className="h-full rounded-full transition-all bg-blue-500" style={{ width: `${blpPct}%` }} />
                         </div>
                       </div>
                       {s.username && <p className="text-[11px] text-slate-400 font-mono">@{s.username}</p>}

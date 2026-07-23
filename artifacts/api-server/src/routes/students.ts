@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, inArray } from "drizzle-orm";
-import { db, neonDb, studentsTable, studentAccountsTable, tomatStudentsTable, type InsertStudent, type Student } from "@workspace/db";
+import { eq, inArray, and, gte, lte } from "drizzle-orm";
+import { db, neonDb, studentsTable, studentAccountsTable, tomatStudentsTable, blpDailyRecordsTable, type InsertStudent, type Student } from "@workspace/db";
 import {
   ListStudentsResponse,
   CreateStudentBody,
@@ -186,13 +186,14 @@ router.get("/students/directory", requireAuth, async (req, res): Promise<void> =
 
   const accountByStudentId = new Map(accounts.map((a) => [a.studentId, a]));
 
-  // 3. BLP/Tomat progress from shared Neon DB (only for students with accounts)
+  // 3. TOMAT progress + photo from shared Neon DB (only for students with accounts)
   const tomatIds = accounts.map((a) => a.tomatStudentId);
   const tomatRows =
     tomatIds.length > 0
       ? await neonDb
           .select({
             id: tomatStudentsTable.id,
+            photoUrl: tomatStudentsTable.photoUrl,
             coins: tomatStudentsTable.coins,
             level: tomatStudentsTable.level,
             exp: tomatStudentsTable.exp,
@@ -204,9 +205,42 @@ router.get("/students/directory", requireAuth, async (req, res): Promise<void> =
       : [];
   const tomatById = new Map(tomatRows.map((r) => [r.id, r]));
 
+  // 4. BLP progress from shared Neon DB — daily_records for the current month
+  const now = new Date();
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const monthEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+
+  const blpRecords =
+    tomatIds.length > 0
+      ? await neonDb
+          .select({
+            studentId: blpDailyRecordsTable.studentId,
+            completedActivities: blpDailyRecordsTable.completedActivities,
+          })
+          .from(blpDailyRecordsTable)
+          .where(
+            and(
+              inArray(blpDailyRecordsTable.studentId, tomatIds),
+              gte(blpDailyRecordsTable.recordDate, monthStart),
+              lte(blpDailyRecordsTable.recordDate, monthEnd),
+            ),
+          )
+      : [];
+
+  // Aggregate BLP per student: days active + total activities this month
+  const blpByStudentId = new Map<string, { daysActive: number; activitiesTotal: number }>();
+  for (const record of blpRecords) {
+    const existing = blpByStudentId.get(record.studentId) ?? { daysActive: 0, activitiesTotal: 0 };
+    existing.daysActive++;
+    existing.activitiesTotal += record.completedActivities?.length ?? 0;
+    blpByStudentId.set(record.studentId, existing);
+  }
+
   const result = students.map((s) => {
     const account = accountByStudentId.get(s.id);
     const tomat = account ? tomatById.get(account.tomatStudentId) : undefined;
+    const blp = account ? blpByStudentId.get(account.tomatStudentId) : undefined;
     return {
       id: s.id,
       namaLengkap: s.namaLengkap,
@@ -215,11 +249,16 @@ router.get("/students/directory", requireAuth, async (req, res): Promise<void> =
       jenisKelamin: s.jenisKelamin,
       hasAccount: !!account,
       username: account?.username ?? null,
+      photoUrl: tomat?.photoUrl ?? null,
+      // TOMAT gamification
       coins: tomat?.coins ?? null,
       level: tomat?.level ?? null,
       exp: tomat?.exp ?? null,
       totalCoinsEarned: tomat?.totalCoinsEarned ?? null,
       bestSurvivalStreak: tomat?.bestSurvivalStreak ?? null,
+      // BLP progress (current month)
+      blpDaysActive: blp?.daysActive ?? null,
+      blpActivitiesTotal: blp?.activitiesTotal ?? null,
     };
   });
 
