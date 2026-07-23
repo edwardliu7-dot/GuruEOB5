@@ -10,6 +10,7 @@ import {
   Star,
   Coins,
   Zap,
+  Flame,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -26,7 +27,10 @@ type StudentDirectoryItem = {
   level: number | null;
   exp: number | null;
   totalCoinsEarned: number | null;
+  bestSurvivalStreak: number | null;
 };
+
+type AppMode = "blp" | "tomat";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -101,6 +105,7 @@ export default function DirektoriSiswa() {
   const [query, setQuery] = useState("");
   const [kelasFilter, setKelasFilter] = useState("");
   const [accountFilter, setAccountFilter] = useState<"all" | "yes" | "no">("all");
+  const [appMode, setAppMode] = useState<AppMode>("blp");
 
   const kelasList = useMemo(
     () => [...new Set(data.map((s) => s.kelas))].sort(),
@@ -210,45 +215,75 @@ export default function DirektoriSiswa() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
-        {/* Search */}
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Cari nama, NISN, atau username…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all placeholder:text-slate-400"
-          />
+      <div className="flex flex-col gap-3 mb-6">
+        {/* Row 1: Search + Kelas + Account */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          {/* Search */}
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cari nama, NISN, atau username…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent transition-all placeholder:text-slate-400"
+            />
+          </div>
+
+          {/* Kelas filter */}
+          <select
+            value={kelasFilter}
+            onChange={(e) => setKelasFilter(e.target.value)}
+            className="appearance-none bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-full text-sm font-medium focus:outline-none hover:bg-slate-50 transition-colors pr-8"
+          >
+            <option value="">Semua Kelas</option>
+            {kelasList.map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+          </select>
+
+          {/* Account filter */}
+          <select
+            value={accountFilter}
+            onChange={(e) =>
+              setAccountFilter(e.target.value as "all" | "yes" | "no")
+            }
+            className="appearance-none bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-full text-sm font-medium focus:outline-none hover:bg-slate-50 transition-colors pr-8"
+          >
+            <option value="all">Semua Status Akun</option>
+            <option value="yes">Punya Akun</option>
+            <option value="no">Belum Akun</option>
+          </select>
         </div>
 
-        {/* Kelas filter */}
-        <select
-          value={kelasFilter}
-          onChange={(e) => setKelasFilter(e.target.value)}
-          className="appearance-none bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-full text-sm font-medium focus:outline-none hover:bg-slate-50 transition-colors pr-8"
-        >
-          <option value="">Semua Kelas</option>
-          {kelasList.map((k) => (
-            <option key={k} value={k}>
-              {k}
-            </option>
-          ))}
-        </select>
-
-        {/* Account filter */}
-        <select
-          value={accountFilter}
-          onChange={(e) =>
-            setAccountFilter(e.target.value as "all" | "yes" | "no")
-          }
-          className="appearance-none bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-full text-sm font-medium focus:outline-none hover:bg-slate-50 transition-colors pr-8"
-        >
-          <option value="all">Semua Status Akun</option>
-          <option value="yes">Punya Akun</option>
-          <option value="no">Belum Akun</option>
-        </select>
+        {/* Row 2: App Mode Toggle — tepat di bawah kolom search */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-400 font-medium mr-1">Tampilkan progres:</span>
+          <button
+            onClick={() => setAppMode("blp")}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${
+              appMode === "blp"
+                ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200"
+                : "bg-white text-slate-500 border-slate-200 hover:border-blue-300 hover:text-blue-600"
+            }`}
+          >
+            <span className="text-sm leading-none">📘</span>
+            BLP
+          </button>
+          <button
+            onClick={() => setAppMode("tomat")}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${
+              appMode === "tomat"
+                ? "bg-rose-500 text-white border-rose-500 shadow-sm shadow-rose-200"
+                : "bg-white text-slate-500 border-slate-200 hover:border-rose-300 hover:text-rose-500"
+            }`}
+          >
+            <span className="text-sm leading-none">🍅</span>
+            TOMAT
+          </button>
+        </div>
       </div>
 
       {/* Grid */}
@@ -318,7 +353,7 @@ export default function DirektoriSiswa() {
                     <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
                       <UserX className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                       <span className="text-xs text-amber-700 font-medium">
-                        Belum punya akun BLP / Tomat
+                        Belum punya akun {appMode === "blp" ? "BLP" : "TOMAT"}
                       </span>
                     </div>
                   ) : !isActive ? (
@@ -336,39 +371,27 @@ export default function DirektoriSiswa() {
                         </p>
                       )}
                     </div>
-                  ) : (
-                    /* Active: show BLP/Tomat progress */
+                  ) : appMode === "blp" ? (
+                    /* BLP progress */
                     <div className="space-y-2.5">
-                      {/* Stats row */}
                       <div className="flex items-center gap-2">
-                        {/* Level */}
                         <div className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1.5">
                           <Star className="w-3 h-3 text-blue-500" />
-                          <span className="text-xs font-bold text-blue-700">
-                            Lv {s.level}
-                          </span>
+                          <span className="text-xs font-bold text-blue-700">Lv {s.level}</span>
                         </div>
-                        {/* Coins */}
                         {s.coins != null && (
                           <div className="flex items-center gap-1 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
                             <Coins className="w-3 h-3 text-amber-500" />
-                            <span className="text-xs font-bold text-amber-700">
-                              {s.coins.toLocaleString("id")}
-                            </span>
+                            <span className="text-xs font-bold text-amber-700">{s.coins.toLocaleString("id")}</span>
                           </div>
                         )}
-                        {/* EXP label */}
                         {s.exp != null && (
                           <div className="flex items-center gap-1 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5">
                             <Zap className="w-3 h-3 text-emerald-500" />
-                            <span className="text-xs font-bold text-emerald-700">
-                              {s.exp} XP
-                            </span>
+                            <span className="text-xs font-bold text-emerald-700">{s.exp} XP</span>
                           </div>
                         )}
                       </div>
-
-                      {/* EXP progress bar toward next level */}
                       <div>
                         <div className="flex items-center justify-between text-[10px] mb-1 text-slate-500">
                           <span className="font-medium flex items-center gap-1">
@@ -378,18 +401,45 @@ export default function DirektoriSiswa() {
                           <span>{ep}%</span>
                         </div>
                         <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${barColor}`}
-                            style={{ width: `${ep}%` }}
-                          />
+                          <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${ep}%` }} />
                         </div>
                       </div>
-
-                      {s.username && (
-                        <p className="text-[11px] text-slate-400 font-mono">
-                          @{s.username}
-                        </p>
-                      )}
+                      {s.username && <p className="text-[11px] text-slate-400 font-mono">@{s.username}</p>}
+                    </div>
+                  ) : (
+                    /* TOMAT progress */
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1 bg-rose-50 border border-rose-100 rounded-lg px-2.5 py-1.5">
+                          <Star className="w-3 h-3 text-rose-500" />
+                          <span className="text-xs font-bold text-rose-700">Lv {s.level}</span>
+                        </div>
+                        {s.coins != null && (
+                          <div className="flex items-center gap-1 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
+                            <Coins className="w-3 h-3 text-amber-500" />
+                            <span className="text-xs font-bold text-amber-700">{s.coins.toLocaleString("id")}</span>
+                          </div>
+                        )}
+                        {s.bestSurvivalStreak != null && (
+                          <div className="flex items-center gap-1 bg-orange-50 border border-orange-100 rounded-lg px-2.5 py-1.5">
+                            <Flame className="w-3 h-3 text-orange-500" />
+                            <span className="text-xs font-bold text-orange-700">{s.bestSurvivalStreak}🔥</span>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between text-[10px] mb-1 text-slate-500">
+                          <span className="font-medium flex items-center gap-1">
+                            <Zap className="w-2.5 h-2.5" />
+                            Progres ke Level {(s.level ?? 0) + 1}
+                          </span>
+                          <span>{ep}%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                          <div className="h-full rounded-full transition-all bg-rose-500" style={{ width: `${ep}%` }} />
+                        </div>
+                      </div>
+                      {s.username && <p className="text-[11px] text-slate-400 font-mono">@{s.username}</p>}
                     </div>
                   )}
                 </div>

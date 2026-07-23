@@ -197,6 +197,7 @@ router.get("/students/directory", requireAuth, async (req, res): Promise<void> =
             level: tomatStudentsTable.level,
             exp: tomatStudentsTable.exp,
             totalCoinsEarned: tomatStudentsTable.totalCoinsEarned,
+            bestSurvivalStreak: tomatStudentsTable.bestSurvivalStreak,
           })
           .from(tomatStudentsTable)
           .where(inArray(tomatStudentsTable.id, tomatIds))
@@ -218,6 +219,7 @@ router.get("/students/directory", requireAuth, async (req, res): Promise<void> =
       level: tomat?.level ?? null,
       exp: tomat?.exp ?? null,
       totalCoinsEarned: tomat?.totalCoinsEarned ?? null,
+      bestSurvivalStreak: tomat?.bestSurvivalStreak ?? null,
     };
   });
 
