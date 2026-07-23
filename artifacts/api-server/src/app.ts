@@ -81,6 +81,35 @@ const sessionTableReady = sessionPool
     ALTER TABLE feedback ADD COLUMN IF NOT EXISTS is_read boolean NOT NULL DEFAULT false;
     -- Sebutan (honorific) for each teacher
     ALTER TABLE gurus ADD COLUMN IF NOT EXISTS sebutan text;
+
+    -- Create subjects table if it doesn't exist yet (fallback for when
+    -- drizzle-kit push fails non-interactively in production/VPS).
+    CREATE TABLE IF NOT EXISTS subjects (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      name text NOT NULL,
+      teacher_id text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      deleted_at timestamptz
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS "subjects_teacher_name_unique"
+      ON subjects (teacher_id, name);
+
+    -- Create documents table if it doesn't exist yet.
+    CREATE TABLE IF NOT EXISTS documents (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      subject_id uuid NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+      name text NOT NULL,
+      description text,
+      file_data text,
+      file_name text,
+      file_type text,
+      file_size integer,
+      uploaded_at timestamptz NOT NULL DEFAULT now()
+    );
+    -- Additive column migrations: ensure file_data/file_name exist even if the
+    -- table was created before these columns were added to the Drizzle schema.
+    ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_data text;
+    ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_name text;
     `,
   )
   .then(() => {

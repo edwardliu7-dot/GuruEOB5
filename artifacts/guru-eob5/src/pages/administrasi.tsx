@@ -484,9 +484,10 @@ export default function Administrasi() {
         });
         setPendingDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: "done" } : d)));
         done++;
-      } catch {
+      } catch (err) {
         setPendingDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: "error" } : d)));
         failed++;
+        console.error("Upload dokumen gagal:", err);
       }
       setUploadProgress({ done, total: todo.length });
     }
