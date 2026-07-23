@@ -201,9 +201,13 @@ router.get("/kesiswaan/overview", requireAuth, async (req, res): Promise<void> =
   });
 
   const poinByStudent = new Map<string, number>();
+  const poinPositifByStudent = new Map<string, number>();
   for (const p of points) {
-    if (p.jenis !== "negatif") continue;
-    poinByStudent.set(p.studentId, (poinByStudent.get(p.studentId) ?? 0) + p.poin);
+    if (p.jenis === "negatif") {
+      poinByStudent.set(p.studentId, (poinByStudent.get(p.studentId) ?? 0) + p.poin);
+    } else {
+      poinPositifByStudent.set(p.studentId, (poinPositifByStudent.get(p.studentId) ?? 0) + p.poin);
+    }
   }
 
   const siswaPoinTerbanyak = [...poinByStudent.entries()]
@@ -212,17 +216,75 @@ router.get("/kesiswaan/overview", requireAuth, async (req, res): Promise<void> =
     .flatMap(([studentId, totalPoin]) => {
       const student = studentById.get(studentId);
       if (!student) return [];
-      return [
-        {
-          studentId,
-          namaLengkap: student.namaLengkap,
-          kelas: student.kelas,
-          totalPoin,
-        },
-      ];
+      return [{ studentId, namaLengkap: student.namaLengkap, kelas: student.kelas, totalPoin }];
     });
 
-  res.json(GetKesiswaanOverviewResponse.parse({ perKelas, siswaPoinTerbanyak }));
+  const siswaPoinPositifTerbanyak = [...poinPositifByStudent.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .flatMap(([studentId, totalPoin]) => {
+      const student = studentById.get(studentId);
+      if (!student) return [];
+      return [{ studentId, namaLengkap: student.namaLengkap, kelas: student.kelas, totalPoin }];
+    });
+
+  res.json(GetKesiswaanOverviewResponse.parse({ perKelas, siswaPoinTerbanyak, siswaPoinPositifTerbanyak }));
+});
+
+router.get("/kesiswaan/absensi-siswa", requireAuth, async (req, res): Promise<void> => {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!isKepsek(guru) && !isWakasek(guru, "Kesiswaan")) {
+    res.status(403).json({ error: "Hanya wakasek kesiswaan yang dapat mengakses halaman ini" });
+    return;
+  }
+
+  const studentFilter = schoolStudentsFilter(guru);
+  const students = studentFilter
+    ? await db.select().from(studentsTable).where(studentFilter)
+    : await db.select().from(studentsTable);
+  const scopedStudentIds = students.map((s) => s.id);
+
+  const [attendance, points] =
+    scopedStudentIds.length > 0
+      ? await Promise.all([
+          db.select().from(attendanceTable).where(inArray(attendanceTable.studentId, scopedStudentIds)),
+          db.select().from(pointsTable).where(inArray(pointsTable.studentId, scopedStudentIds)),
+        ])
+      : [[], []];
+
+  const perSiswa = students
+    .map((s) => {
+      const att = attendance.filter((a) => a.studentId === s.id);
+      const pts = points.filter((p) => p.studentId === s.id);
+      const hadir = att.filter((a) => a.status === "hadir").length;
+      const izin = att.filter((a) => a.status === "izin").length;
+      const sakit = att.filter((a) => a.status === "sakit").length;
+      const alpa = att.filter((a) => a.status === "alpa").length;
+      const totalSesi = hadir + izin + sakit + alpa;
+      const pctHadir = totalSesi > 0 ? Math.round((hadir / totalSesi) * 100) : 0;
+      const totalPoinPositif = pts.filter((p) => p.jenis === "positif").reduce((sum, p) => sum + p.poin, 0);
+      const totalPoinNegatif = pts.filter((p) => p.jenis === "negatif").reduce((sum, p) => sum + p.poin, 0);
+      return {
+        studentId: s.id,
+        namaLengkap: s.namaLengkap,
+        kelas: s.kelas,
+        hadir,
+        izin,
+        sakit,
+        alpa,
+        totalSesi,
+        pctHadir,
+        totalPoinPositif,
+        totalPoinNegatif,
+      };
+    })
+    .sort((a, b) => a.kelas.localeCompare(b.kelas) || a.namaLengkap.localeCompare(b.namaLengkap));
+
+  res.json(perSiswa);
 });
 
 router.get("/walikelas/rekap", requireAuth, async (req, res): Promise<void> => {

@@ -64,6 +64,7 @@ import type {
   JournalEntryInput,
   KepsekOverview,
   KesiswaanOverview,
+  KesiswaanSiswaAbsensi,
   KurikulumOverview,
   ListAcademicWeeksParams,
   ListAttendanceParams,
@@ -105,6 +106,7 @@ import type {
   SuccessResponse,
   TPImportAnalyzeInput,
   TPImportAnalyzeResult,
+  TPReorderInput,
   Teacher,
   TeacherProgress,
   TujuanPembelajaran,
@@ -804,6 +806,83 @@ export function useGetKesiswaanOverview<TData = Awaited<ReturnType<typeof getKes
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetKesiswaanOverviewQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetKesiswaanAbsensiSiswaUrl = () => {
+
+
+
+
+  return `/api/kesiswaan/absensi-siswa`
+}
+
+/**
+ * @summary Per-student attendance breakdown for wakasek kesiswaan
+ */
+export const getKesiswaanAbsensiSiswa = async ( options?: RequestInit): Promise<KesiswaanSiswaAbsensi[]> => {
+
+  return customFetch<KesiswaanSiswaAbsensi[]>(getGetKesiswaanAbsensiSiswaUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetKesiswaanAbsensiSiswaQueryKey = () => {
+    return [
+    `/api/kesiswaan/absensi-siswa`
+    ] as const;
+    }
+
+
+export const getGetKesiswaanAbsensiSiswaQueryOptions = <TData = Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetKesiswaanAbsensiSiswaQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>> = ({ signal }) => getKesiswaanAbsensiSiswa({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetKesiswaanAbsensiSiswaQueryResult = NonNullable<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>>
+export type GetKesiswaanAbsensiSiswaQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Per-student attendance breakdown for wakasek kesiswaan
+ */
+
+export function useGetKesiswaanAbsensiSiswa<TData = Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getKesiswaanAbsensiSiswa>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetKesiswaanAbsensiSiswaQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -3498,6 +3577,77 @@ export const useDeleteTujuanPembelajaran = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteTujuanPembelajaranMutationOptions(options));
+    }
+
+export const getReorderTujuanPembelajaranUrl = () => {
+
+
+
+
+  return `/api/tp/reorder`
+}
+
+/**
+ * @summary Reorder Tujuan Pembelajaran entries within a Lingkup Materi
+ */
+export const reorderTujuanPembelajaran = async (tPReorderInput: TPReorderInput, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getReorderTujuanPembelajaranUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(tPReorderInput)
+  }
+);}
+
+
+
+
+
+export const getReorderTujuanPembelajaranMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reorderTujuanPembelajaran>>, TError,{data: BodyType<TPReorderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reorderTujuanPembelajaran>>, TError,{data: BodyType<TPReorderInput>}, TContext> => {
+
+const mutationKey = ['reorderTujuanPembelajaran'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reorderTujuanPembelajaran>>, {data: BodyType<TPReorderInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  reorderTujuanPembelajaran(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReorderTujuanPembelajaranMutationResult = NonNullable<Awaited<ReturnType<typeof reorderTujuanPembelajaran>>>
+    export type ReorderTujuanPembelajaranMutationBody = BodyType<TPReorderInput>
+    export type ReorderTujuanPembelajaranMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Reorder Tujuan Pembelajaran entries within a Lingkup Materi
+ */
+export const useReorderTujuanPembelajaran = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reorderTujuanPembelajaran>>, TError,{data: BodyType<TPReorderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reorderTujuanPembelajaran>>,
+        TError,
+        {data: BodyType<TPReorderInput>},
+        TContext
+      > => {
+      return useMutation(getReorderTujuanPembelajaranMutationOptions(options));
     }
 
 export const getListJadwalUrl = (params?: ListJadwalParams,) => {

@@ -47,6 +47,7 @@ export const RegisterResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
+  "sebutan": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "isAdmin": zod.boolean()
 })
@@ -72,6 +73,7 @@ export const LoginResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
+  "sebutan": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "isAdmin": zod.boolean()
 })
@@ -100,6 +102,7 @@ export const GetMeResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
+  "sebutan": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "isAdmin": zod.boolean()
 })
@@ -186,8 +189,33 @@ export const GetKesiswaanOverviewResponse = zod.object({
   "namaLengkap": zod.string(),
   "kelas": zod.string(),
   "totalPoin": zod.number()
+})),
+  "siswaPoinPositifTerbanyak": zod.array(zod.object({
+  "studentId": zod.string(),
+  "namaLengkap": zod.string(),
+  "kelas": zod.string(),
+  "totalPoin": zod.number()
 }))
 })
+
+
+/**
+ * @summary Per-student attendance breakdown for wakasek kesiswaan
+ */
+export const GetKesiswaanAbsensiSiswaResponseItem = zod.object({
+  "studentId": zod.string(),
+  "namaLengkap": zod.string(),
+  "kelas": zod.string(),
+  "hadir": zod.number(),
+  "izin": zod.number(),
+  "sakit": zod.number(),
+  "alpa": zod.number(),
+  "totalSesi": zod.number(),
+  "pctHadir": zod.number(),
+  "totalPoinPositif": zod.number(),
+  "totalPoinNegatif": zod.number()
+})
+export const GetKesiswaanAbsensiSiswaResponse = zod.array(GetKesiswaanAbsensiSiswaResponseItem)
 
 
 /**
@@ -351,6 +379,7 @@ export const ListTeachersResponseItem = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
+  "sebutan": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "isAdmin": zod.boolean()
 })
@@ -389,6 +418,7 @@ export const GetTeacherResponse = zod.object({
   "school": zod.string().nullish(),
   "photoUrl": zod.string().nullish(),
   "bio": zod.string().nullish(),
+  "sebutan": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "isAdmin": zod.boolean()
 })
@@ -841,6 +871,24 @@ export const DeleteTujuanPembelajaranParams = zod.object({
 })
 
 export const DeleteTujuanPembelajaranResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Reorder Tujuan Pembelajaran entries within a Lingkup Materi
+ */
+
+
+
+export const ReorderTujuanPembelajaranBody = zod.object({
+  "subjectId": zod.string(),
+  "calendarId": zod.string(),
+  "lingkupMateri": zod.number(),
+  "ids": zod.array(zod.string()).min(1).describe('Ordered list of TP IDs for this Lingkup Materi')
+}).describe('Reorder TP entries within a single Lingkup Materi by supplying their IDs in the desired order.')
+
+export const ReorderTujuanPembelajaranResponse = zod.object({
   "success": zod.boolean()
 })
 

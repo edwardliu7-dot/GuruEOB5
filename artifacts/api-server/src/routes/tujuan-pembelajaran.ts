@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, asc, desc, eq, gt, gte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, sql } from "drizzle-orm";
 import mammoth from "mammoth";
 import { db, subjectsTable, tujuanPembelajaranTable } from "@workspace/db";
 import {
@@ -317,6 +317,61 @@ router.delete("/tp/:id", requireAuth, async (req, res): Promise<void> => {
     );
 
   res.json(DeleteTujuanPembelajaranResponse.parse({ success: true }));
+});
+
+router.post("/tp/reorder", requireAuth, async (req, res): Promise<void> => {
+  const teacherId = req.session.teacherId as string;
+  const { subjectId, calendarId, lingkupMateri, ids } = req.body as {
+    subjectId?: string;
+    calendarId?: string;
+    lingkupMateri?: number;
+    ids?: string[];
+  };
+
+  if (!subjectId || !calendarId || !lingkupMateri || !Array.isArray(ids) || ids.length === 0) {
+    res.status(400).json({ error: "subjectId, calendarId, lingkupMateri, and ids are required" });
+    return;
+  }
+  if (!(await isOwnSubject(subjectId, teacherId))) {
+    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
+    return;
+  }
+
+  const rows = await db
+    .select({ id: tujuanPembelajaranTable.id, tpNumber: tujuanPembelajaranTable.tpNumber })
+    .from(tujuanPembelajaranTable)
+    .where(
+      and(
+        eq(tujuanPembelajaranTable.subjectId, subjectId),
+        eq(tujuanPembelajaranTable.calendarId, calendarId),
+        eq(tujuanPembelajaranTable.lingkupMateri, lingkupMateri),
+        inArray(tujuanPembelajaranTable.id, ids),
+      ),
+    );
+
+  if (rows.length !== ids.length) {
+    res.status(400).json({ error: "Beberapa TP tidak ditemukan dalam Lingkup Materi ini" });
+    return;
+  }
+
+  const minTp = Math.min(...rows.map((r) => r.tpNumber));
+  const OFFSET = 100_000;
+
+  // Step 1: Park all items at temp range to avoid unique constraint violations
+  await db
+    .update(tujuanPembelajaranTable)
+    .set({ tpNumber: sql`${tujuanPembelajaranTable.tpNumber} + ${OFFSET}` })
+    .where(inArray(tujuanPembelajaranTable.id, ids));
+
+  // Step 2: Assign sequential tpNumbers in the requested order
+  for (let i = 0; i < ids.length; i++) {
+    await db
+      .update(tujuanPembelajaranTable)
+      .set({ tpNumber: minTp + i })
+      .where(eq(tujuanPembelajaranTable.id, ids[i]!));
+  }
+
+  res.json({ success: true });
 });
 
 router.post("/tp/import/analyze", requireAuth, async (req, res): Promise<void> => {

@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout";
-import { useGetKesiswaanOverview } from "@workspace/api-client-react";
+import { useGetKesiswaanOverview, useGetKesiswaanAbsensiSiswa } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Users,
   UserCheck,
@@ -13,7 +13,10 @@ import {
   TrendingDown,
   Award,
   MoreHorizontal,
+  Star,
+  Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 function getProgressColor(pct: number) {
   if (pct >= 93) return "bg-emerald-500";
@@ -54,6 +57,9 @@ function getAvatar(name: string) {
 
 export default function Kesiswaan() {
   const { data, isLoading } = useGetKesiswaanOverview();
+  const { data: siswaAbsensi, isLoading: isLoadingSiswa } = useGetKesiswaanAbsensiSiswa();
+  const [activeTab, setActiveTab] = useState<"ringkasan" | "siswa">("ringkasan");
+  const [searchSiswa, setSearchSiswa] = useState("");
 
   const summary = useMemo(() => {
     if (!data?.perKelas?.length) return null;
@@ -92,7 +98,7 @@ export default function Kesiswaan() {
   }, [data]);
 
   const topPelanggaran = (data?.siswaPoinTerbanyak ?? []).slice(0, 6);
-  const topPrestasi = (data?.siswaPoinTerbanyak ?? []).slice(0, 3); // will show differently
+  const topPrestasi = (data?.siswaPoinPositifTerbanyak ?? []).slice(0, 6);
 
   const stats = [
     {
@@ -183,7 +189,88 @@ export default function Kesiswaan() {
         ))}
       </div>
 
-      {/* Main Two-Column Layout */}
+      {/* Tab Navigation */}
+      <div className="flex bg-slate-100/50 p-1 rounded-full w-max mb-5 border border-slate-200/50 shadow-sm">
+        <button
+          onClick={() => setActiveTab("ringkasan")}
+          className={`px-5 py-2 text-sm font-medium rounded-full transition-all ${activeTab === "ringkasan" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+        >
+          Ringkasan Kelas
+        </button>
+        <button
+          onClick={() => setActiveTab("siswa")}
+          className={`px-5 py-2 text-sm font-medium rounded-full transition-all ${activeTab === "siswa" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+        >
+          Rekap Per Siswa
+        </button>
+      </div>
+
+      {activeTab === "siswa" && (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                placeholder="Cari nama siswa..."
+                className="pl-8 h-9 rounded-full"
+                value={searchSiswa}
+                onChange={(e) => setSearchSiswa(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="p-4 font-semibold">Nama Siswa</th>
+                  <th className="p-4 font-semibold">Kelas</th>
+                  <th className="p-4 font-semibold text-center">Hadir</th>
+                  <th className="p-4 font-semibold text-center">Izin</th>
+                  <th className="p-4 font-semibold text-center">Sakit</th>
+                  <th className="p-4 font-semibold text-center">Alpa</th>
+                  <th className="p-4 font-semibold w-36">Kehadiran</th>
+                  <th className="p-4 font-semibold text-center">Poin +</th>
+                  <th className="p-4 font-semibold text-center">Poin −</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {isLoadingSiswa ? (
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <tr key={i}><td colSpan={9} className="p-4"><Skeleton className="h-5 w-full" /></td></tr>
+                  ))
+                ) : !siswaAbsensi?.length ? (
+                  <tr><td colSpan={9} className="p-12 text-center text-slate-400">Belum ada data siswa.</td></tr>
+                ) : (
+                  siswaAbsensi
+                    .filter((s: any) => !searchSiswa || s.namaLengkap.toLowerCase().includes(searchSiswa.toLowerCase()) || s.kelas.toLowerCase().includes(searchSiswa.toLowerCase()))
+                    .map((s: any) => (
+                      <tr key={s.studentId} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-4 font-medium text-slate-800">{s.namaLengkap}</td>
+                        <td className="p-4 text-slate-600">{s.kelas}</td>
+                        <td className="p-4 text-center text-emerald-600 font-semibold">{s.hadir}</td>
+                        <td className="p-4 text-center text-slate-500">{s.izin}</td>
+                        <td className="p-4 text-center text-slate-500">{s.sakit}</td>
+                        <td className="p-4 text-center text-red-500 font-semibold">{s.alpa}</td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold w-9">{s.pctHadir}%</span>
+                            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${getProgressColor(s.pctHadir)}`} style={{ width: `${s.pctHadir}%` }} />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-center font-semibold text-emerald-600">{s.totalPoinPositif > 0 ? s.totalPoinPositif : <span className="text-slate-400">-</span>}</td>
+                        <td className="p-4 text-center font-semibold">{s.totalPoinNegatif > 0 ? <span className={s.totalPoinNegatif > 50 ? "text-red-600" : "text-slate-700"}>{s.totalPoinNegatif}</span> : <span className="text-slate-400">-</span>}</td>
+                      </tr>
+                    ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "ringkasan" && (
       <div className="flex gap-5 items-start">
         {/* Left Column - Table */}
         <div className="flex-1">
@@ -331,6 +418,46 @@ export default function Kesiswaan() {
             </div>
           </div>
 
+          {/* Top Prestasi */}
+          <div>
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-1">
+              Top Prestasi
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
+                <Star size={18} className="text-amber-500" />
+                <span className="font-semibold text-sm text-slate-800">Poin Positif Tertinggi</span>
+              </div>
+              <div className="p-2 flex flex-col gap-1">
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="p-2"><Skeleton className="h-10 w-full" /></div>
+                  ))
+                ) : !topPrestasi.length ? (
+                  <p className="text-xs text-slate-400 text-center py-4">Belum ada poin positif.</p>
+                ) : (
+                  topPrestasi.map((siswa: any, i: number) => (
+                    <div key={siswa.studentId ?? i} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-4">{i + 1}</span>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${getAvatar(siswa.namaLengkap)}`}>
+                          {getInitials(siswa.namaLengkap)}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-slate-800 leading-tight">{siswa.namaLengkap}</span>
+                          <span className="text-xs text-slate-500">{siswa.kelas}</span>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold min-w-[36px]">
+                        +{siswa.totalPoin}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Kelas Terbaik */}
           <div>
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-1">
@@ -344,9 +471,7 @@ export default function Kesiswaan() {
               <div className="p-2 flex flex-col gap-1">
                 {isLoading ? (
                   Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="p-2">
-                      <Skeleton className="h-10 w-full" />
-                    </div>
+                    <div key={i} className="p-2"><Skeleton className="h-10 w-full" /></div>
                   ))
                 ) : !enrichedKelas.length ? (
                   <p className="text-xs text-slate-400 text-center py-4">Belum ada data.</p>
@@ -355,21 +480,14 @@ export default function Kesiswaan() {
                     .sort((a: any, b: any) => b.pctHadir - a.pctHadir)
                     .slice(0, 5)
                     .map((k: any, i: number) => (
-                      <div
-                        key={k.kelas}
-                        className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors"
-                      >
+                      <div key={k.kelas} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors">
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-bold text-slate-400 w-4">{i + 1}</span>
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-emerald-100 text-emerald-700"
-                          >
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-emerald-100 text-emerald-700">
                             {k.kelas.replace(/\s/g, "").slice(0, 3)}
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-slate-800 leading-tight">
-                              {k.kelas}
-                            </span>
+                            <span className="text-sm font-semibold text-slate-800 leading-tight">{k.kelas}</span>
                             <span className="text-xs text-slate-500">{k.totalSiswa} siswa</span>
                           </div>
                         </div>
@@ -384,6 +502,7 @@ export default function Kesiswaan() {
           </div>
         </div>
       </div>
+      )}
     </Layout>
   );
 }

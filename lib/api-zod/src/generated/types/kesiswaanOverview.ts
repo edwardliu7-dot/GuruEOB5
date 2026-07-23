@@ -11,4 +11,5 @@ import type { KesiswaanSiswaPoin } from './kesiswaanSiswaPoin';
 export interface KesiswaanOverview {
   perKelas: KesiswaanKelasRekap[];
   siswaPoinTerbanyak: KesiswaanSiswaPoin[];
+  siswaPoinPositifTerbanyak: KesiswaanSiswaPoin[];
 }

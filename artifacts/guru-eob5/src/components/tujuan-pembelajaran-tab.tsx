@@ -8,6 +8,7 @@ import {
   useDeleteTujuanPembelajaran,
   useAnalyzeTPImport,
   useBulkCreateTujuanPembelajaran,
+  useReorderTujuanPembelajaran,
   getListTujuanPembelajaranQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Edit2, Loader2, Plus, Sparkles, Trash2, Upload } from "lucide-react";
+import { BookOpen, Edit2, GripVertical, Loader2, Plus, Sparkles, Trash2, Upload } from "lucide-react";
 
 const LM_LIST = [1, 2, 3, 4, 5];
 
@@ -80,7 +82,10 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
   const deleteTP = useDeleteTujuanPembelajaran();
   const analyzeImport = useAnalyzeTPImport();
   const bulkCreate = useBulkCreateTujuanPembelajaran();
+  const reorderTP = useReorderTujuanPembelajaran();
 
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTP, setEditingTP] = useState<any | null>(null);
   const [importItems, setImportItems] = useState<ImportItem[]>([]);
@@ -88,6 +93,22 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey });
+
+  const handleReorder = async (lm: number, items: any[], fromId: string, toId: string) => {
+    const ids = items.map((i: any) => i.id);
+    const fromIdx = ids.indexOf(fromId);
+    const toIdx = ids.indexOf(toId);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+    const newOrder = [...ids];
+    newOrder.splice(fromIdx, 1);
+    newOrder.splice(toIdx, 0, fromId);
+    try {
+      await reorderTP.mutateAsync({ data: { subjectId, calendarId, lingkupMateri: lm, ids: newOrder } });
+      invalidate();
+    } catch {
+      toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat mengubah urutan" });
+    }
+  };
 
   const form = useForm<TPFormValues>({
     resolver: zodResolver(tpSchema),
@@ -418,8 +439,36 @@ export function TujuanPembelajaranTab({ subjectId }: { subjectId: string }) {
                 <h4 className="font-semibold text-sm text-primary mb-2">Lingkup Materi {lm}</h4>
                 <div className="space-y-2">
                   {items.map((item: any) => (
-                    <div key={item.id} className="flex items-start justify-between gap-3 bg-gray-50/60 rounded-lg p-3">
-                      <div className="flex gap-3">
+                    <div
+                      key={item.id}
+                      className={cn(
+                        "flex items-start justify-between gap-3 bg-gray-50/60 rounded-lg p-3 transition-all select-none",
+                        draggedId === item.id && "opacity-40",
+                        dragOverId === item.id && draggedId !== item.id && "ring-2 ring-primary/50 bg-primary/5",
+                      )}
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedId(item.id);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        if (dragOverId !== item.id) setDragOverId(item.id);
+                      }}
+                      onDragLeave={() => setDragOverId(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedId && draggedId !== item.id) {
+                          handleReorder(lm, items, draggedId, item.id);
+                        }
+                        setDraggedId(null);
+                        setDragOverId(null);
+                      }}
+                      onDragEnd={() => { setDraggedId(null); setDragOverId(null); }}
+                    >
+                      <div className="flex gap-3 items-start flex-1">
+                        <GripVertical className="w-4 h-4 text-muted-foreground/30 cursor-grab shrink-0 mt-0.5" />
                         <span className="shrink-0 text-xs font-medium text-muted-foreground bg-card border border-border rounded px-2 py-0.5 h-fit">
                           TP {item.tpNumber}
                         </span>

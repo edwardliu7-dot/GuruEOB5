@@ -162,6 +162,7 @@ export interface Teacher {
   school?: string | null;
   photoUrl?: string | null;
   bio?: string | null;
+  sebutan?: string | null;
   createdAt: string;
   isAdmin: boolean;
 }
@@ -227,6 +228,7 @@ export interface UpdateTeacherInput {
      * @pattern ^$|^data:image/(jpeg|png|webp);base64,|^https?://
      */
   photoUrl?: string;
+  sebutan?: string;
 }
 
 export interface GenerateStudentAccountInput {
@@ -301,6 +303,20 @@ export interface TujuanPembelajaranInput {
   calendarId: string;
   lingkupMateri: number;
   description: string;
+}
+
+/**
+ * Reorder TP entries within a single Lingkup Materi by supplying their IDs in the desired order.
+ */
+export interface TPReorderInput {
+  subjectId: string;
+  calendarId: string;
+  lingkupMateri: number;
+  /**
+     * Ordered list of TP IDs for this Lingkup Materi
+     * @minItems 1
+     */
+  ids: string[];
 }
 
 /**
@@ -862,9 +878,24 @@ export interface KesiswaanSiswaPoin {
   totalPoin: number;
 }
 
+export interface KesiswaanSiswaAbsensi {
+  studentId: string;
+  namaLengkap: string;
+  kelas: string;
+  hadir: number;
+  izin: number;
+  sakit: number;
+  alpa: number;
+  totalSesi: number;
+  pctHadir: number;
+  totalPoinPositif: number;
+  totalPoinNegatif: number;
+}
+
 export interface KesiswaanOverview {
   perKelas: KesiswaanKelasRekap[];
   siswaPoinTerbanyak: KesiswaanSiswaPoin[];
+  siswaPoinPositifTerbanyak: KesiswaanSiswaPoin[];
 }
 
 export interface WaliKelasSiswaRekap {

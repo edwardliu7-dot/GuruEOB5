@@ -173,6 +173,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/KesiswaanOverview"
 
+  /kesiswaan/absensi-siswa:
+    get:
+      operationId: getKesiswaanAbsensiSiswa
+      tags: [dashboard]
+      summary: Per-student attendance breakdown for wakasek kesiswaan
+      responses:
+        "200":
+          description: Per-student attendance data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KesiswaanSiswaAbsensi"
+
   /kepsek/jurnal:
     get:
       operationId: getKepsekJurnal
@@ -772,6 +787,25 @@ paths:
       responses:
         "200":
           description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /tp/reorder:
+    post:
+      operationId: reorderTujuanPembelajaran
+      tags: [tujuan-pembelajaran]
+      summary: Reorder Tujuan Pembelajaran entries within a Lingkup Materi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TPReorderInput"
+      responses:
+        "200":
+          description: Reordered successfully
           content:
             application/json:
               schema:
@@ -2237,6 +2271,24 @@ components:
           type: string
       required: [subjectId, calendarId, lingkupMateri, description]
 
+    TPReorderInput:
+      type: object
+      description: Reorder TP entries within a single Lingkup Materi by supplying their IDs in the desired order.
+      properties:
+        subjectId:
+          type: string
+        calendarId:
+          type: string
+        lingkupMateri:
+          type: integer
+        ids:
+          type: array
+          description: Ordered list of TP IDs for this Lingkup Materi
+          items:
+            type: string
+          minItems: 1
+      required: [subjectId, calendarId, lingkupMateri, ids]
+
     TPImportAnalyzeInput:
       type: object
       description: >
@@ -2963,6 +3015,33 @@ components:
           type: integer
       required: [studentId, namaLengkap, kelas, totalPoin]
 
+    KesiswaanSiswaAbsensi:
+      type: object
+      properties:
+        studentId:
+          type: string
+        namaLengkap:
+          type: string
+        kelas:
+          type: string
+        hadir:
+          type: integer
+        izin:
+          type: integer
+        sakit:
+          type: integer
+        alpa:
+          type: integer
+        totalSesi:
+          type: integer
+        pctHadir:
+          type: number
+        totalPoinPositif:
+          type: integer
+        totalPoinNegatif:
+          type: integer
+      required: [studentId, namaLengkap, kelas, hadir, izin, sakit, alpa, totalSesi, pctHadir, totalPoinPositif, totalPoinNegatif]
+
     KesiswaanOverview:
       type: object
       properties:
@@ -2974,7 +3053,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/KesiswaanSiswaPoin"
-      required: [perKelas, siswaPoinTerbanyak]
+        siswaPoinPositifTerbanyak:
+          type: array
+          items:
+            $ref: "#/components/schemas/KesiswaanSiswaPoin"
+      required: [perKelas, siswaPoinTerbanyak, siswaPoinPositifTerbanyak]
 
     WaliKelasSiswaRekap:
       type: object

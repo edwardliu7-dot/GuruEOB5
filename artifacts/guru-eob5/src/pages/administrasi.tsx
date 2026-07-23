@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Folder, FolderOpen, FileText, Plus, ArrowLeft, Trash2, Edit2, MoreVertical, Upload,
   BookOpen, Download, Loader2, ExternalLink, X, CheckCircle2, AlertCircle, ChevronRight,
-  Target, History
+  Target, History, Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -381,6 +381,10 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
 export default function Administrasi() {
   const { data: subjects, isLoading: isLoadingSubjects } = useListSubjects();
   const { data: me } = useGetMe();
+  const { data: allDocuments } = useListDocuments(
+    {},
+    { query: { queryKey: getListDocumentsQueryKey({}) } },
+  );
   const createSubject = useCreateSubject();
   const updateSubject = useUpdateSubject();
   const deleteSubject = useDeleteSubject();
@@ -413,6 +417,8 @@ export default function Administrasi() {
   const [pendingDocs, setPendingDocs] = useState<PendingDoc[]>([]);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string; fileType?: string | null } | null>(null);
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const docFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -530,6 +536,21 @@ export default function Administrasi() {
       toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat mengunduh dokumen" });
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handlePreviewDocument = async (doc: any) => {
+    setPreviewingId(doc.id);
+    try {
+      const response = await fetch(`/api/documents/${doc.id}/file`, { credentials: "include" });
+      if (!response.ok) throw new Error();
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setPreviewDoc({ name: doc.name, url, fileType: doc.fileType });
+    } catch {
+      toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat membuka dokumen" });
+    } finally {
+      setPreviewingId(null);
     }
   };
 
@@ -772,7 +793,7 @@ export default function Administrasi() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                     {[
                       { label: "Mata Pelajaran", count: subjects?.length ?? 0, color: "blue" },
-                      { label: "Total Dokumen", count: 0, color: "violet" },
+                      { label: "Modul Ajar", count: allDocuments?.length ?? 0, color: "violet" },
                       { label: "Bahan Ajar", count: 0, color: "amber" },
                       { label: "Tujuan Pembelajaran", count: 0, color: "emerald" },
                     ].map((stat, idx) => {
@@ -866,7 +887,7 @@ export default function Administrasi() {
                                   <h3 className="font-bold text-lg text-slate-800 line-clamp-1">{subject.name}</h3>
                                   <div className="flex items-center gap-2 mt-2">
                                     <span className="inline-flex items-center gap-1 text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
-                                      <FileText className="w-3 h-3" /> Dokumen
+                                      <FileText className="w-3 h-3" /> Modul Ajar
                                     </span>
                                     <span className="inline-flex items-center gap-1 text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
                                       <Target className="w-3 h-3" /> TP
@@ -935,7 +956,7 @@ export default function Administrasi() {
             {selectedSubject && (
               <Tabs value={innerTab} onValueChange={(v) => setInnerTab(v as "dokumen" | "tp")}>
                 <TabsList>
-                  <TabsTrigger value="dokumen">Dokumen</TabsTrigger>
+                  <TabsTrigger value="dokumen">Modul Ajar</TabsTrigger>
                   <TabsTrigger value="tp">Tujuan Pembelajaran</TabsTrigger>
                 </TabsList>
                 <TabsContent value="dokumen">
@@ -965,7 +986,10 @@ export default function Administrasi() {
                               </div>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted" disabled={downloadingId === doc.id} onClick={() => handleDownloadDocument(doc)}>
+                              <Button variant="ghost" size="icon" className="text-blue-600 hover:bg-blue-50" disabled={previewingId === doc.id} title="Lihat dokumen" onClick={() => handlePreviewDocument(doc)}>
+                                {previewingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+                              </Button>
+                              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted" disabled={downloadingId === doc.id} title="Unduh" onClick={() => handleDownloadDocument(doc)}>
                                 {downloadingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                               </Button>
                               <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteDocument(doc.id)}>
@@ -991,6 +1015,36 @@ export default function Administrasi() {
         )}
 
       </div>
+
+      {/* Document preview dialog */}
+      {previewDoc && (
+        <Dialog open={!!previewDoc} onOpenChange={(open) => {
+          if (!open) {
+            URL.revokeObjectURL(previewDoc.url);
+            setPreviewDoc(null);
+          }
+        }}>
+          <DialogContent className="max-w-5xl w-full p-0 overflow-hidden flex flex-col" style={{ height: "85vh" }}>
+            <DialogHeader className="px-6 pt-5 pb-3 border-b flex-shrink-0">
+              <DialogTitle className="truncate">{previewDoc.name}</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-hidden">
+              {previewDoc.fileType?.startsWith("image/") ? (
+                <div className="w-full h-full flex items-center justify-center bg-muted/30 p-4">
+                  <img src={previewDoc.url} alt={previewDoc.name} className="max-h-full max-w-full object-contain rounded" />
+                </div>
+              ) : (
+                <iframe
+                  src={previewDoc.url}
+                  className="w-full h-full"
+                  title={previewDoc.name}
+                  style={{ border: "none" }}
+                />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Layout>
   );
 }
