@@ -260,9 +260,15 @@ export default function InfoPekanan() {
   useEffect(() => {
     if (!weeks?.length) { setWeekIndex(0); return; }
     const today = new Date().toISOString().split("T")[0];
+    // 1. Hari ini tepat dalam sebuah pekan → tampilkan pekan itu
     const current = weeks.findIndex((w: any) => w.tanggalMulai <= today && w.tanggalSelesai >= today);
     if (current >= 0) { setWeekIndex(current); return; }
+    // 2. Hari ini sebelum pekan pertama → tampilkan pekan pertama
     if (today < (weeks[0] as any).tanggalMulai) { setWeekIndex(0); return; }
+    // 3. Hari ini di antara pekan (gap) → tampilkan pekan berikutnya yang belum mulai
+    const next = weeks.findIndex((w: any) => w.tanggalMulai > today);
+    if (next >= 0) { setWeekIndex(next); return; }
+    // 4. Hari ini setelah semua pekan → tampilkan pekan terakhir
     setWeekIndex(weeks.length - 1);
   }, [weeks]);
 

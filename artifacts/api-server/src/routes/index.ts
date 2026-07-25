@@ -23,6 +23,7 @@ import bahanAjarRouter from "./bahan-ajar";
 import debugProsemRouter from "./debug-prosem";
 import jadwalRouter from "./jadwal";
 import rekapRouter from "./rekap";
+import inboxRouter from "./inbox";
 
 const router: IRouter = Router();
 
@@ -50,5 +51,6 @@ router.use(bahanAjarRouter);
 router.use(debugProsemRouter);
 router.use(jadwalRouter);
 router.use(rekapRouter);
+router.use(inboxRouter);
 
 export default router;

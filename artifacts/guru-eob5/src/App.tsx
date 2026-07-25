@@ -33,6 +33,7 @@ import Direktori from "@/pages/direktori";
 import DirektoriSiswa from "@/pages/direktori-siswa";
 import Jadwal from "@/pages/jadwal";
 import Rekap from "@/pages/rekap";
+import KotakMasuk from "@/pages/kotak-masuk";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -92,6 +93,7 @@ function Router() {
       <Route path="/direktori-siswa" component={() => <ProtectedRoute component={DirektoriSiswa} />} />
       <Route path="/jadwal" component={() => <ProtectedRoute component={Jadwal} />} />
       <Route path="/rekap" component={() => <ProtectedRoute component={Rekap} />} />
+      <Route path="/kotak-masuk" component={() => <ProtectedRoute component={KotakMasuk} />} />
       <Route component={NotFound} />
     </Switch>
   );

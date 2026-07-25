@@ -109,15 +109,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
     queryFn: () =>
       fetch("/api/feedback/unread-count", { credentials: "include" }).then((r) => r.json()),
     enabled: isAdmin,
-    refetchInterval: 60_000, // refresh every minute
+    refetchInterval: 60_000,
     staleTime: 30_000,
   });
   const unreadCount = unreadData?.count ?? 0;
+
+  // Fetch unread inbox (pesan siswa) count for all teachers
+  const { data: inboxUnreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/inbox/unread-count"],
+    queryFn: () =>
+      fetch("/api/inbox/unread-count", { credentials: "include" }).then((r) => r.json()),
+    enabled: !!user,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+  const inboxUnreadCount = inboxUnreadData?.count ?? 0;
 
   const utamaNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/direktori", label: "Direktori Guru", icon: Contact },
     { href: "/direktori-siswa", label: "Direktori Siswa", icon: Users },
+    { href: "/kotak-masuk", label: "Kotak Masuk Siswa", icon: Inbox, badge: inboxUnreadCount },
     { href: "/pengaturan", label: "Pengaturan Tampilan", icon: Settings2 },
   ];
 
@@ -177,12 +189,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {utamaNavItems.map((item) => {
                 const isActive = location === item.href || (location === "/" && item.href === "/dashboard");
                 const Icon = item.icon;
+                const badge = (item as any).badge ?? 0;
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
                       <Link href={item.href}>
                         <Icon />
-                        <span>{item.label}</span>
+                        <span className="flex-1">{item.label}</span>
+                        {badge > 0 && (
+                          <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white group-data-[collapsible=icon]:hidden">
+                            {badge > 99 ? "99+" : badge}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
