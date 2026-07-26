@@ -13,7 +13,6 @@ export interface BulkCreateAttendanceInput {
      * @maxItems 500
      */
   studentIds: string[];
-  subjectId: string;
   tanggal: string;
   status: BulkCreateAttendanceInputStatus;
 }

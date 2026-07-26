@@ -2,7 +2,6 @@ import { pgTable, text, timestamp, uuid, date, uniqueIndex } from "drizzle-orm/p
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { studentsTable } from "./students";
-import { subjectsTable } from "./subjects";
 
 export const attendanceTable = pgTable(
   "attendance_records",
@@ -11,15 +10,15 @@ export const attendanceTable = pgTable(
     studentId: uuid("student_id")
       .notNull()
       .references(() => studentsTable.id, { onDelete: "cascade" }),
-    subjectId: uuid("subject_id")
-      .notNull()
-      .references(() => subjectsTable.id, { onDelete: "cascade" }),
+    // subjectId removed — attendance is now per day per student, not per subject
     tanggal: date("tanggal", { mode: "string" }).notNull(),
     status: text("status", { enum: ["hadir", "izin", "sakit", "alpa"] }).notNull(),
+    filledByTeacherId: uuid("filled_by_teacher_id"),
+    filledByTeacherName: text("filled_by_teacher_name"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex("attendance_student_subject_tanggal_unique").on(t.studentId, t.subjectId, t.tanggal),
+    uniqueIndex("attendance_student_tanggal_unique").on(t.studentId, t.tanggal),
   ],
 );
 

@@ -1136,7 +1136,7 @@ paths:
     get:
       operationId: getAttendanceRekap
       tags: [attendance]
-      summary: Attendance recap grouped by date, class, and subject (for the calling teacher's own subjects)
+      summary: Attendance recap grouped by date and class (school-wide — all teachers can see)
       responses:
         "200":
           description: Attendance recap
@@ -2423,14 +2423,12 @@ components:
           maxItems: 500
           items:
             type: string
-        subjectId:
-          type: string
         tanggal:
           type: string
         status:
           type: string
           enum: [hadir, izin, sakit, alpa]
-      required: [studentIds, subjectId, tanggal, status]
+      required: [studentIds, tanggal, status]
 
     BulkMixedAttendanceEntry:
       type: object
@@ -2445,8 +2443,6 @@ components:
     BulkMixedAttendanceInput:
       type: object
       properties:
-        subjectId:
-          type: string
         tanggal:
           type: string
         entries:
@@ -2455,7 +2451,7 @@ components:
           maxItems: 500
           items:
             $ref: "#/components/schemas/BulkMixedAttendanceEntry"
-      required: [subjectId, tanggal, entries]
+      required: [tanggal, entries]
 
     BulkMixedPointsEntry:
       type: object
@@ -2735,31 +2731,31 @@ components:
           type: string
         studentId:
           type: string
-        subjectId:
-          type: string
         tanggal:
           type: string
         status:
           type: string
           enum: [hadir, izin, sakit, alpa]
+        filledByTeacherId:
+          type: ["string", "null"]
+        filledByTeacherName:
+          type: ["string", "null"]
         createdAt:
           type: string
           format: date-time
-      required: [id, studentId, subjectId, tanggal, status, createdAt]
+      required: [id, studentId, tanggal, status, createdAt]
 
     AttendanceRecordInput:
       type: object
       properties:
         studentId:
           type: string
-        subjectId:
-          type: string
         tanggal:
           type: string
         status:
           type: string
           enum: [hadir, izin, sakit, alpa]
-      required: [studentId, subjectId, tanggal, status]
+      required: [studentId, tanggal, status]
 
     AttendanceUpdate:
       type: object
@@ -3324,10 +3320,6 @@ components:
           type: string
         kelas:
           type: string
-        subjectId:
-          type: string
-        subjectName:
-          type: string
         hadir:
           type: integer
         izin:
@@ -3338,7 +3330,9 @@ components:
           type: integer
         total:
           type: integer
-      required: [tanggal, kelas, subjectId, subjectName, hadir, izin, sakit, alpa, total]
+        filledByTeacherName:
+          type: ["string", "null"]
+      required: [tanggal, kelas, hadir, izin, sakit, alpa, total]
 
     AttendanceRekap:
       type: object
@@ -3356,9 +3350,7 @@ components:
           type: string
         tanggal:
           type: string
-        subjectId:
-          type: string
-      required: [kelas, tanggal, subjectId]
+      required: [kelas, tanggal]
 
     RoleJurnalEntry:
       type: object

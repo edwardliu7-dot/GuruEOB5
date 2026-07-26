@@ -415,7 +415,6 @@ export interface BulkCreateAttendanceInput {
      * @maxItems 500
      */
   studentIds: string[];
-  subjectId: string;
   tanggal: string;
   status: BulkCreateAttendanceInputStatus;
 }
@@ -436,7 +435,6 @@ export interface BulkMixedAttendanceEntry {
 }
 
 export interface BulkMixedAttendanceInput {
-  subjectId: string;
   tanggal: string;
   /**
      * @minItems 1
@@ -669,9 +667,12 @@ export const AttendanceRecordStatus = {
 export interface AttendanceRecord {
   id: string;
   studentId: string;
-  subjectId: string;
   tanggal: string;
   status: AttendanceRecordStatus;
+  /** @nullable */
+  filledByTeacherId?: string | null;
+  /** @nullable */
+  filledByTeacherName?: string | null;
   createdAt: string;
 }
 
@@ -687,7 +688,6 @@ export const AttendanceRecordInputStatus = {
 
 export interface AttendanceRecordInput {
   studentId: string;
-  subjectId: string;
   tanggal: string;
   status: AttendanceRecordInputStatus;
 }
@@ -1025,13 +1025,13 @@ export interface InfoPekanan {
 export interface AttendanceRekapGroup {
   tanggal: string;
   kelas: string;
-  subjectId: string;
-  subjectName: string;
   hadir: number;
   izin: number;
   sakit: number;
   alpa: number;
   total: number;
+  /** @nullable */
+  filledByTeacherName?: string | null;
 }
 
 export interface AttendanceRekap {
@@ -1041,7 +1041,6 @@ export interface AttendanceRekap {
 export interface BulkDeleteAttendanceByKelasInput {
   kelas: string;
   tanggal: string;
-  subjectId: string;
 }
 
 export interface RoleJurnalEntry {

@@ -4942,7 +4942,7 @@ export const getGetAttendanceRekapUrl = () => {
 }
 
 /**
- * @summary Attendance recap grouped by date, class, and subject (for the calling teacher's own subjects)
+ * @summary Attendance recap grouped by date and class (school-wide — all teachers can see)
  */
 export const getAttendanceRekap = async ( options?: RequestInit): Promise<AttendanceRekap> => {
 
@@ -4989,7 +4989,7 @@ export type GetAttendanceRekapQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Attendance recap grouped by date, class, and subject (for the calling teacher's own subjects)
+ * @summary Attendance recap grouped by date and class (school-wide — all teachers can see)
  */
 
 export function useGetAttendanceRekap<TData = Awaited<ReturnType<typeof getAttendanceRekap>>, TError = ErrorType<unknown>>(

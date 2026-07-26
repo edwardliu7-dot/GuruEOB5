@@ -14,26 +14,17 @@ import { requireAuth, getCurrentGuru } from "../lib/auth";
 const router: IRouter = Router();
 
 // ─── GET /rekap/absensi ───────────────────────────────────────────────────────
-// Monthly attendance breakdown (last 6 months) across the teacher's subjects.
+// Monthly attendance breakdown (last 6 months) — school-wide, all classes.
 // Filter by kelas if provided.
 router.get("/rekap/absensi", requireAuth, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
   if (!guru) { res.status(401).json({ error: "Unauthorized" }); return; }
-
-  const kelasFilter = typeof req.query.kelas === "string" ? req.query.kelas : null;
-
-  // Get teacher's subjects
-  const subjects = await db
-    .select({ id: subjectsTable.id })
-    .from(subjectsTable)
-    .where(eq(subjectsTable.teacherId, guru.id));
-
-  const subjectIds = subjects.map((s) => s.id);
-
-  if (subjectIds.length === 0) {
+  if (!guru.school) {
     res.json(GetRekapAbsensiResponse.parse({ kelasOptions: [], data: [] }));
     return;
   }
+
+  const kelasFilter = typeof req.query.kelas === "string" ? req.query.kelas : null;
 
   // 6 months ago
   const sixMonthsAgo = new Date();
@@ -41,7 +32,13 @@ router.get("/rekap/absensi", requireAuth, async (req, res): Promise<void> => {
   sixMonthsAgo.setDate(1);
   const cutoff = sixMonthsAgo.toISOString().slice(0, 10);
 
-  // Get attendance with student kelas
+  // Get attendance for all students in the school
+  const conditions = [
+    eq(studentsTable.school, guru.school),
+    gte(attendanceTable.tanggal, cutoff),
+    ...(kelasFilter ? [eq(studentsTable.kelas, kelasFilter)] : []),
+  ];
+
   const rows = await db
     .select({
       tanggal: attendanceTable.tanggal,
@@ -50,13 +47,7 @@ router.get("/rekap/absensi", requireAuth, async (req, res): Promise<void> => {
     })
     .from(attendanceTable)
     .innerJoin(studentsTable, eq(studentsTable.id, attendanceTable.studentId))
-    .where(
-      and(
-        inArray(attendanceTable.subjectId, subjectIds),
-        gte(attendanceTable.tanggal, cutoff),
-        ...(kelasFilter ? [eq(studentsTable.kelas, kelasFilter)] : []),
-      ),
-    );
+    .where(and(...conditions));
 
   // Collect kelas options
   const kelasSet = new Set(rows.map((r) => r.kelas));

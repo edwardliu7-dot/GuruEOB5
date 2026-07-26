@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, inArray, type SQL } from "drizzle-orm";
-import { db, attendanceTable, studentsTable, subjectsTable } from "@workspace/db";
+import { db, attendanceTable, studentsTable } from "@workspace/db";
 import {
   ListAttendanceResponse,
   CreateAttendanceRecordBody,
@@ -36,15 +36,6 @@ async function schoolStudentIds(req: Request, kelas?: string): Promise<Set<strin
   return new Set(rows.map((r) => r.id));
 }
 
-/** A subjectId in the request body must belong to the caller's own subjects. */
-async function ownsSubject(subjectId: string, teacherId: string): Promise<boolean> {
-  const [row] = await db
-    .select({ id: subjectsTable.id })
-    .from(subjectsTable)
-    .where(and(eq(subjectsTable.id, subjectId), eq(subjectsTable.teacherId, teacherId)));
-  return Boolean(row);
-}
-
 router.get("/attendance", requireAuth, async (req, res): Promise<void> => {
   const kelas = typeof req.query["kelas"] === "string" ? req.query["kelas"] : undefined;
   const allowed = await schoolStudentIds(req, kelas);
@@ -57,12 +48,9 @@ router.get("/attendance", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const subjectId =
-    typeof req.query["subjectId"] === "string" ? req.query["subjectId"] : undefined;
   const date = typeof req.query["date"] === "string" ? req.query["date"] : undefined;
 
   const conditions: SQL[] = [inArray(attendanceTable.studentId, [...allowed])];
-  if (subjectId) conditions.push(eq(attendanceTable.subjectId, subjectId));
   if (date) conditions.push(eq(attendanceTable.tanggal, date));
 
   const records = await db.select().from(attendanceTable).where(and(...conditions));
@@ -91,17 +79,21 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
     res.status(404).json({ error: "Siswa tidak ditemukan" });
     return;
   }
-  if (!(await ownsSubject(parsed.data.subjectId, guru.id))) {
-    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
-    return;
-  }
 
   const [record] = await db
     .insert(attendanceTable)
-    .values(parsed.data)
+    .values({
+      ...parsed.data,
+      filledByTeacherId: guru.id,
+      filledByTeacherName: guru.namaLengkap,
+    })
     .onConflictDoUpdate({
-      target: [attendanceTable.studentId, attendanceTable.subjectId, attendanceTable.tanggal],
-      set: { status: parsed.data.status },
+      target: [attendanceTable.studentId, attendanceTable.tanggal],
+      set: {
+        status: parsed.data.status,
+        filledByTeacherId: guru.id,
+        filledByTeacherName: guru.namaLengkap,
+      },
     })
     .returning();
   res.status(201).json(CreateAttendanceRecordResponse.parse(record));
@@ -198,33 +190,34 @@ router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => 
     return;
   }
 
-  const { studentIds, subjectId, tanggal, status } = parsed.data;
+  const { studentIds, tanggal, status } = parsed.data;
   const targets = [...new Set(studentIds)].filter((id) => allowed.has(id));
 
   if (targets.length === 0) {
     res.status(400).json({ error: "Tidak ada siswa valid yang dipilih" });
     return;
   }
-  if (!(await ownsSubject(subjectId, guru.id))) {
-    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
-    return;
-  }
 
   const inserted = await db
     .insert(attendanceTable)
-    .values(targets.map((studentId) => ({ studentId, subjectId, tanggal, status })))
+    .values(targets.map((studentId) => ({
+      studentId,
+      tanggal,
+      status,
+      filledByTeacherId: guru.id,
+      filledByTeacherName: guru.namaLengkap,
+    })))
     .onConflictDoUpdate({
-      target: [attendanceTable.studentId, attendanceTable.subjectId, attendanceTable.tanggal],
-      set: { status },
+      target: [attendanceTable.studentId, attendanceTable.tanggal],
+      set: { status, filledByTeacherId: guru.id, filledByTeacherName: guru.namaLengkap },
     })
     .returning();
   res.json(BulkCreateAttendanceResponse.parse({ count: inserted.length }));
 });
 
 /**
- * Daily input: one subject/date, a different status per student. Powers the
- * "isi sekaligus semua siswa" roster table so a teacher doesn't have to open
- * a dialog per student.
+ * Daily input: one date, a different status per student.
+ * Any teacher can fill — one attendance record per student per day across the whole school.
  */
 router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<void> => {
   const parsed = BulkMixedCreateAttendanceBody.safeParse(req.body);
@@ -245,16 +238,12 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
     return;
   }
 
-  const { subjectId, tanggal, entries } = parsed.data;
+  const { tanggal, entries } = parsed.data;
   const byStudent = new Map(entries.map((e) => [e.studentId, e.status]));
   const targets = [...byStudent.keys()].filter((id) => allowed.has(id));
 
   if (targets.length === 0) {
     res.status(400).json({ error: "Tidak ada siswa valid yang dipilih" });
-    return;
-  }
-  if (!(await ownsSubject(subjectId, guru.id))) {
-    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
     return;
   }
 
@@ -263,10 +252,16 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
     const status = byStudent.get(studentId)!;
     await db
       .insert(attendanceTable)
-      .values({ studentId, subjectId, tanggal, status })
+      .values({
+        studentId,
+        tanggal,
+        status,
+        filledByTeacherId: guru.id,
+        filledByTeacherName: guru.namaLengkap,
+      })
       .onConflictDoUpdate({
-        target: [attendanceTable.studentId, attendanceTable.subjectId, attendanceTable.tanggal],
-        set: { status },
+        target: [attendanceTable.studentId, attendanceTable.tanggal],
+        set: { status, filledByTeacherId: guru.id, filledByTeacherName: guru.namaLengkap },
       });
     count++;
   }
@@ -274,10 +269,7 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
 });
 
 /**
- * Rekap absensi: aggregated by (tanggal, kelas, subject), so a teacher can
- * see "Sabtu 18 Juli 2026 · Matematika · Kelas 7A → 21 hadir, 2 izin" at a glance.
- * Only returns data for the calling teacher's own subjects (so they see only the
- * classes they actually taught, not other teachers' attendance records).
+ * Rekap absensi: aggregated by (tanggal, kelas) — school-wide, any teacher can see all.
  */
 router.get("/attendance/rekap", requireAuth, async (req, res): Promise<void> => {
   const guru = await getCurrentGuru(req);
@@ -296,62 +288,60 @@ router.get("/attendance/rekap", requireAuth, async (req, res): Promise<void> => 
     return;
   }
 
-  // Fetch all subjects the calling teacher owns.
-  const ownSubjects = await db
-    .select({ id: subjectsTable.id, name: subjectsTable.name })
-    .from(subjectsTable)
-    .where(eq(subjectsTable.teacherId, guru.id));
-
-  if (ownSubjects.length === 0) {
-    res.json(GetAttendanceRekapResponse.parse({ groups: [] }));
-    return;
-  }
-
-  const ownSubjectIds = new Set(ownSubjects.map((s) => s.id));
-  const subjectNameById = new Map(ownSubjects.map((s) => [s.id, s.name]));
-
-  // All students in scope for school, keyed by id → kelas.
+  // All students in scope, keyed by id → kelas.
   const studentsInScope = await db
     .select({ id: studentsTable.id, kelas: studentsTable.kelas })
     .from(studentsTable)
     .where(inArray(studentsTable.id, [...allowed]));
   const kelasById = new Map(studentsInScope.map((s) => [s.id, s.kelas]));
 
-  // All attendance records for own subjects.
-  const conditions: SQL[] = [
-    inArray(attendanceTable.studentId, [...allowed]),
-    inArray(attendanceTable.subjectId, [...ownSubjectIds]),
-  ];
+  // All attendance records for this school.
   const records = await db
     .select()
     .from(attendanceTable)
-    .where(and(...conditions));
+    .where(inArray(attendanceTable.studentId, [...allowed]));
 
-  // Aggregate: key = tanggal|kelas|subjectId
+  // Aggregate: key = tanggal|kelas
   type GroupKey = string;
-  type GroupAcc = { tanggal: string; kelas: string; subjectId: string; hadir: number; izin: number; sakit: number; alpa: number; total: number };
+  type GroupAcc = {
+    tanggal: string;
+    kelas: string;
+    hadir: number;
+    izin: number;
+    sakit: number;
+    alpa: number;
+    total: number;
+    filledByTeacherName: string | null;
+  };
   const grouped = new Map<GroupKey, GroupAcc>();
 
   for (const rec of records) {
     const kelas = kelasById.get(rec.studentId);
-    if (!kelas || !ownSubjectIds.has(rec.subjectId)) continue;
-    const key: GroupKey = `${rec.tanggal}|${kelas}|${rec.subjectId}`;
-    const acc = grouped.get(key) ?? { tanggal: rec.tanggal, kelas, subjectId: rec.subjectId, hadir: 0, izin: 0, sakit: 0, alpa: 0, total: 0 };
+    if (!kelas) continue;
+    const key: GroupKey = `${rec.tanggal}|${kelas}`;
+    const acc = grouped.get(key) ?? {
+      tanggal: rec.tanggal,
+      kelas,
+      hadir: 0,
+      izin: 0,
+      sakit: 0,
+      alpa: 0,
+      total: 0,
+      filledByTeacherName: rec.filledByTeacherName ?? null,
+    };
     acc[rec.status as keyof Pick<GroupAcc, "hadir" | "izin" | "sakit" | "alpa">] += 1;
     acc.total += 1;
     grouped.set(key, acc);
   }
 
   const groups = [...grouped.values()]
-    .map((g) => ({ ...g, subjectName: subjectNameById.get(g.subjectId) ?? g.subjectId }))
     .sort((a, b) => (a.tanggal < b.tanggal ? 1 : a.tanggal > b.tanggal ? -1 : 0));
 
   res.json(GetAttendanceRekapResponse.parse({ groups }));
 });
 
 /**
- * Hapus semua catatan kehadiran untuk satu kelas + mata pelajaran + tanggal.
- * Berguna ketika guru ingin mengulang input absensi dari awal untuk sesi tertentu.
+ * Hapus semua catatan kehadiran untuk satu kelas + tanggal.
  */
 router.delete("/attendance/bulk-kelas", requireAuth, async (req, res): Promise<void> => {
   const parsed = BulkDeleteAttendanceByKelasBody.safeParse(req.body);
@@ -360,16 +350,7 @@ router.delete("/attendance/bulk-kelas", requireAuth, async (req, res): Promise<v
     return;
   }
 
-  const guru = await getCurrentGuru(req);
-  if (!guru) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
-  if (!(await ownsSubject(parsed.data.subjectId, guru.id))) {
-    res.status(404).json({ error: "Mata pelajaran tidak ditemukan" });
-    return;
-  }
+  await getCurrentGuru(req); // just verify auth
 
   const allowed = await schoolStudentIds(req, parsed.data.kelas);
   if (allowed === null) {
@@ -386,7 +367,6 @@ router.delete("/attendance/bulk-kelas", requireAuth, async (req, res): Promise<v
     .where(
       and(
         inArray(attendanceTable.studentId, [...allowed]),
-        eq(attendanceTable.subjectId, parsed.data.subjectId),
         eq(attendanceTable.tanggal, parsed.data.tanggal),
       ),
     )

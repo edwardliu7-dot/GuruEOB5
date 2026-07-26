@@ -8,7 +8,6 @@
 import type { BulkMixedAttendanceEntry } from './bulkMixedAttendanceEntry';
 
 export interface BulkMixedAttendanceInput {
-  subjectId: string;
   tanggal: string;
   /**
      * @minItems 1

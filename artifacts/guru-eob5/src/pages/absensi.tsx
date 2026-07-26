@@ -5,20 +5,11 @@ import {
   useBulkMixedCreateAttendance,
   useGetAttendanceRekap,
   useBulkDeleteAttendanceByKelas,
-  useListSubjects,
   useListStudents,
   listAttendance,
 } from "@workspace/api-client-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   CalendarCheck2,
@@ -34,13 +25,15 @@ import {
   Calendar,
   Loader2,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Info,
 } from "lucide-react";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 type AttendanceStatus = "hadir" | "izin" | "sakit" | "alpa";
 
@@ -71,7 +64,6 @@ function todayStr() {
 }
 
 export default function Absensi() {
-  const { data: subjects } = useListSubjects();
   const { data: students } = useListStudents();
   const { data: rekapData, isLoading: rekapLoading } = useGetAttendanceRekap();
   const bulkMixedAttendance = useBulkMixedCreateAttendance();
@@ -81,11 +73,12 @@ export default function Absensi() {
 
   // ── Form state ──
   const [bulkKelas, setBulkKelas] = useState<string>("");
-  const [bulkSubjectId, setBulkSubjectId] = useState<string>("");
   const [bulkTanggal, setBulkTanggal] = useState<string>(todayStr());
   const [bulkRows, setBulkRows] = useState<Record<string, AttendanceStatus>>({});
   const [search, setSearch] = useState("");
   const [loadingSession, setLoadingSession] = useState(false);
+  // Info about who already filled attendance for the selected kelas+date
+  const [alreadyFilledBy, setAlreadyFilledBy] = useState<string | null>(null);
 
   // Ref to hold pre-fetched session records so the bulkStudents useEffect can apply them
   const pendingSessionRef = useRef<any[] | null>(null);
@@ -128,6 +121,35 @@ export default function Absensi() {
     });
   }, [bulkStudents]);
 
+  // When kelas or tanggal changes, check if there's already attendance for this day
+  useEffect(() => {
+    if (!bulkKelas || !bulkTanggal) {
+      setAlreadyFilledBy(null);
+      return;
+    }
+    let cancelled = false;
+    listAttendance({ date: bulkTanggal, kelas: bulkKelas }).then((records: any[]) => {
+      if (cancelled) return;
+      if (records && records.length > 0) {
+        const fillerName = records[0]?.filledByTeacherName ?? "Guru lain";
+        setAlreadyFilledBy(fillerName);
+        // Pre-populate rows with existing data
+        setBulkRows((prev) => {
+          const next = { ...prev };
+          for (const r of records as any[]) {
+            if (r.studentId) next[r.studentId] = r.status as AttendanceStatus;
+          }
+          return next;
+        });
+      } else {
+        setAlreadyFilledBy(null);
+      }
+    }).catch(() => {
+      setAlreadyFilledBy(null);
+    });
+    return () => { cancelled = true; };
+  }, [bulkKelas, bulkTanggal]);
+
   const filteredStudents = useMemo(() => {
     if (!search.trim()) return bulkStudents as any[];
     const q = search.toLowerCase();
@@ -164,10 +186,6 @@ export default function Absensi() {
   };
 
   const handleSave = async () => {
-    if (!bulkSubjectId) {
-      toast({ variant: "destructive", title: "Gagal", description: "Pilih mata pelajaran terlebih dahulu" });
-      return;
-    }
     if ((bulkStudents as any[]).length === 0) {
       toast({ variant: "destructive", title: "Gagal", description: "Tidak ada siswa pada kelas ini" });
       return;
@@ -178,9 +196,14 @@ export default function Absensi() {
         status: bulkRows[s.id] ?? "hadir",
       }));
       const result = await bulkMixedAttendance.mutateAsync({
-        data: { subjectId: bulkSubjectId, tanggal: bulkTanggal, entries },
+        data: { tanggal: bulkTanggal, entries },
       });
       toast({ title: "Berhasil", description: `Kehadiran ${result.count} siswa dicatat` });
+      // Refresh "already filled" info
+      const refreshed = await listAttendance({ date: bulkTanggal, kelas: bulkKelas }) as any[];
+      if (refreshed && refreshed.length > 0) {
+        setAlreadyFilledBy(refreshed[0]?.filledByTeacherName ?? null);
+      }
       invalidateAttendance();
     } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan saat menyimpan" });
@@ -190,20 +213,18 @@ export default function Absensi() {
   // Click a history session → load its data into the form in-place
   const handleLoadSession = async (group: {
     kelas: string;
-    subjectId: string;
     tanggal: string;
   }) => {
     setLoadingSession(true);
     try {
       const records = await queryClient.fetchQuery({
-        queryKey: ["/api/attendance", "session", group.subjectId, group.tanggal, group.kelas],
+        queryKey: ["/api/attendance", "session", group.tanggal, group.kelas],
         queryFn: () =>
-          listAttendance({ subjectId: group.subjectId, date: group.tanggal, kelas: group.kelas }),
+          listAttendance({ date: group.tanggal, kelas: group.kelas }),
         staleTime: 0,
       });
       // Store records in ref BEFORE changing kelas (which triggers bulkStudents useEffect)
       pendingSessionRef.current = records as any[];
-      setBulkSubjectId(group.subjectId);
       setBulkTanggal(group.tanggal);
       setBulkKelas(group.kelas);
     } catch {
@@ -215,16 +236,17 @@ export default function Absensi() {
 
   const handleHapusSesi = async (group: {
     kelas: string;
-    subjectId: string;
     tanggal: string;
-    subjectName: string;
   }) => {
-    if (!confirm(`Hapus semua absensi kelas ${group.kelas} mapel ${group.subjectName} tanggal ${group.tanggal}?`)) return;
+    if (!confirm(`Hapus semua absensi kelas ${group.kelas} tanggal ${group.tanggal}?`)) return;
     try {
       const result = await bulkDeleteByKelas.mutateAsync({
-        data: { kelas: group.kelas, subjectId: group.subjectId, tanggal: group.tanggal },
+        data: { kelas: group.kelas, tanggal: group.tanggal },
       });
       toast({ title: "Berhasil", description: `${result.count} catatan kehadiran dihapus` });
+      if (bulkKelas === group.kelas && bulkTanggal === group.tanggal) {
+        setAlreadyFilledBy(null);
+      }
       invalidateAttendance();
     } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan saat menghapus" });
@@ -232,7 +254,6 @@ export default function Absensi() {
   };
 
   // ── Build history with per-session absent student names ──
-  // We fetch all attendance records once and cross-reference with students
   const { data: allAttendance } = useListAttendance(
     {},
     { query: { queryKey: ["/api/attendance", "all"] } },
@@ -247,11 +268,13 @@ export default function Absensi() {
         .filter(
           (r: any) =>
             r.tanggal === g.tanggal &&
-            r.subjectId === g.subjectId &&
             r.status !== "hadir",
         )
         .map((r: any) => {
           const stu = studentMap.get(r.studentId);
+          if (!stu) return null;
+          // filter to this kelas
+          if (stu.kelas !== g.kelas) return null;
           return stu
             ? { name: stu.namaPanggilan || stu.namaLengkap, status: r.status as Exclude<AttendanceStatus, "hadir"> }
             : null;
@@ -286,7 +309,9 @@ export default function Absensi() {
               <span className="text-slate-600 font-medium">Absensi</span>
             </div>
             <h1 className="text-xl font-bold text-slate-800">Absensi</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Pencatatan kehadiran siswa per sesi.</p>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Pencatatan kehadiran siswa — satu absensi per hari per kelas, siapa saja bisa mengisi.
+            </p>
           </div>
         </FadeIn>
 
@@ -302,20 +327,6 @@ export default function Absensi() {
               >
                 <option value="">Pilih Kelas</option>
                 {kelasList.map((k) => <option key={k} value={k}>{k}</option>)}
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mata Pelajaran</label>
-            <div className="relative">
-              <select 
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-800/20 pr-10 cursor-pointer w-[220px]"
-                value={bulkSubjectId} 
-                onChange={(e) => setBulkSubjectId(e.target.value)}
-              >
-                <option value="">Pilih Mapel</option>
-                {subjects?.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
               <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -345,6 +356,19 @@ export default function Absensi() {
             </button>
           </div>
         </FadeIn>
+
+        {/* ── Already filled banner ── */}
+        {alreadyFilledBy && (
+          <FadeIn>
+            <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
+              <Info className="w-4 h-4 text-blue-500 shrink-0" />
+              <span>
+                Absensi kelas <strong>{bulkKelas}</strong> tanggal <strong>{bulkTanggal}</strong> sudah diisi oleh{" "}
+                <strong>{alreadyFilledBy}</strong>. Anda bisa melihat dan memperbarui jika perlu.
+              </span>
+            </div>
+          </FadeIn>
+        )}
 
         {/* ── Stat Cards ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -506,7 +530,7 @@ export default function Absensi() {
           </div>
 
           {/* History Panel */}
-          <div className="w-full lg:w-[300px] bg-card border border-border rounded-xl shadow-sm flex flex-col shrink-0 max-h-[600px] flex-col">
+          <div className="w-full lg:w-[300px] bg-card border border-border rounded-xl shadow-sm flex flex-col shrink-0 max-h-[600px]">
             <div className="px-5 py-4 border-b border-border flex items-center gap-2">
               <History className="w-4 h-4 text-muted-foreground" />
               <h2 className="font-bold text-foreground text-sm uppercase tracking-wide">Rekap Riwayat</h2>
@@ -541,13 +565,12 @@ export default function Absensi() {
                           const allHadir = g.alpa === 0 && g.sakit === 0 && g.izin === 0;
                           const tidakHadir = g.total - g.hadir;
                           const isActive =
-                            bulkSubjectId === g.subjectId &&
                             bulkTanggal === g.tanggal &&
                             bulkKelas === g.kelas;
 
                           return (
                             <div
-                              key={`${g.subjectId}|${g.kelas}`}
+                              key={`${g.kelas}|${g.tanggal}`}
                               className={`relative pl-4 border-l-2 cursor-pointer group ${
                                 isActive
                                   ? "border-primary"
@@ -555,7 +578,7 @@ export default function Absensi() {
                                   ? "border-emerald-200"
                                   : "border-orange-200"
                               }`}
-                              onClick={() => handleLoadSession({ kelas: g.kelas, subjectId: g.subjectId, tanggal: g.tanggal })}
+                              onClick={() => handleLoadSession({ kelas: g.kelas, tanggal: g.tanggal })}
                             >
                               <div
                                 className={`absolute w-2.5 h-2.5 rounded-full -left-[6px] top-1.5 ring-4 ring-background ${
@@ -569,13 +592,18 @@ export default function Absensi() {
 
                               <div className="flex items-start justify-between gap-2 mb-1">
                                 <div className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
-                                  {g.subjectName}
-                                  <span className="ml-1 font-normal text-muted-foreground">· {g.kelas}</span>
+                                  Kelas {g.kelas}
                                 </div>
                                 <div className={`text-xs font-semibold shrink-0 ${allHadir ? "text-emerald-600" : "text-muted-foreground"}`}>
                                   {g.hadir}/{g.total}
                                 </div>
                               </div>
+
+                              {g.filledByTeacherName && (
+                                <div className="text-[10px] text-muted-foreground mb-1 truncate">
+                                  oleh {g.filledByTeacherName}
+                                </div>
+                              )}
 
                               {allHadir ? (
                                 <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 mb-1">
@@ -610,12 +638,12 @@ export default function Absensi() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleHapusSesi({ kelas: g.kelas, subjectId: g.subjectId, tanggal: g.tanggal, subjectName: g.subjectName });
+                                  handleHapusSesi({ kelas: g.kelas, tanggal: g.tanggal });
                                 }}
                                 className="mt-2 flex items-center gap-1 text-[10px] text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <Trash2 className="w-3 h-3" />
-                                Hapus sesi
+                                Hapus absensi
                               </button>
                             </div>
                           );

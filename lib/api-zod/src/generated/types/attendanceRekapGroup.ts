@@ -9,11 +9,11 @@
 export interface AttendanceRekapGroup {
   tanggal: string;
   kelas: string;
-  subjectId: string;
-  subjectName: string;
   hadir: number;
   izin: number;
   sakit: number;
   alpa: number;
   total: number;
+  /** @nullable */
+  filledByTeacherName?: string | null;
 }

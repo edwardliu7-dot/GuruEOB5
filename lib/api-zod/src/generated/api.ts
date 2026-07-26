@@ -1170,9 +1170,10 @@ export const ListAttendanceQueryParams = zod.object({
 export const ListAttendanceResponseItem = zod.object({
   "id": zod.string(),
   "studentId": zod.string(),
-  "subjectId": zod.string(),
   "tanggal": zod.string(),
   "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa']),
+  "filledByTeacherId": zod.string().nullish(),
+  "filledByTeacherName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 export const ListAttendanceResponse = zod.array(ListAttendanceResponseItem)
@@ -1183,7 +1184,6 @@ export const ListAttendanceResponse = zod.array(ListAttendanceResponseItem)
  */
 export const CreateAttendanceRecordBody = zod.object({
   "studentId": zod.string(),
-  "subjectId": zod.string(),
   "tanggal": zod.string(),
   "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa'])
 })
@@ -1191,9 +1191,10 @@ export const CreateAttendanceRecordBody = zod.object({
 export const CreateAttendanceRecordResponse = zod.object({
   "id": zod.string(),
   "studentId": zod.string(),
-  "subjectId": zod.string(),
   "tanggal": zod.string(),
   "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa']),
+  "filledByTeacherId": zod.string().nullish(),
+  "filledByTeacherName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -1212,9 +1213,10 @@ export const UpdateAttendanceRecordBody = zod.object({
 export const UpdateAttendanceRecordResponse = zod.object({
   "id": zod.string(),
   "studentId": zod.string(),
-  "subjectId": zod.string(),
   "tanggal": zod.string(),
   "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa']),
+  "filledByTeacherId": zod.string().nullish(),
+  "filledByTeacherName": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
 
@@ -1240,7 +1242,6 @@ export const bulkCreateAttendanceBodyStudentIdsMax = 500;
 
 export const BulkCreateAttendanceBody = zod.object({
   "studentIds": zod.array(zod.string()).min(1).max(bulkCreateAttendanceBodyStudentIdsMax),
-  "subjectId": zod.string(),
   "tanggal": zod.string(),
   "status": zod.enum(['hadir', 'izin', 'sakit', 'alpa'])
 })
@@ -1251,19 +1252,18 @@ export const BulkCreateAttendanceResponse = zod.object({
 
 
 /**
- * @summary Attendance recap grouped by date, class, and subject (for the calling teacher's own subjects)
+ * @summary Attendance recap grouped by date and class (school-wide — all teachers can see)
  */
 export const GetAttendanceRekapResponse = zod.object({
   "groups": zod.array(zod.object({
   "tanggal": zod.string(),
   "kelas": zod.string(),
-  "subjectId": zod.string(),
-  "subjectName": zod.string(),
   "hadir": zod.number(),
   "izin": zod.number(),
   "sakit": zod.number(),
   "alpa": zod.number(),
-  "total": zod.number()
+  "total": zod.number(),
+  "filledByTeacherName": zod.string().nullish()
 }))
 })
 
@@ -1273,8 +1273,7 @@ export const GetAttendanceRekapResponse = zod.object({
  */
 export const BulkDeleteAttendanceByKelasBody = zod.object({
   "kelas": zod.string(),
-  "tanggal": zod.string(),
-  "subjectId": zod.string()
+  "tanggal": zod.string()
 })
 
 export const BulkDeleteAttendanceByKelasResponse = zod.object({
@@ -1290,7 +1289,6 @@ export const bulkMixedCreateAttendanceBodyEntriesMax = 500;
 
 
 export const BulkMixedCreateAttendanceBody = zod.object({
-  "subjectId": zod.string(),
   "tanggal": zod.string(),
   "entries": zod.array(zod.object({
   "studentId": zod.string(),

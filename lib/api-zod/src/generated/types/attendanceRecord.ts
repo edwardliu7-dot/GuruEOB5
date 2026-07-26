@@ -10,8 +10,11 @@ import type { AttendanceRecordStatus } from './attendanceRecordStatus';
 export interface AttendanceRecord {
   id: string;
   studentId: string;
-  subjectId: string;
   tanggal: string;
   status: AttendanceRecordStatus;
+  /** @nullable */
+  filledByTeacherId?: string | null;
+  /** @nullable */
+  filledByTeacherName?: string | null;
   createdAt: Date;
 }

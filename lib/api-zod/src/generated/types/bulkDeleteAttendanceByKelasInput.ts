@@ -9,5 +9,4 @@
 export interface BulkDeleteAttendanceByKelasInput {
   kelas: string;
   tanggal: string;
-  subjectId: string;
 }

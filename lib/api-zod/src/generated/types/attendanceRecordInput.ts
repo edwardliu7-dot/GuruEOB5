@@ -9,7 +9,6 @@ import type { AttendanceRecordInputStatus } from './attendanceRecordInputStatus'
 
 export interface AttendanceRecordInput {
   studentId: string;
-  subjectId: string;
   tanggal: string;
   status: AttendanceRecordInputStatus;
 }
