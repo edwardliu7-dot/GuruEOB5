@@ -85,14 +85,14 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
     .values({
       ...parsed.data,
       filledByTeacherId: guru.id,
-      filledByTeacherName: guru.namaLengkap,
+      filledByTeacherName: guru.name,
     })
     .onConflictDoUpdate({
       target: [attendanceTable.studentId, attendanceTable.tanggal],
       set: {
         status: parsed.data.status,
         filledByTeacherId: guru.id,
-        filledByTeacherName: guru.namaLengkap,
+        filledByTeacherName: guru.name,
       },
     })
     .returning();
@@ -205,11 +205,11 @@ router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => 
       tanggal,
       status,
       filledByTeacherId: guru.id,
-      filledByTeacherName: guru.namaLengkap,
+      filledByTeacherName: guru.name,
     })))
     .onConflictDoUpdate({
       target: [attendanceTable.studentId, attendanceTable.tanggal],
-      set: { status, filledByTeacherId: guru.id, filledByTeacherName: guru.namaLengkap },
+      set: { status, filledByTeacherId: guru.id, filledByTeacherName: guru.name },
     })
     .returning();
   res.json(BulkCreateAttendanceResponse.parse({ count: inserted.length }));
@@ -257,11 +257,11 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
         tanggal,
         status,
         filledByTeacherId: guru.id,
-        filledByTeacherName: guru.namaLengkap,
+        filledByTeacherName: guru.name,
       })
       .onConflictDoUpdate({
         target: [attendanceTable.studentId, attendanceTable.tanggal],
-        set: { status, filledByTeacherId: guru.id, filledByTeacherName: guru.namaLengkap },
+        set: { status, filledByTeacherId: guru.id, filledByTeacherName: guru.name },
       });
     count++;
   }

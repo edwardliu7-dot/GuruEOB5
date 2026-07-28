@@ -1,5 +1,4 @@
-import { pgTable, text, timestamp, uuid, date, uniqueIndex } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+import { pgTable, text, timestamp, uuid, date, uniqueIndex } from "drizzle-orm/pg-core";import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { studentsTable } from "./students";
 
@@ -13,7 +12,7 @@ export const attendanceTable = pgTable(
     // subjectId removed — attendance is now per day per student, not per subject
     tanggal: date("tanggal", { mode: "string" }).notNull(),
     status: text("status", { enum: ["hadir", "izin", "sakit", "alpa"] }).notNull(),
-    filledByTeacherId: uuid("filled_by_teacher_id"),
+    filledByTeacherId: text("filled_by_teacher_id"),
     filledByTeacherName: text("filled_by_teacher_name"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
