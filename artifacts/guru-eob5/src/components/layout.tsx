@@ -145,16 +145,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
     ...(isAdmin ? [{ href: "/feedback", label: "Kotak Masuk", icon: Inbox, badge: unreadCount }] : []),
   ];
 
+  const jabatan = user?.jabatan ?? [];
+  const isKepsek = jabatan.includes("kepala_sekolah");
+
   const kegiatanBelajarMengajarNavItems = [
-    { href: "/jadwal", label: "Jadwal Pelajaran", icon: CalendarClock },
+    ...(!isKepsek ? [{ href: "/jadwal", label: "Jadwal Pelajaran", icon: CalendarClock }] : []),
     { href: "/absensi", label: "Absensi", icon: ClipboardCheck },
     { href: "/jurnal", label: "Jurnal Mengajar", icon: BookOpen },
     { href: "/nilai", label: "Nilai", icon: GraduationCap },
     { href: "/poin", label: "Poin Siswa", icon: Star },
     { href: "/rekap", label: "Rekap & Analitik", icon: PieChart },
   ];
-
-  const jabatan = user?.jabatan ?? [];
   const roleNavItems = [
     ...(jabatan.includes("kepala_sekolah")
       ? [{ href: "/kepsek", label: "Progres Guru", icon: BarChart3 }]
