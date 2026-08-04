@@ -1,6 +1,7 @@
 import { pgTable, text, timestamp, uuid, date, uniqueIndex } from "drizzle-orm/pg-core";import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { studentsTable } from "./students";
+// NOTE: studentsTable points to "guru_eob5_students" — see shared-db-naming-collisions.md
 
 export const attendanceTable = pgTable(
   "attendance_records",
