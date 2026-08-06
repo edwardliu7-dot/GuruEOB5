@@ -111,14 +111,23 @@ const sessionTableReady = sessionPool
     ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_data text;
     ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_name text;
 
-    -- Migrate attendance_records: remove subject_id dependency, add filled_by columns.
-    -- attendance is now per-day per-student (not per-subject).
+    -- Create attendance_records table if not exists (new schema: per-day per-student).
+    CREATE TABLE IF NOT EXISTS attendance_records (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_id uuid NOT NULL REFERENCES guru_eob5_students(id) ON DELETE CASCADE,
+      tanggal date NOT NULL,
+      status text NOT NULL CHECK (status IN ('hadir','izin','sakit','alpa')),
+      filled_by_teacher_id text,
+      filled_by_teacher_name text,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS attendance_student_tanggal_unique
+      ON attendance_records (student_id, tanggal);
+    -- Migrate old schema if subject_id column still exists (safe no-ops if already migrated).
     ALTER TABLE attendance_records
       ADD COLUMN IF NOT EXISTS filled_by_teacher_id   text,
       ADD COLUMN IF NOT EXISTS filled_by_teacher_name text;
     DROP INDEX IF EXISTS attendance_student_subject_tanggal_unique;
-    CREATE UNIQUE INDEX IF NOT EXISTS attendance_student_tanggal_unique
-      ON attendance_records (student_id, tanggal);
     ALTER TABLE attendance_records
       ALTER COLUMN subject_id DROP NOT NULL;
     ALTER TABLE attendance_records
