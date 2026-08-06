@@ -128,10 +128,16 @@ const sessionTableReady = sessionPool
       ADD COLUMN IF NOT EXISTS filled_by_teacher_id   text,
       ADD COLUMN IF NOT EXISTS filled_by_teacher_name text;
     DROP INDEX IF EXISTS attendance_student_subject_tanggal_unique;
-    ALTER TABLE attendance_records
-      ALTER COLUMN subject_id DROP NOT NULL;
-    ALTER TABLE attendance_records
-      DROP COLUMN IF EXISTS subject_id;
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'attendance_records' AND column_name = 'subject_id'
+      ) THEN
+        ALTER TABLE attendance_records ALTER COLUMN subject_id DROP NOT NULL;
+        ALTER TABLE attendance_records DROP COLUMN subject_id;
+      END IF;
+    END $$;
     `,
   )
   .then(() => {

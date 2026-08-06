@@ -1,0 +1,395 @@
+2026-Aug-06 01:24:14.758692 Docker 29.6.1 with BuildKit and Buildx detected on deployment server (localhost).
+2026-Aug-06 01:24:14.782769 Starting deployment of edwardliu7-dot/GuruEOB5:main to localhost.
+2026-Aug-06 01:24:15.310665 Preparing container with helper image: docker.io/coollabsio/coolify-helper:1.0.14
+2026-Aug-06 01:24:16.360768 [DEBUG] [CMD]: docker stop --time=30 zgumkoy4h7v56st9vnbrox8c
+2026-Aug-06 01:24:16.360768 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Aug-06 01:24:16.369811 [DEBUG] Error response from daemon: No such container: zgumkoy4h7v56st9vnbrox8c
+2026-Aug-06 01:24:19.985423 [DEBUG] [CMD]: docker run -d --network 'coolify' --name zgumkoy4h7v56st9vnbrox8c  --rm -v /root/.docker/buildx:/root/.docker/buildx -v /var/run/docker.sock:/var/run/docker.sock docker.io/coollabsio/coolify-helper:1.0.14
+2026-Aug-06 01:24:19.985423 [DEBUG] 34ac3ac00b7f4a8e210cd8c32a4d39d6f93767a0194231773d0823f1e56a568c
+2026-Aug-06 01:24:24.312278 [DEBUG] [CMD]: docker exec zgumkoy4h7v56st9vnbrox8c bash -c 'GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -p 22 -o Port=22 -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git ls-remote '\''https://x-access-token:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''refs/heads/main'\'''
+2026-Aug-06 01:24:24.312278 [DEBUG] 7cb74ca0db7fa71e955aecfe3715079fbb7340c8	refs/heads/main
+2026-Aug-06 01:24:24.768900 ----------------------------------------
+2026-Aug-06 01:24:24.783910 Importing edwardliu7-dot/GuruEOB5:main (commit sha 7cb74ca0db7fa71e955aecfe3715079fbb7340c8) to /artifacts/zgumkoy4h7v56st9vnbrox8c.
+2026-Aug-06 01:24:25.073089 [DEBUG] [CMD]: docker exec zgumkoy4h7v56st9vnbrox8c bash -c 'git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 clone --depth=1 --recurse-submodules --shallow-submodules -b '\''main'\'' '\''https:<REDACTED>@github.com/edwardliu7-dot/GuruEOB5.git'\'' '\''/artifacts/zgumkoy4h7v56st9vnbrox8c'\'' && cd '\''/artifacts/zgumkoy4h7v56st9vnbrox8c'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https://x-access-token:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 fetch --depth=1 origin '\''7cb74ca0db7fa71e955aecfe3715079fbb7340c8'\'' && git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 -c advice.detachedHead=false checkout '\''7cb74ca0db7fa71e955aecfe3715079fbb7340c8'\'' >/dev/null 2>&1 && cd '\''/artifacts/zgumkoy4h7v56st9vnbrox8c'\'' && if [ -f .gitmodules ]; then git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule sync && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 submodule update --init --recursive --depth=1; fi && cd '\''/artifacts/zgumkoy4h7v56st9vnbrox8c'\'' && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" git -c '\''url.https:<REDACTED>@github.com/.insteadOf=https://github.com/'\'' -c http.version=HTTP/1.1 lfs pull'
+2026-Aug-06 01:<REDACTED>@latest --quiet \
+2026-Aug-06 01:24:32.635210 [DEBUG] && npm install pdfkit pdf-parse --omit=dev --no-package-lock --no-save \
+2026-Aug-06 01:24:32.635210 [DEBUG] --prefix /app 2>&1 | tail -5
+2026-Aug-06 01:24:32.635210 [DEBUG] 
+2026-Aug-06 01:24:32.635210 [DEBUG] ENV NODE_ENV=production
+2026-Aug-06 01:24:32.635210 [DEBUG] ENV PORT=3000
+2026-Aug-06 01:24:32.635210 [DEBUG] 
+2026-Aug-06 01:24:32.635210 [DEBUG] # Only the compiled output is needed to run the app.
+2026-Aug-06 01:24:32.635210 [DEBUG] # (pdfkit node_modules installed above; everything else is bundled by esbuild)
+2026-Aug-06 01:24:32.635210 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Aug-06 01:24:32.635210 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Aug-06 01:24:32.635210 [DEBUG] 
+2026-Aug-06 01:24:32.635210 [DEBUG] EXPOSE 3000
+2026-Aug-06 01:24:32.635210 [DEBUG] 
+2026-Aug-06 01:24:32.635210 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Aug-06 01:24:32.982698 [DEBUG] Creating build-time .env file in /artifacts (outside Docker context).
+2026-Aug-06 01:24:33.380173 ----------------------------------------
+2026-Aug-06 01:24:33.397974 ⚠️ Build-time environment variable warning: NODE_ENV=production
+2026-Aug-06 01:24:33.412962 Affects: Node.js/npm/yarn/bun/pnpm
+2026-Aug-06 01:24:33.433412 Issue: Skips devDependencies installation which are often required for building (webpack, typescript, etc.)
+2026-Aug-06 01:24:33.450861 Recommendation: Uncheck "Available at Buildtime" or use "development" during build
+2026-Aug-06 01:24:33.469812 
+2026-Aug-06 01:24:33.487913 💡 Tips to resolve build issues:
+2026-Aug-06 01:24:33.503490 1. Set these variables as "Runtime only" in the environment variables settings
+2026-Aug-06 01:24:33.520732 2. Use different values for build-time (e.g., NODE_ENV=development for build)
+2026-Aug-06 01:24:33.537618 3. Consider using multi-stage Docker builds to separate build and runtime environments
+2026-Aug-06 01:24:33.843282 [DEBUG] [CMD]: docker exec zgumkoy4h7v56st9vnbrox8c bash -c 'cat /artifacts/zgumkoy4h7v56st9vnbrox8c/Dockerfile'
+2026-Aug-06 01:24:33.843282 [DEBUG] # Multi-stage production build for GuruEOB5.
+2026-Aug-06 01:24:33.843282 [DEBUG] #
+2026-Aug-06 01:24:33.843282 [DEBUG] # Stage 1 ("build") has all the heavy tooling (pnpm, TypeScript, Vite,
+2026-Aug-06 01:24:33.843282 [DEBUG] # esbuild, devDependencies) needed to compile the app.
+2026-Aug-06 01:24:33.843282 [DEBUG] # Stage 2 ("runtime") is a slim image that only contains the compiled
+2026-Aug-06 01:24:33.843282 [DEBUG] # output — no source code, no node_modules, no dev tools. This keeps the
+2026-Aug-06 01:24:33.843282 [DEBUG] # final image small, which matters a lot on a small-RAM VPS: Docker can run
+2026-Aug-06 01:24:33.843282 [DEBUG] # out of memory while exporting a bloated single-stage image.
+2026-Aug-06 01:24:33.843282 [DEBUG] #
+2026-Aug-06 01:24:33.843282 [DEBUG] # esbuild bundles virtually everything into dist/index.mjs.  The one
+2026-Aug-06 01:24:33.843282 [DEBUG] # exception is pdfkit: it loads its built-in .afm font files from disk at
+2026-Aug-06 01:24:33.843282 [DEBUG] # runtime using paths relative to its own package directory, so bundling
+2026-Aug-06 01:24:33.843282 [DEBUG] # breaks those paths. We install pdfkit directly in the runtime stage via a
+2026-Aug-06 01:24:33.843282 [DEBUG] # plain npm install — it's ~5 MB and avoids the RAM-heavy `pnpm deploy` step
+2026-Aug-06 01:24:33.843282 [DEBUG] # that was previously needed to copy external deps.
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] # ---------- Stage 1: build ----------
+2026-Aug-06 01:24:33.843282 [DEBUG] FROM node:22-slim AS build
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] ENV PNPM_HOME="/pnpm"
+2026-Aug-06 01:24:33.843282 [DEBUG] ENV PATH="$PNPM_HOME:$PATH"
+2026-Aug-06 01:24:33.843282 [DEBUG] RUN corepack enable
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] WORKDIR /app
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] # Copy everything (see .dockerignore for what's excluded).
+2026-Aug-06 01:24:33.843282 [DEBUG] COPY . .
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] RUN pnpm install --frozen-lockfile
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] # Needed at build time only, so the frontend build knows its asset base path.
+2026-Aug-06 01:24:33.843282 [DEBUG] ENV NODE_ENV=production
+2026-Aug-06 01:24:33.843282 [DEBUG] ENV PORT=3000
+2026-Aug-06 01:24:33.843282 [DEBUG] ENV BASE_PATH=/
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] # Inject a unique build ID into the frontend env so every Docker build produces
+2026-Aug-06 01:24:33.843282 [DEBUG] # a different value.  When users open the app after a redeploy, the stored
+2026-Aug-06 01:24:33.843282 [DEBUG] # localStorage version won't match and the "What's New" dialog fires for everyone.
+2026-Aug-06 01:24:33.843282 [DEBUG] # We use a millisecond timestamp (no git history available in Docker context).
+2026-Aug-06 01:24:33.843282 [DEBUG] RUN node -e "require('fs').appendFileSync( \
+2026-Aug-06 01:24:33.843282 [DEBUG] 'artifacts/guru-eob5/.env.production', \
+2026-Aug-06 01:24:33.843282 [DEBUG] '\nVITE_BUILD_ID=' + Date.now() + '\n')"
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] # Skip the repo-wide typecheck here: it's a dev/CI concern and its extra
+2026-Aug-06 01:24:33.843282 [DEBUG] # `tsc` processes roughly double the peak memory used during this step,
+2026-Aug-06 01:24:33.843282 [DEBUG] # which matters on a small-RAM VPS. Run `pnpm run build` (with typecheck)
+2026-Aug-06 01:24:33.843282 [DEBUG] # locally or in CI before deploying.
+2026-Aug-06 01:24:33.843282 [DEBUG] #
+2026-Aug-06 01:24:33.843282 [DEBUG] # Cap Node.js heap at 768 MB so the Vite build does not get OOM-killed on a
+2026-Aug-06 01:24:33.843282 [DEBUG] # RAM-constrained VPS.  768 MB leaves headroom for the OS and Docker overhead
+2026-Aug-06 01:24:33.843282 [DEBUG] # on a 2 GB machine while still giving Vite plenty of room to bundle.
+2026-Aug-06 01:24:33.843282 [DEBUG] ENV NODE_OPTIONS="--max-old-space-size=768"
+2026-Aug-06 01:24:33.843282 [DEBUG] RUN pnpm run build:app
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] # ---------- Stage 2: runtime ----------
+2026-Aug-06 01:24:33.843282 [DEBUG] FROM node:22-slim AS runtime
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] WORKDIR /app
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] # Coolify's healthcheck runs `curl`/`wget` inside the container to verify
+2026-Aug-06 01:24:33.843282 [DEBUG] # the app is up. node:22-slim has neither by default, so the check always
+2026-Aug-06 01:24:33.843282 [DEBUG] # fails and Coolify rolls back a perfectly working deployment. Install curl.
+2026-Aug-06 01:24:33.843282 [DEBUG] # Also install pdfkit and pdf-parse here: both load files from disk at runtime
+2026-Aug-06 01:24:33.843282 [DEBUG] # (pdfkit uses path traversal for .afm fonts; pdf-parse v2 has no default ESM
+2026-Aug-06 01:24:33.843282 [DEBUG] # export), so esbuild cannot bundle them safely.
+2026-Aug-06 01:24:33.843282 [DEBUG] RUN apt-get update \
+2026-Aug-06 01:24:33.843282 [DEBUG] && apt-get install -y --no-install-recommends curl \
+2026-Aug-06 01:24:33.843282 [DEBUG] && rm -rf /var/lib/apt/lists/* \
+2026-Aug-06 01:24:33.843282 [DEBUG] && npm install -g npm@latest --quiet \
+2026-Aug-06 01:24:33.843282 [DEBUG] && npm install pdfkit pdf-parse --omit=dev --no-package-lock --no-save \
+2026-Aug-06 01:24:33.843282 [DEBUG] --prefix /app 2>&1 | tail -5
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] ENV NODE_ENV=production
+2026-Aug-06 01:24:33.843282 [DEBUG] ENV PORT=3000
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] # Only the compiled output is needed to run the app.
+2026-Aug-06 01:24:33.843282 [DEBUG] # (pdfkit node_modules installed above; everything else is bundled by esbuild)
+2026-Aug-06 01:24:33.843282 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Aug-06 01:24:33.843282 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] EXPOSE 3000
+2026-Aug-06 01:24:33.843282 [DEBUG] 
+2026-Aug-06 01:24:33.843282 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Aug-06 01:24:33.944160 [DEBUG] Final Dockerfile:
+2026-Aug-06 01:24:34.565514 [DEBUG] [CMD]: docker exec zgumkoy4h7v56st9vnbrox8c bash -c 'cat /artifacts/zgumkoy4h7v56st9vnbrox8c/Dockerfile'
+2026-Aug-06 01:24:34.565514 [DEBUG] # Multi-stage production build for GuruEOB5.
+2026-Aug-06 01:24:34.565514 [DEBUG] #
+2026-Aug-06 01:24:34.565514 [DEBUG] # Stage 1 ("build") has all the heavy tooling (pnpm, TypeScript, Vite,
+2026-Aug-06 01:24:34.565514 [DEBUG] # esbuild, devDependencies) needed to compile the app.
+2026-Aug-06 01:24:34.565514 [DEBUG] # Stage 2 ("runtime") is a slim image that only contains the compiled
+2026-Aug-06 01:24:34.565514 [DEBUG] # output — no source code, no node_modules, no dev tools. This keeps the
+2026-Aug-06 01:24:34.565514 [DEBUG] # final image small, which matters a lot on a small-RAM VPS: Docker can run
+2026-Aug-06 01:24:34.565514 [DEBUG] # out of memory while exporting a bloated single-stage image.
+2026-Aug-06 01:24:34.565514 [DEBUG] #
+2026-Aug-06 01:24:34.565514 [DEBUG] # esbuild bundles virtually everything into dist/index.mjs.  The one
+2026-Aug-06 01:24:34.565514 [DEBUG] # exception is pdfkit: it loads its built-in .afm font files from disk at
+2026-Aug-06 01:24:34.565514 [DEBUG] # runtime using paths relative to its own package directory, so bundling
+2026-Aug-06 01:24:34.565514 [DEBUG] # breaks those paths. We install pdfkit directly in the runtime stage via a
+2026-Aug-06 01:24:34.565514 [DEBUG] # plain npm install — it's ~5 MB and avoids the RAM-heavy `pnpm deploy` step
+2026-Aug-06 01:24:34.565514 [DEBUG] # that was previously needed to copy external deps.
+2026-Aug-06 01:24:34.565514 [DEBUG] 
+2026-Aug-06 01:24:34.565514 [DEBUG] # ---------- Stage 1: build ----------
+2026-Aug-06 01:24:34.565514 [DEBUG] FROM node:22-slim AS build
+2026-Aug-06 01:24:34.565514 [DEBUG] ARG NODE_ENV=production
+2026-Aug-06 01:24:34.565514 [DEBUG] ARG NEON_DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Aug-06 01:24:34.565514 [DEBUG] ARG DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Aug-06 01:24:34.565514 [DEBUG] ARG COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io
+2026-Aug-06 01:<REDACTED>@157.10.161.229:5432/postgres
+2026-Aug-06 01:24:34.565514 [DEBUG] ARG DATABASE_URL=postgres://postgres:<REDACTED>@157.10.161.229:5432/postgres
+2026-Aug-06 01:24:34.565514 [DEBUG] ARG COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io
+2026-Aug-06 01:<REDACTED>@latest --quiet \
+2026-Aug-06 01:24:34.565514 [DEBUG] && npm install pdfkit pdf-parse --omit=dev --no-package-lock --no-save \
+2026-Aug-06 01:24:34.565514 [DEBUG] --prefix /app 2>&1 | tail -5
+2026-Aug-06 01:24:34.565514 [DEBUG] 
+2026-Aug-06 01:24:34.565514 [DEBUG] ENV NODE_ENV=production
+2026-Aug-06 01:24:34.565514 [DEBUG] ENV PORT=3000
+2026-Aug-06 01:24:34.565514 [DEBUG] 
+2026-Aug-06 01:24:34.565514 [DEBUG] # Only the compiled output is needed to run the app.
+2026-Aug-06 01:24:34.565514 [DEBUG] # (pdfkit node_modules installed above; everything else is bundled by esbuild)
+2026-Aug-06 01:24:34.565514 [DEBUG] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Aug-06 01:24:34.565514 [DEBUG] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Aug-06 01:24:34.565514 [DEBUG] 
+2026-Aug-06 01:24:34.565514 [DEBUG] EXPOSE 3000
+2026-Aug-06 01:24:34.565514 [DEBUG] 
+2026-Aug-06 01:24:34.565514 [DEBUG] CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+2026-Aug-06 01:24:34.585817 ----------------------------------------
+2026-Aug-06 01:24:34.603941 Building docker image started.
+2026-Aug-06 01:24:34.625175 To check the current progress, click on Show Debug Logs.
+2026-Aug-06 01:24:35.181177 [DEBUG] [CMD]: docker exec zgumkoy4h7v56st9vnbrox8c bash -c 'cat /artifacts/build.sh'
+2026-Aug-06 01:24:35.181177 [DEBUG] cd /artifacts/zgumkoy4h7v56st9vnbrox8c && set -a && source /artifacts/build-time.env && set +a && DOCKER_BUILDKIT=1 docker build  --add-host coolify:10.0.1.6 --add-host coolify-db:10.0.1.8 --add-host coolify-realtime:10.0.1.5 --add-host coolify-redis:10.0.1.11 --add-host llfsfaj7n7vzkp3n08i500fv:10.0.1.2 --add-host llfsfaj7n7vzkp3n08i500fv-proxy:10.0.1.3 --network host -f /artifacts/zgumkoy4h7v56st9vnbrox8c/Dockerfile --progress plain -t sfptjjfqgqidt4736qzont0l:7cb74ca0db7fa71e955aecfe3715079fbb7340c8 --build-arg COOLIFY_URL --build-arg COOLIFY_FQDN --build-arg COOLIFY_BRANCH --build-arg COOLIFY_RESOURCE_UUID --build-arg NODE_ENV --build-arg NEON_DATABASE_URL --build-arg DATABASE_URL --build-arg COOLIFY_BUILD_SECRETS_HASH=3ee830dfd2a966cc1c09118affddbfe6544ef71af47a0e0c1d1263a34b9286a7 --build-arg 'COOLIFY_URL' --build-arg 'COOLIFY_FQDN' --build-arg 'COOLIFY_BRANCH' --build-arg 'COOLIFY_RESOURCE_UUID' /artifacts/zgumkoy4h7v56st9vnbrox8c
+2026-Aug-06 01:24:36.684466 [DEBUG] [CMD]: docker exec zgumkoy4h7v56st9vnbrox8c bash -c 'bash /artifacts/build.sh'
+2026-Aug-06 01:24:36.684466 [DEBUG] #0 building with "default" instance using docker driver
+2026-Aug-06 01:24:36.684466 [DEBUG] 
+2026-Aug-06 01:24:36.684466 [DEBUG] #1 [internal] load build definition from Dockerfile
+2026-Aug-06 01:24:37.345805 [DEBUG] #1 transferring dockerfile:
+2026-Aug-06 01:24:37.503700 [DEBUG] #1 transferring dockerfile: 4.52kB 0.0s done
+2026-Aug-06 01:24:37.629823 [DEBUG] #1 DONE 1.1s
+2026-Aug-06 01:24:37.786798 [DEBUG] #2 [internal] load metadata for docker.io/library/node:22-slim
+2026-Aug-06 01:24:39.607280 [DEBUG] #2 DONE 1.8s
+2026-Aug-06 01:24:39.764144 [DEBUG] #3 [internal] load .dockerignore
+2026-Aug-06 01:24:40.136042 [DEBUG] #3 transferring context:
+2026-Aug-06 01:24:40.292398 [DEBUG] #3 transferring context: 148B done
+2026-Aug-06 01:24:40.575179 [DEBUG] #3 DONE 1.0s
+2026-Aug-06 01:24:40.904560 [DEBUG] #4 [internal] load build context
+2026-Aug-06 01:24:40.904560 [DEBUG] #4 DONE 0.0s
+2026-Aug-06 01:24:40.904560 [DEBUG] 
+2026-Aug-06 01:24:40.904560 [DEBUG] #5 [build 1/7] FROM docker.io/library/node:22-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436
+2026-Aug-06 01:24:40.904560 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436
+2026-Aug-06 01:24:41.124752 [DEBUG] #5 resolve docker.io/library/node:22-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436 0.4s done
+2026-Aug-06 01:24:41.312932 [DEBUG] #5 DONE 0.4s
+2026-Aug-06 01:24:41.312932 [DEBUG] 
+2026-Aug-06 01:24:41.312932 [DEBUG] #4 [internal] load build context
+2026-Aug-06 01:24:41.932335 [DEBUG] #4 transferring context: 3.34MB 0.1s done
+2026-Aug-06 01:24:42.030242 [DEBUG] #4 DONE 0.9s
+2026-Aug-06 01:24:42.251355 [DEBUG] #6 [build 2/7] RUN corepack enable
+2026-Aug-06 01:24:42.251355 [DEBUG] #6 CACHED
+2026-Aug-06 01:24:42.251355 [DEBUG] 
+2026-Aug-06 01:24:42.251355 [DEBUG] #7 [build 3/7] WORKDIR /app
+2026-Aug-06 01:24:42.251355 [DEBUG] #7 CACHED
+2026-Aug-06 01:24:42.251355 [DEBUG] 
+2026-Aug-06 01:24:42.251355 [DEBUG] #8 [build 4/7] COPY . .
+2026-Aug-06 01:24:47.317178 [DEBUG] #8 DONE 5.2s
+2026-Aug-06 01:24:47.475533 [DEBUG] #9 [build 5/7] RUN pnpm install --frozen-lockfile
+2026-Aug-06 01:24:48.607480 [DEBUG] #9 1.134 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.26.1.tgz
+2026-Aug-06 01:<REDACTED>@11.20.0   │
+2026-Aug-06 01:24:52.374369 [DEBUG] #9 4.896    │                                               │
+2026-Aug-06 01:24:52.374369 [DEBUG] #9 4.896    ╰───────────────────────────────────────────────╯
+2026-Aug-06 01:24:52.374369 [DEBUG] #9 4.896
+2026-Aug-06 01:24:52.758759 [DEBUG] #9 5.285 Progress: resolved 672, reused 0, downloaded 3, added 0
+2026-Aug-06 01:24:53.761278 [DEBUG] #9 6.286 Progress: resolved 672, reused 0, downloaded 45, added 8
+2026-Aug-06 01:24:54.763713 [DEBUG] #9 7.290 Progress: resolved 672, reused 0, downloaded 113, added 31
+2026-Aug-06 01:24:55.766326 [DEBUG] #9 8.290 Progress: resolved 672, reused 0, downloaded 144, added 43
+2026-Aug-06 01:24:56.765214 [DEBUG] #9 9.291 Progress: resolved 672, reused 0, downloaded 164, added 48
+2026-Aug-06 01:24:57.766819 [DEBUG] #9 10.29 Progress: resolved 672, reused 0, downloaded 231, added 82
+2026-Aug-06 01:24:58.773602 [DEBUG] #9 11.30 Progress: resolved 672, reused 0, downloaded 273, added 94
+2026-Aug-06 01:24:59.775371 [DEBUG] #9 12.30 Progress: resolved 672, reused 0, downloaded 350, added 144
+2026-Aug-06 01:25:00.778894 [DEBUG] #9 13.30 Progress: resolved 672, reused 0, downloaded 401, added 175
+2026-Aug-06 01:25:01.779375 [DEBUG] #9 14.31 Progress: resolved 672, reused 0, downloaded 427, added 183
+2026-Aug-06 01:25:02.782614 [DEBUG] #9 15.31 Progress: resolved 672, reused 0, downloaded 451, added 191
+2026-Aug-06 01:25:03.933618 [DEBUG] #9 16.31 Progress: resolved 672, reused 0, downloaded 456, added 194
+2026-Aug-06 01:25:04.788938 [DEBUG] #9 17.31 Progress: resolved 672, reused 0, downloaded 463, added 194
+2026-Aug-06 01:25:07.425241 [DEBUG] #9 18.44 Progress: resolved 672, reused 0, downloaded 464, added 194
+2026-Aug-06 01:25:07.425241 [DEBUG] #9 19.44 Progress: resolved 672, reused 0, downloaded 471, added 198
+2026-Aug-06 01:25:08.870000 [DEBUG] #9 21.40 Progress: resolved 672, reused 0, downloaded 472, added 198
+2026-Aug-06 01:25:09.870184 [DEBUG] #9 22.40 Progress: resolved 672, reused 0, downloaded 510, added 207
+2026-Aug-06 01:25:10.870391 [DEBUG] #9 23.40 Progress: resolved 672, reused 0, downloaded 539, added 223
+2026-Aug-06 01:25:11.872294 [DEBUG] #9 24.40 Progress: resolved 672, reused 0, downloaded 561, added 227
+2026-Aug-06 01:25:14.190196 [DEBUG] #9 26.72 Progress: resolved 672, reused 0, downloaded 562, added 227
+2026-Aug-06 01:25:15.191156 [DEBUG] #9 27.72 Progress: resolved 672, reused 0, downloaded 575, added 231
+2026-Aug-06 01:25:16.207340 [DEBUG] #9 28.73 Progress: resolved 672, reused 0, downloaded 621, added 246
+2026-Aug-06 01:25:17.208650 [DEBUG] #9 29.73 Progress: resolved 672, reused 0, downloaded 625, added 248
+2026-Aug-06 01:25:18.211333 [DEBUG] #9 30.74 Progress: resolved 672, reused 0, downloaded 626, added 248
+2026-Aug-06 01:25:19.212410 [DEBUG] #9 31.74 Progress: resolved 672, reused 0, downloaded 636, added 250
+2026-Aug-06 01:25:20.213440 [DEBUG] #9 32.74 Progress: resolved 672, reused 0, downloaded 646, added 254
+2026-Aug-06 01:25:21.214866 [DEBUG] #9 33.74 Progress: resolved 672, reused 0, downloaded 658, added 257
+2026-Aug-06 01:25:22.215603 [DEBUG] #9 34.74 Progress: resolved 672, reused 0, downloaded 659, added 258
+2026-Aug-06 01:25:23.216605 [DEBUG] #9 35.74 Progress: resolved 672, reused 0, downloaded 672, added 272
+2026-Aug-06 01:25:24.217766 [DEBUG] #9 36.74 Progress: resolved 672, reused 0, downloaded 672, added 456
+2026-Aug-06 01:25:25.227174 [DEBUG] #9 37.75 Progress: resolved 672, reused 0, downloaded 672, added 526
+2026-Aug-06 01:25:26.947813 [DEBUG] #9 38.75 Progress: resolved 672, reused 0, downloaded 672, added 621
+2026-Aug-06 01:25:27.989360 [DEBUG] #9 39.75 Progress: resolved 672, reused 0, downloaded 672, added 626
+2026-Aug-06 01:25:28.161438 [DEBUG] #9 40.69 Progress: resolved 672, reused 0, downloaded 672, added 672, done
+2026-Aug-06 01:25:28.959303 [DEBUG] #9 41.49 .../esbuild@0.18.20/node_modules/esbuild postinstall$ node install.js
+2026-Aug-06 01:25:29.291008 [DEBUG] #9 41.49 .../esbuild@0.28.1/node_modules/esbuild postinstall$ node install.js
+2026-Aug-06 01:25:29.291008 [DEBUG] #9 41.50 .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-Aug-06 01:25:29.291008 [DEBUG] #9 41.55 .../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-Aug-06 01:25:29.436575 [DEBUG] #9 41.83 .../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-Aug-06 01:25:29.529806 [DEBUG] #9 42.06 .../esbuild@0.28.1/node_modules/esbuild postinstall: Done
+2026-Aug-06 01:25:30.722424 [DEBUG] #9 42.06 .../esbuild@0.18.20/node_modules/esbuild postinstall: Done
+2026-Aug-06 01:25:30.722424 [DEBUG] #9 42.08 .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-Aug-06 01:25:33.440169 [DEBUG] #9 45.96
+2026-Aug-06 01:25:33.440169 [DEBUG] #9 45.96 dependencies:
+2026-Aug-06 01:25:33.440169 [DEBUG] #9 45.96 + @replit/connectors-sdk 0.4.1
+2026-Aug-06 01:25:33.440169 [DEBUG] #9 45.96
+2026-Aug-06 01:25:33.440169 [DEBUG] #9 45.96 devDependencies:
+2026-Aug-06 01:25:33.440169 [DEBUG] #9 45.96 + prettier 3.9.4
+2026-Aug-06 01:25:33.440169 [DEBUG] #9 45.96 + typescript 5.9.3
+2026-Aug-06 01:25:33.440169 [DEBUG] #9 45.96
+2026-Aug-06 01:25:33.554773 [DEBUG] #9 46.08 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-Aug-06 01:25:33.729519 [DEBUG] #9 46.10 . preinstall: Done
+2026-Aug-06 01:25:33.891608 [DEBUG] #9 46.42 Done in 43.4s using pnpm v10.26.1
+2026-Aug-06 01:25:37.512408 [DEBUG] #9 DONE 50.0s
+2026-Aug-06 01:25:37.753669 [DEBUG] #10 [build 6/7] RUN node -e "require('fs').appendFileSync(       'artifacts/guru-eob5/.env.production',       '\nVITE_BUILD_ID=' + Date.now() + '\n')"
+2026-Aug-06 01:25:42.263131 [DEBUG] #10 DONE 4.7s
+2026-Aug-06 01:25:42.474433 [DEBUG] #11 [build 7/7] RUN pnpm run build:app
+2026-Aug-06 01:25:44.892702 [DEBUG] #11 2.568
+2026-Aug-06 01:25:44.892702 [DEBUG] #11 2.568 > workspace@0.0.0 build:app /app
+2026-Aug-06 01:25:44.892702 [DEBUG] #11 2.568 > pnpm -r --workspace-concurrency=1 --if-present --filter '!@workspace/mockup-sandbox' run build
+2026-Aug-06 01:25:44.892702 [DEBUG] #11 2.568
+2026-Aug-06 01:25:46.061791 [DEBUG] #11 3.738 Scope: 8 of 10 workspace projects
+2026-Aug-06 01:25:46.248042 [DEBUG] #11 3.773
+2026-Aug-06 01:25:46.248042 [DEBUG] #11 3.773 > @workspace/api-server@0.0.0 build /app/artifacts/api-server
+2026-Aug-06 01:25:46.248042 [DEBUG] #11 3.773 > node ./build.mjs
+2026-Aug-06 01:25:46.248042 [DEBUG] #11 3.773
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/index.mjs                       4.3mb ⚠️
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/pino-worker.mjs               153.4kb
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/pino-file.mjs                 142.0kb
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/pino-pretty.mjs               114.6kb
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/thread-stream-worker.mjs        7.3kb
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/index.mjs.map                   8.2mb
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/pino-worker.mjs.map           256.9kb
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/pino-file.mjs.map             229.0kb
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/pino-pretty.mjs.map           204.0kb
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373   dist/thread-stream-worker.mjs.map   12.0kb
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373
+2026-Aug-06 01:25:47.697287 [DEBUG] #11 5.373 ⚡ Done in 1399ms
+2026-Aug-06 01:25:47.865940 [DEBUG] #11 5.391
+2026-Aug-06 01:25:47.865940 [DEBUG] #11 5.391 > @workspace/guru-eob5@0.0.0 build /app/artifacts/guru-eob5
+2026-Aug-06 01:25:47.865940 [DEBUG] #11 5.391 > vite build --config vite.config.ts
+2026-Aug-06 01:25:47.865940 [DEBUG] #11 5.391
+2026-Aug-06 01:25:48.854535 [DEBUG] #11 6.530 vite v7.3.6 building client environment for production...
+2026-Aug-06 01:25:49.201651 [DEBUG] #11 6.878 transforming...
+2026-Aug-06 01:25:55.973408 [DEBUG] #11 13.65 src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Aug-06 01:25:57.244302 [DEBUG] #11 14.92 src/components/ui/select.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Aug-06 01:25:59.170457 [DEBUG] #11 16.85 src/components/ui/dropdown-menu.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Aug-06 01:25:59.307848 [DEBUG] 
+2026-Aug-06 01:25:59.345369 [DEBUG] #11 16.87 src/components/ui/label.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Aug-06 01:26:02.159582 [DEBUG] #11 19.83 src/components/ui/avatar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Aug-06 01:26:03.193539 [DEBUG] #11 20.87 src/components/ui/sidebar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Aug-06 01:26:05.522474 [DEBUG] #11 23.20 src/components/ui/sheet.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Aug-06 01:26:30.423167 [DEBUG] #11 48.10 ✓ 3751 modules transformed.
+2026-Aug-06 01:26:35.649810 [DEBUG] #11 53.32 rendering chunks...
+2026-Aug-06 01:26:36.340771 [DEBUG] #11 53.42 computing gzip size...
+2026-Aug-06 01:26:36.340771 [DEBUG] #11 54.00 dist/public/index.html                     1.36 kB │ gzip:   0.54 kB
+2026-Aug-06 01:26:36.340771 [DEBUG] #11 54.00 dist/public/assets/logo-C8q4zXk9.png      73.99 kB
+2026-Aug-06 01:26:36.340771 [DEBUG] #11 54.00 dist/public/assets/index-O-kSEH_4.css    150.69 kB │ gzip:  24.26 kB
+2026-Aug-06 01:26:36.340771 [DEBUG] #11 54.00 dist/public/assets/index-B8Uc8g43.js   3,178.12 kB │ gzip: 902.99 kB
+2026-Aug-06 01:26:36.484616 [DEBUG] #11 54.00
+2026-Aug-06 01:26:36.500681 [DEBUG] #11 54.00 (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-Aug-06 01:26:36.500681 [DEBUG] #11 54.00 - Using dynamic import() to code-split the application
+2026-Aug-06 01:26:36.500681 [DEBUG] #11 54.00 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-Aug-06 01:<REDACTED>@workspace/temp-register@0.0.0 build /app/artifacts/temp-register
+2026-Aug-06 01:26:37.511733 [DEBUG] #11 55.19 > vite build --config vite.config.ts
+2026-Aug-06 01:26:37.511733 [DEBUG] #11 55.19
+2026-Aug-06 01:26:38.683319 [DEBUG] #11 56.36 vite v7.3.6 building client environment for production...
+2026-Aug-06 01:26:38.837251 [DEBUG] #11 56.51 transforming...
+2026-Aug-06 01:26:40.241799 [DEBUG] #11 57.92 src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-Aug-06 01:26:47.255889 [DEBUG] #11 64.93 ✓ 1766 modules transformed.
+2026-Aug-06 01:26:47.843236 [DEBUG] #11 65.52 rendering chunks...
+2026-Aug-06 01:26:47.943862 [DEBUG] #11 65.53 computing gzip size...
+2026-Aug-06 01:26:47.943862 [DEBUG] #11 65.62 dist/public/index.html                   1.34 kB │ gzip:   0.54 kB
+2026-Aug-06 01:26:48.102212 [DEBUG] #11 65.62 dist/public/assets/index-D_2ym2bF.css   91.38 kB │ gzip:  14.96 kB
+2026-Aug-06 01:26:48.102212 [DEBUG] #11 65.63 dist/public/assets/index-vFBd7-8X.js   311.50 kB │ gzip: 100.39 kB
+2026-Aug-06 01:26:48.102212 [DEBUG] #11 65.63 ✓ built in 9.23s
+2026-Aug-06 01:26:48.711889 [DEBUG] #11 DONE 66.4s
+2026-Aug-06 01:26:49.009212 [DEBUG] #12 [runtime 2/5] WORKDIR /app
+2026-Aug-06 01:26:49.009212 [DEBUG] #12 CACHED
+2026-Aug-06 01:26:49.009212 [DEBUG] 
+2026-Aug-06 01:26:49.009212 [DEBUG] #13 [runtime 3/5] RUN apt-get update   && apt-get install -y --no-install-recommends curl   && rm -rf /var/lib/apt/lists/*   && npm install -g npm@latest --quiet   && npm install pdfkit pdf-parse --omit=dev --no-package-lock --no-save      --prefix /app 2>&1 | tail -5
+2026-Aug-06 01:26:49.233292 [DEBUG] #13 CACHED
+2026-Aug-06 01:26:49.233292 [DEBUG] 
+2026-Aug-06 01:26:49.233292 [DEBUG] #14 [runtime 4/5] COPY --from=build /app/artifacts/api-server/dist ./artifacts/api-server/dist
+2026-Aug-06 01:26:50.181181 [DEBUG] #14 DONE 1.1s
+2026-Aug-06 01:26:50.412064 [DEBUG] #15 [runtime 5/5] COPY --from=build /app/artifacts/guru-eob5/dist ./artifacts/guru-eob5/dist
+2026-Aug-06 01:26:54.577163 [DEBUG] #15 DONE 4.3s
+2026-Aug-06 01:26:55.340238 [DEBUG] #16 exporting to image
+2026-Aug-06 01:26:55.491371 [DEBUG] #16 exporting layers
+2026-Aug-06 01:27:00.699774 [DEBUG] #16 exporting layers 5.4s done
+2026-Aug-06 01:27:00.850070 [DEBUG] #16 exporting manifest sha256:a89a71ff71b4a65cbf264f56c716a44b330bc5d3331d9cfdd3d414ff769df036
+2026-Aug-06 01:27:03.415383 [DEBUG] #16 exporting manifest sha256:a89a71ff71b4a65cbf264f56c716a44b330bc5d3331d9cfdd3d414ff769df036 2.7s done
+2026-Aug-06 01:27:03.415383 [DEBUG] #16 exporting config sha256:f5efc63b0100a6bc92cb5491e6dabc4f50d96809bd34cb5475fef59b46c89563
+2026-Aug-06 01:27:03.668111 [DEBUG] #16 exporting config sha256:f5efc63b0100a6bc92cb5491e6dabc4f50d96809bd34cb5475fef59b46c89563 0.3s done
+2026-Aug-06 01:27:03.923613 [DEBUG] #16 exporting attestation manifest sha256:858f9a97384087283fa2a129a33bc900c2097d7a21582c3e0290858a01bdc3f7
+2026-Aug-06 01:27:04.408960 [DEBUG] #16 exporting attestation manifest sha256:858f9a97384087283fa2a129a33bc900c2097d7a21582c3e0290858a01bdc3f7 0.5s done
+2026-Aug-06 01:27:04.408960 [DEBUG] #16 exporting manifest list sha256:17f463726ecdda7eb1448b8d228391e5bc886a7273ef532ff02ff88d0f2bf9dd
+2026-Aug-06 01:27:04.681487 [DEBUG] #16 exporting manifest list sha256:17f463726ecdda7eb1448b8d228391e5bc886a7273ef532ff02ff88d0f2bf9dd 0.3s done
+2026-Aug-06 01:27:04.681487 [DEBUG] #16 naming to docker.io/library/sfptjjfqgqidt4736qzont0l:7cb74ca0db7fa71e955aecfe3715079fbb7340c8
+2026-Aug-06 01:27:05.005684 [DEBUG] #16 naming to docker.io/library/sfptjjfqgqidt4736qzont0l:7cb74ca0db7fa71e955aecfe3715079fbb7340c8 0.3s done
+2026-Aug-06 01:27:05.155832 [DEBUG] #16 unpacking to docker.io/library/sfptjjfqgqidt4736qzont0l:7cb74ca0db7fa71e955aecfe3715079fbb7340c8
+2026-Aug-06 01:27:06.451354 [DEBUG] #16 unpacking to docker.io/library/sfptjjfqgqidt4736qzont0l:7cb74ca0db7fa71e955aecfe3715079fbb7340c8 1.4s done
+2026-Aug-06 01:27:06.619727 [DEBUG] #16 DONE 11.3s
+2026-Aug-06 01:27:10.216759 Building docker image completed.
+2026-Aug-06 01:27:10.366189 [DEBUG] Creating .env file with runtime variables for container.
+2026-Aug-06 01:27:10.893902 ----------------------------------------
+2026-Aug-06 01:27:11.095732 Rolling update started.
+2026-Aug-06 01:27:12.237394 [DEBUG] [CMD]: docker exec zgumkoy4h7v56st9vnbrox8c bash -c 'COOLIFY_URL=https://sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io COOLIFY_FQDN=sfptjjfqgqidt4736qzont0l.157.10.161.229.sslip.io COOLIFY_BRANCH='\''main'\'' COOLIFY_RESOURCE_UUID=sfptjjfqgqidt4736qzont0l  docker compose --project-name sfptjjfqgqidt4736qzont0l --project-directory /artifacts/zgumkoy4h7v56st9vnbrox8c -f /artifacts/zgumkoy4h7v56st9vnbrox8c/docker-compose.yaml up --build -d'
+2026-Aug-06 01:27:12.237394 [DEBUG] time="2026-08-06T01:27:12Z" level=warning msg="Found orphan containers ([sfptjjfqgqidt4736qzont0l-011042621383]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+2026-Aug-06 01:27:12.372809 [DEBUG] Container sfptjjfqgqidt4736qzont0l-012411982606  Creating
+2026-Aug-06 01:27:15.769817 [DEBUG] sfptjjfqgqidt4736qzont0l-012411982606 Your kernel does not support memory swappiness capabilities or the cgroup is not mounted. Memory swappiness discarded.
+2026-Aug-06 01:27:15.837401 [DEBUG] Container sfptjjfqgqidt4736qzont0l-012411982606  Created
+2026-Aug-06 01:27:15.837401 [DEBUG] Container sfptjjfqgqidt4736qzont0l-012411982606  Starting
+2026-Aug-06 01:27:16.943007 [DEBUG] Container sfptjjfqgqidt4736qzont0l-012411982606  Started
+2026-Aug-06 01:27:16.988718 New container started.
+2026-Aug-06 01:27:17.058628 Waiting for healthcheck to pass on the new container.
+2026-Aug-06 01:27:17.107647 Healthcheck URL (inside the container): GET: http://localhost:8080/
+2026-Aug-06 01:27:17.153882 Waiting for the start period (5 seconds) before starting healthcheck.
+2026-Aug-06 01:27:23.018997 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Status}}' sfptjjfqgqidt4736qzont0l-012411982606
+2026-Aug-06 01:27:23.018997 [DEBUG] "unhealthy"
+2026-Aug-06 01:27:24.019941 [DEBUG] [CMD]: docker inspect --format='{{json .State.Health.Log}}' sfptjjfqgqidt4736qzont0l-012411982606
+2026-Aug-06 01:27:24.019941 [DEBUG] []
+2026-Aug-06 01:27:24.061862 Attempt 1 of 10 | Healthcheck status: "unhealthy"
+2026-Aug-06 01:27:24.114951 New container is unhealthy.
+2026-Aug-06 01:27:24.172455 ----------------------------------------
+2026-Aug-06 01:27:24.223619 Container logs:
+2026-Aug-06 01:27:24.702404 [CMD]: docker logs -n 100 sfptjjfqgqidt4736qzont0l-012411982606
+2026-Aug-06 01:27:24.702404 {"level":30,"time":1785979638344,"pid":1,"hostname":"9d003840eb6a","frontendDist":"/app/artifacts/guru-eob5/dist/public","msg":"Serving frontend static files"}
+2026-Aug-06 01:27:24.702404 {"level":50,"time":1785979638466,"pid":1,"hostname":"9d003840eb6a","err":{"type":"DatabaseError2","message":"column \"subject_id\" of relation \"attendance_records\" does not exist","stack":"error: column \"subject_id\" of relation \"attendance_records\" does not exist\n    at file:///app/artifacts/api-server/dist/index.mjs:29793:15\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)","length":133,"name":"error","severity":"ERROR","code":"42703","file":"tablecmds.c","line":"7759","routine":"ATExecDropNotNull"},"msg":"Failed to ensure session table / run migrations"}
+2026-Aug-06 01:27:24.702404 {"level":50,"time":1785979638472,"pid":1,"hostname":"9d003840eb6a","err":{"type":"DatabaseError2","message":"column \"subject_id\" of relation \"attendance_records\" does not exist","stack":"error: column \"subject_id\" of relation \"attendance_records\" does not exist\n    at file:///app/artifacts/api-server/dist/index.mjs:29793:15\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)","length":133,"name":"error","severity":"ERROR","code":"42703","file":"tablecmds.c","line":"7759","routine":"ATExecDropNotNull"},"msg":"Failed to initialize session store; not starting server"}
+2026-Aug-06 01:27:24.736915 ----------------------------------------
+2026-Aug-06 01:27:24.772364 Removing old containers.
+2026-Aug-06 01:27:24.805402 ----------------------------------------
+2026-Aug-06 01:27:24.835422 WARNING: Dockerfile or Docker Image based deployment detected. The healthcheck needs a curl or wget command to check the health of the application. Please make sure that it is available in the image or turn off healthcheck on Coolify's UI.
+2026-Aug-06 01:27:24.857995 ----------------------------------------
+2026-Aug-06 01:27:24.889613 New container is not healthy, rolling back to the old container.
+2026-Aug-06 01:27:25.209537 [DEBUG] [CMD]: docker stop --time=30 sfptjjfqgqidt4736qzont0l-012411982606
+2026-Aug-06 01:27:25.209537 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Aug-06 01:27:26.553745 [DEBUG] sfptjjfqgqidt4736qzont0l-012411982606
+2026-Aug-06 01:27:27.461311 [DEBUG] [CMD]: docker rm -f sfptjjfqgqidt4736qzont0l-012411982606
+2026-Aug-06 01:27:27.461311 [DEBUG] sfptjjfqgqidt4736qzont0l-012411982606
+2026-Aug-06 01:27:27.481311 Rolling update completed.
+2026-Aug-06 01:27:28.216696 Gracefully shutting down build container: zgumkoy4h7v56st9vnbrox8c
+2026-Aug-06 01:27:28.427823 [DEBUG] [CMD]: docker stop --time=30 zgumkoy4h7v56st9vnbrox8c
+2026-Aug-06 01:27:28.427823 [DEBUG] Flag --time has been deprecated, use --timeout instead
+2026-Aug-06 01:27:29.866504 [DEBUG] zgumkoy4h7v56st9vnbrox8c
