@@ -110,6 +110,19 @@ const sessionTableReady = sessionPool
     -- table was created before these columns were added to the Drizzle schema.
     ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_data text;
     ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_name text;
+
+    -- Migrate attendance_records: remove subject_id dependency, add filled_by columns.
+    -- attendance is now per-day per-student (not per-subject).
+    ALTER TABLE attendance_records
+      ADD COLUMN IF NOT EXISTS filled_by_teacher_id   text,
+      ADD COLUMN IF NOT EXISTS filled_by_teacher_name text;
+    DROP INDEX IF EXISTS attendance_student_subject_tanggal_unique;
+    CREATE UNIQUE INDEX IF NOT EXISTS attendance_student_tanggal_unique
+      ON attendance_records (student_id, tanggal);
+    ALTER TABLE attendance_records
+      ALTER COLUMN subject_id DROP NOT NULL;
+    ALTER TABLE attendance_records
+      DROP COLUMN IF EXISTS subject_id;
     `,
   )
   .then(() => {
