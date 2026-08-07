@@ -1,6 +1,15 @@
 import { Router, type IRouter } from "express";
-import { eq, and, inArray, type SQL } from "drizzle-orm";
-import { db, attendanceTable, studentsTable } from "@workspace/db";
+import { eq, and, inArray, or, type SQL } from "drizzle-orm";
+import {
+  db,
+  neonDb,
+  attendanceTable,
+  studentsTable,
+  studentAccountsTable,
+  gurusTable,
+  type Guru,
+  type Attendance,
+} from "@workspace/db";
 import {
   ListAttendanceResponse,
   CreateAttendanceRecordBody,
@@ -36,25 +45,97 @@ async function schoolStudentIds(req: Request, kelas?: string): Promise<Set<strin
   return new Set(rows.map((r) => r.id));
 }
 
+type AttendanceRow = {
+  attendance: Attendance;
+  rosterStudentId: string;
+  kelas: string;
+};
+
+async function scopedAttendance(
+  guru: Guru,
+  options: { kelas?: string; tanggal?: string } = {},
+): Promise<AttendanceRow[]> {
+  if (!guru.school) return [];
+
+  const conditions: SQL[] = [eq(studentsTable.school, guru.school)];
+  if (options.kelas) conditions.push(eq(studentsTable.kelas, options.kelas));
+  if (options.tanggal) conditions.push(eq(attendanceTable.tanggal, options.tanggal));
+
+  return db
+    .select({
+      attendance: attendanceTable,
+      rosterStudentId: studentAccountsTable.studentId,
+      kelas: studentsTable.kelas,
+    })
+    .from(attendanceTable)
+    .innerJoin(
+      studentAccountsTable,
+      eq(studentAccountsTable.tomatStudentId, attendanceTable.studentId),
+    )
+    .innerJoin(studentsTable, eq(studentsTable.id, studentAccountsTable.studentId))
+    .where(and(...conditions));
+}
+
+async function guruNamesFor(guru: Guru, rows: AttendanceRow[]): Promise<Map<string, string>> {
+  const ids = [...new Set(rows.map((row) => row.attendance.guruId).filter(Boolean))];
+  if (ids.length === 0) return new Map();
+
+  const identityCondition = guru.school
+    ? and(or(inArray(gurusTable.id, ids), inArray(gurusTable.username, ids)), eq(gurusTable.school, guru.school))
+    : eq(gurusTable.id, guru.id);
+  const gurus = await neonDb
+    .select({ id: gurusTable.id, username: gurusTable.username, name: gurusTable.name })
+    .from(gurusTable)
+    .where(identityCondition);
+
+  return new Map(
+    gurus.flatMap((guru) => [
+      [guru.id, guru.name] as const,
+      [guru.username, guru.name] as const,
+    ]),
+  );
+}
+
+function toApiRecord(
+  row: AttendanceRow,
+  guruNames: Map<string, string>,
+): Record<string, unknown> {
+  return {
+    id: String(row.attendance.id),
+    studentId: row.rosterStudentId,
+    tanggal: row.attendance.tanggal,
+    status: row.attendance.status,
+    filledByTeacherId: row.attendance.guruId,
+    filledByTeacherName: guruNames.get(row.attendance.guruId) ?? row.attendance.guruId,
+    createdAt: row.attendance.createdAt ?? new Date(0),
+  };
+}
+
+async function legacyStudentIds(
+  rosterStudentIds: string[],
+): Promise<Map<string, string>> {
+  if (rosterStudentIds.length === 0) return new Map();
+  const accounts = await db
+    .select({
+      studentId: studentAccountsTable.studentId,
+      tomatStudentId: studentAccountsTable.tomatStudentId,
+    })
+    .from(studentAccountsTable)
+    .where(inArray(studentAccountsTable.studentId, rosterStudentIds));
+  return new Map(accounts.map((account) => [account.studentId, account.tomatStudentId]));
+}
+
 router.get("/attendance", requireAuth, async (req, res): Promise<void> => {
   const kelas = typeof req.query["kelas"] === "string" ? req.query["kelas"] : undefined;
-  const allowed = await schoolStudentIds(req, kelas);
-  if (allowed === null) {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  if (allowed.size === 0) {
-    res.json(ListAttendanceResponse.parse([]));
-    return;
-  }
-
   const date = typeof req.query["date"] === "string" ? req.query["date"] : undefined;
-
-  const conditions: SQL[] = [inArray(attendanceTable.studentId, [...allowed])];
-  if (date) conditions.push(eq(attendanceTable.tanggal, date));
-
-  const records = await db.select().from(attendanceTable).where(and(...conditions));
-  res.json(ListAttendanceResponse.parse(records));
+  const rows = await scopedAttendance(guru, { kelas, tanggal: date });
+  const guruNames = await guruNamesFor(guru, rows);
+  res.json(ListAttendanceResponse.parse(rows.map((row) => toApiRecord(row, guruNames))));
 });
 
 router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
@@ -80,23 +161,33 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const [record] = await db
+  const legacyIds = await legacyStudentIds([parsed.data.studentId]);
+  const legacyStudentId = legacyIds.get(parsed.data.studentId);
+  if (!legacyStudentId) {
+    res.status(404).json({ error: "Akun siswa belum terhubung ke data absensi lama" });
+    return;
+  }
+  const [saved] = await db
     .insert(attendanceTable)
     .values({
-      ...parsed.data,
-      filledByTeacherId: guru.id,
-      filledByTeacherName: guru.name,
+      studentId: legacyStudentId,
+      guruId: guru.username,
+      tanggal: parsed.data.tanggal,
+      status: parsed.data.status,
     })
     .onConflictDoUpdate({
       target: [attendanceTable.studentId, attendanceTable.tanggal],
-      set: {
-        status: parsed.data.status,
-        filledByTeacherId: guru.id,
-        filledByTeacherName: guru.name,
-      },
+      set: { status: parsed.data.status, guruId: guru.username },
     })
     .returning();
-  res.status(201).json(CreateAttendanceRecordResponse.parse(record));
+  const rows = await scopedAttendance(guru, { tanggal: saved.tanggal });
+  const row = rows.find((item) => item.attendance.id === saved.id);
+  if (!row) {
+    res.status(500).json({ error: "Catatan absensi tersimpan tetapi gagal dibaca kembali" });
+    return;
+  }
+  const guruNames = await guruNamesFor(guru, [row]);
+  res.status(201).json(CreateAttendanceRecordResponse.parse(toApiRecord(row, guruNames)));
 });
 
 router.patch("/attendance/:id", requireAuth, async (req, res): Promise<void> => {
@@ -117,15 +208,21 @@ router.patch("/attendance/:id", requireAuth, async (req, res): Promise<void> => 
     return;
   }
 
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const scopedRows = await scopedAttendance(guru);
+  const target = scopedRows.find((row) => String(row.attendance.id) === params.data.id);
+  if (!target) {
+    res.status(404).json({ error: "Attendance record not found" });
+    return;
+  }
   const [record] = await db
     .update(attendanceTable)
     .set({ status: body.data.status })
-    .where(
-      and(
-        eq(attendanceTable.id, params.data.id),
-        inArray(attendanceTable.studentId, [...allowed]),
-      ),
-    )
+    .where(eq(attendanceTable.id, target.attendance.id))
     .returning();
 
   if (!record) {
@@ -133,7 +230,12 @@ router.patch("/attendance/:id", requireAuth, async (req, res): Promise<void> => 
     return;
   }
 
-  res.json(UpdateAttendanceRecordResponse.parse(record));
+  const updatedRows = await scopedAttendance(guru, {
+    tanggal: record.tanggal,
+  });
+  const updated = updatedRows.find((row) => row.attendance.id === record.id);
+  const guruNames = await guruNamesFor(guru, updated ? [updated] : []);
+  res.json(UpdateAttendanceRecordResponse.parse(updated ? toApiRecord(updated, guruNames) : record));
 });
 
 router.delete("/attendance/:id", requireAuth, async (req, res): Promise<void> => {
@@ -153,15 +255,16 @@ router.delete("/attendance/:id", requireAuth, async (req, res): Promise<void> =>
     return;
   }
 
-  const [record] = await db
-    .delete(attendanceTable)
-    .where(
-      and(
-        eq(attendanceTable.id, params.data.id),
-        inArray(attendanceTable.studentId, [...allowed]),
-      ),
-    )
-    .returning();
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const scopedRows = await scopedAttendance(guru);
+  const target = scopedRows.find((row) => String(row.attendance.id) === params.data.id);
+  const [record] = target
+    ? await db.delete(attendanceTable).where(eq(attendanceTable.id, target.attendance.id)).returning()
+    : [];
 
   if (!record) {
     res.status(404).json({ error: "Attendance record not found" });
@@ -198,18 +301,21 @@ router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => 
     return;
   }
 
+  const legacyIds = await legacyStudentIds(targets);
+  const mappedTargets = targets.filter((studentId) => legacyIds.has(studentId));
+  if (mappedTargets.length === 0) {
+    res.status(400).json({ error: "Siswa belum terhubung ke data absensi lama" });
+    return;
+  }
   const inserted = await db
     .insert(attendanceTable)
-    .values(targets.map((studentId) => ({
-      studentId,
-      tanggal,
-      status,
-      filledByTeacherId: guru.id,
-      filledByTeacherName: guru.name,
-    })))
+    .values(mappedTargets.flatMap((studentId) => {
+      const legacyStudentId = legacyIds.get(studentId);
+      return legacyStudentId ? [{ studentId: legacyStudentId, tanggal, status, guruId: guru.username }] : [];
+    }))
     .onConflictDoUpdate({
       target: [attendanceTable.studentId, attendanceTable.tanggal],
-      set: { status, filledByTeacherId: guru.id, filledByTeacherName: guru.name },
+      set: { status, guruId: guru.username },
     })
     .returning();
   res.json(BulkCreateAttendanceResponse.parse({ count: inserted.length }));
@@ -247,21 +353,23 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
     return;
   }
 
+  const legacyIds = await legacyStudentIds(targets);
   let count = 0;
   for (const studentId of targets) {
+    const legacyStudentId = legacyIds.get(studentId);
+    if (!legacyStudentId) continue;
     const status = byStudent.get(studentId)!;
     await db
       .insert(attendanceTable)
       .values({
-        studentId,
+        studentId: legacyStudentId,
         tanggal,
         status,
-        filledByTeacherId: guru.id,
-        filledByTeacherName: guru.name,
+        guruId: guru.username,
       })
       .onConflictDoUpdate({
         target: [attendanceTable.studentId, attendanceTable.tanggal],
-        set: { status, filledByTeacherId: guru.id, filledByTeacherName: guru.name },
+        set: { status, guruId: guru.username },
       });
     count++;
   }
@@ -278,28 +386,8 @@ router.get("/attendance/rekap", requireAuth, async (req, res): Promise<void> => 
     return;
   }
 
-  const allowed = await schoolStudentIds(req);
-  if (allowed === null) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  if (allowed.size === 0) {
-    res.json(GetAttendanceRekapResponse.parse({ groups: [] }));
-    return;
-  }
-
-  // All students in scope, keyed by id → kelas.
-  const studentsInScope = await db
-    .select({ id: studentsTable.id, kelas: studentsTable.kelas })
-    .from(studentsTable)
-    .where(inArray(studentsTable.id, [...allowed]));
-  const kelasById = new Map(studentsInScope.map((s) => [s.id, s.kelas]));
-
-  // All attendance records for this school.
-  const records = await db
-    .select()
-    .from(attendanceTable)
-    .where(inArray(attendanceTable.studentId, [...allowed]));
+  const scopedRows = await scopedAttendance(guru);
+  const guruNames = await guruNamesFor(guru, scopedRows);
 
   // Aggregate: key = tanggal|kelas
   type GroupKey = string;
@@ -315,19 +403,18 @@ router.get("/attendance/rekap", requireAuth, async (req, res): Promise<void> => 
   };
   const grouped = new Map<GroupKey, GroupAcc>();
 
-  for (const rec of records) {
-    const kelas = kelasById.get(rec.studentId);
-    if (!kelas) continue;
-    const key: GroupKey = `${rec.tanggal}|${kelas}`;
+  for (const row of scopedRows) {
+    const rec = row.attendance;
+    const key: GroupKey = `${rec.tanggal}|${row.kelas}`;
     const acc = grouped.get(key) ?? {
       tanggal: rec.tanggal,
-      kelas,
+      kelas: row.kelas,
       hadir: 0,
       izin: 0,
       sakit: 0,
       alpa: 0,
       total: 0,
-      filledByTeacherName: rec.filledByTeacherName ?? null,
+      filledByTeacherName: guruNames.get(rec.guruId) ?? rec.guruId ?? null,
     };
     acc[rec.status as keyof Pick<GroupAcc, "hadir" | "izin" | "sakit" | "alpa">] += 1;
     acc.total += 1;
@@ -350,14 +437,16 @@ router.delete("/attendance/bulk-kelas", requireAuth, async (req, res): Promise<v
     return;
   }
 
-  await getCurrentGuru(req); // just verify auth
-
-  const allowed = await schoolStudentIds(req, parsed.data.kelas);
-  if (allowed === null) {
+  const guru = await getCurrentGuru(req);
+  if (!guru) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  if (allowed.size === 0) {
+  const scopedRows = await scopedAttendance(guru, {
+    kelas: parsed.data.kelas,
+    tanggal: parsed.data.tanggal,
+  });
+  if (scopedRows.length === 0) {
     res.json(BulkDeleteAttendanceByKelasResponse.parse({ count: 0 }));
     return;
   }
@@ -366,7 +455,7 @@ router.delete("/attendance/bulk-kelas", requireAuth, async (req, res): Promise<v
     .delete(attendanceTable)
     .where(
       and(
-        inArray(attendanceTable.studentId, [...allowed]),
+        inArray(attendanceTable.id, scopedRows.map((row) => row.attendance.id)),
         eq(attendanceTable.tanggal, parsed.data.tanggal),
       ),
     )

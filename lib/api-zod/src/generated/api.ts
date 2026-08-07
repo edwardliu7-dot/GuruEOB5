@@ -1162,7 +1162,6 @@ export const DeleteJournalEntryResponse = zod.object({
  * @summary List attendance records
  */
 export const ListAttendanceQueryParams = zod.object({
-  "subjectId": zod.coerce.string().optional(),
   "date": zod.coerce.string().optional(),
   "kelas": zod.coerce.string().optional()
 })
@@ -1269,7 +1268,7 @@ export const GetAttendanceRekapResponse = zod.object({
 
 
 /**
- * @summary Delete all attendance records for a specific class, date, and subject
+ * @summary Delete all attendance records for a specific class and date
  */
 export const BulkDeleteAttendanceByKelasBody = zod.object({
   "kelas": zod.string(),
@@ -1282,7 +1281,7 @@ export const BulkDeleteAttendanceByKelasResponse = zod.object({
 
 
 /**
- * @summary Record a different attendance status per student for one subject/date (daily input)
+ * @summary Record a different attendance status per student for one date (daily input)
  */
 export const bulkMixedCreateAttendanceBodyEntriesMax = 500;
 

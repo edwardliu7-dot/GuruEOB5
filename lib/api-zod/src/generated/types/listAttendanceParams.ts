@@ -7,7 +7,6 @@
  */
 
 export type ListAttendanceParams = {
-subjectId?: string;
 date?: string;
 kelas?: string;
 };

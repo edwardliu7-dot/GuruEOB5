@@ -156,18 +156,18 @@ Response 401: { "error": "Unauthorized" }
 
 > **Auto-sync**: Saat `GET /subjects`, server otomatis membuat folder subjects dari kombinasi `mapel × kelas_diampu` guru jika belum ada.
 
-### Tabel: `attendance_records` (App DB)
+### Tabel: `absensi` (Legacy/TOMAT DB table, used as the attendance source of truth)
 | Kolom | Tipe | Keterangan |
 |---|---|---|
-| `id` | uuid PK | |
-| `student_id` | uuid FK→guru_eob5_students.id | CASCADE delete |
+| `id` | integer PK | |
+| `student_id` | text | Username/ID siswa TOMAT; dijembatani melalui `student_accounts.tomat_student_id` |
+| `guru_id` | text | Username/ID guru yang mengisi |
 | `tanggal` | date | Format: `YYYY-MM-DD` |
 | `status` | text | `hadir`, `izin`, `sakit`, `alpa` |
-| `filled_by_teacher_id` | text | ID guru yang mengisi |
-| `filled_by_teacher_name` | text | Nama guru yang mengisi |
-| `created_at` | timestamptz | |
+| `keterangan` | text nullable | Catatan tambahan |
+| `created_at` | timestamptz nullable | |
 
-> **Unique**: `(student_id, tanggal)` — satu absensi per siswa per hari, upsert jika sudah ada
+> **Unique**: `(student_id, tanggal)` — satu absensi per siswa per hari, upsert jika sudah ada. API mengembalikan `guru_eob5_students.id` sebagai `studentId` agar tetap cocok dengan daftar siswa aplikasi.
 
 ### Tabel: `grades` (App DB)
 | Kolom | Tipe | Keterangan |

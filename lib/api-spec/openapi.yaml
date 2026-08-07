@@ -1040,10 +1040,6 @@ paths:
       tags: [attendance]
       summary: List attendance records
       parameters:
-        - name: subjectId
-          in: query
-          schema:
-            type: string
         - name: date
           in: query
           schema:
@@ -1149,7 +1145,7 @@ paths:
     delete:
       operationId: bulkDeleteAttendanceByKelas
       tags: [attendance]
-      summary: Delete all attendance records for a specific class, date, and subject
+      summary: Delete all attendance records for a specific class and date
       requestBody:
         required: true
         content:
@@ -1168,7 +1164,7 @@ paths:
     post:
       operationId: bulkMixedCreateAttendance
       tags: [attendance]
-      summary: Record a different attendance status per student for one subject/date (daily input)
+      summary: Record a different attendance status per student for one date (daily input)
       requestBody:
         required: true
         content:

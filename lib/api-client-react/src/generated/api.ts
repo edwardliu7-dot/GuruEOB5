@@ -5019,7 +5019,7 @@ export const getBulkDeleteAttendanceByKelasUrl = () => {
 }
 
 /**
- * @summary Delete all attendance records for a specific class, date, and subject
+ * @summary Delete all attendance records for a specific class and date
  */
 export const bulkDeleteAttendanceByKelas = async (bulkDeleteAttendanceByKelasInput: BulkDeleteAttendanceByKelasInput, options?: RequestInit): Promise<BulkCreateResult> => {
 
@@ -5068,7 +5068,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type BulkDeleteAttendanceByKelasMutationError = ErrorType<unknown>
 
     /**
- * @summary Delete all attendance records for a specific class, date, and subject
+ * @summary Delete all attendance records for a specific class and date
  */
 export const useBulkDeleteAttendanceByKelas = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkDeleteAttendanceByKelas>>, TError,{data: BodyType<BulkDeleteAttendanceByKelasInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -5090,7 +5090,7 @@ export const getBulkMixedCreateAttendanceUrl = () => {
 }
 
 /**
- * @summary Record a different attendance status per student for one subject/date (daily input)
+ * @summary Record a different attendance status per student for one date (daily input)
  */
 export const bulkMixedCreateAttendance = async (bulkMixedAttendanceInput: BulkMixedAttendanceInput, options?: RequestInit): Promise<BulkCreateResult> => {
 
@@ -5139,7 +5139,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type BulkMixedCreateAttendanceMutationError = ErrorType<unknown>
 
     /**
- * @summary Record a different attendance status per student for one subject/date (daily input)
+ * @summary Record a different attendance status per student for one date (daily input)
  */
 export const useBulkMixedCreateAttendance = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkMixedCreateAttendance>>, TError,{data: BodyType<BulkMixedAttendanceInput>}, TContext>, request?: SecondParameter<typeof customFetch>}

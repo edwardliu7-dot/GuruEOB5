@@ -88,17 +88,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS grades_sumatif_akhir_unique
   ON grades (student_id, subject_id, calendar_id)
   WHERE jenis = 'sumatif_akhir';
 
--- 7. attendance_records (FK → guru_eob5_students, subjects)
-CREATE TABLE IF NOT EXISTS attendance_records (
-  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  student_id  uuid        NOT NULL REFERENCES guru_eob5_students(id) ON DELETE CASCADE,
-  subject_id  uuid        NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
-  tanggal     date        NOT NULL,
-  status      text        NOT NULL CHECK (status IN ('hadir','izin','sakit','alpa')),
-  created_at  timestamptz NOT NULL DEFAULT now()
-);
-CREATE UNIQUE INDEX IF NOT EXISTS attendance_student_subject_tanggal_unique
-  ON attendance_records (student_id, subject_id, tanggal);
+-- 7. absensi
+-- Attendance is owned by the existing legacy `absensi` table. Its student_id
+-- stores the TOMAT student username and is bridged to guru_eob5_students via
+-- student_accounts. Do not create a second attendance_records table here.
 
 -- 8. point_records (FK → guru_eob5_students)
 CREATE TABLE IF NOT EXISTS point_records (
