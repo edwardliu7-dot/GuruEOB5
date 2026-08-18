@@ -79,9 +79,6 @@ const sessionTableReady = sessionPool
     ALTER TABLE feedback ADD COLUMN IF NOT EXISTS screenshot_base64 text;
     ALTER TABLE feedback ADD COLUMN IF NOT EXISTS page_url text;
     ALTER TABLE feedback ADD COLUMN IF NOT EXISTS is_read boolean NOT NULL DEFAULT false;
-    -- Sebutan (honorific) for each teacher
-    ALTER TABLE gurus ADD COLUMN IF NOT EXISTS sebutan text;
-
     -- Create subjects table if it doesn't exist yet (fallback for when
     -- drizzle-kit push fails non-interactively in production/VPS).
     CREATE TABLE IF NOT EXISTS subjects (

@@ -9,6 +9,12 @@ description: DATABASE_URL is a dedicated per-app Postgres (most tables); NEON_DA
 
 **How to apply:** when adding new tables for this app, migrate/push against `DATABASE_URL`, not `NEON_DATABASE_URL`. If you need to know which DB a table lives in, check whether its schema file imports from `./schema/*` (dedicated `db`) or `./neon/gurus` (shared `neonDb`).
 
+**Startup migration constraint:** never run `ALTER TABLE gurus` from the app startup migration, because that migration uses `DATABASE_URL` while `gurus` belongs to `NEON_DATABASE_URL`.
+
+**Why:** referencing the shared accounts table from the dedicated app database causes the API to fail before listening whenever the dedicated database does not contain `gurus`.
+
+**How to apply:** manage `gurus` columns through the Neon/shared-database migration path; keep `app.ts` startup DDL limited to tables owned by `DATABASE_URL`.
+
 ## drizzle-kit push interactive prompt gotcha
 
 `pnpm run push` in `lib/db` (`drizzle-kit push`) can fail non-interactively with "Interactive prompts require a TTY terminal" even for brand-new, unambiguous tables — drizzle-kit's rename-detection heuristic tries to prompt and there's no TTY in this environment.
