@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, inArray, or, type SQL } from "drizzle-orm";
+import { eq, and, inArray, or, sql, type SQL } from "drizzle-orm";
 import {
   db,
   neonDb,
@@ -354,26 +354,32 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
   }
 
   const legacyIds = await legacyStudentIds(targets);
-  let count = 0;
-  for (const studentId of targets) {
-    const legacyStudentId = legacyIds.get(studentId);
-    if (!legacyStudentId) continue;
-    const status = byStudent.get(studentId)!;
-    await db
+  const unmappedStudentIds = targets.filter((studentId) => !legacyIds.has(studentId));
+  if (unmappedStudentIds.length > 0) {
+    res.status(400).json({
+      error: `${unmappedStudentIds.length} siswa belum terhubung ke data absensi lama`,
+      unmappedCount: unmappedStudentIds.length,
+    });
+    return;
+  }
+
+  const values = targets.map((studentId) => ({
+    studentId: legacyIds.get(studentId)!,
+    tanggal,
+    status: byStudent.get(studentId)!,
+    guruId: guru.username,
+  }));
+  const saved = await db.transaction(async (tx) =>
+    tx
       .insert(attendanceTable)
-      .values({
-        studentId: legacyStudentId,
-        tanggal,
-        status,
-        guruId: guru.username,
-      })
+      .values(values)
       .onConflictDoUpdate({
         target: [attendanceTable.studentId, attendanceTable.tanggal],
-        set: { status, guruId: guru.username },
-      });
-    count++;
-  }
-  res.json(BulkMixedCreateAttendanceResponse.parse({ count }));
+        set: { status: sql`excluded.status`, guruId: guru.username },
+      })
+      .returning({ id: attendanceTable.id }),
+  );
+  res.json(BulkMixedCreateAttendanceResponse.parse({ count: saved.length }));
 });
 
 /**

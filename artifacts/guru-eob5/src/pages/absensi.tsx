@@ -205,8 +205,13 @@ export default function Absensi() {
         setAlreadyFilledBy(refreshed[0]?.filledByTeacherName ?? null);
       }
       invalidateAttendance();
-    } catch {
-      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan saat menyimpan" });
+    } catch (error: any) {
+      const apiMessage =
+        error?.data?.error ||
+        error?.data?.message ||
+        error?.message ||
+        "Terjadi kesalahan saat menyimpan";
+      toast({ variant: "destructive", title: "Gagal menyimpan absensi", description: apiMessage });
     }
   };
 

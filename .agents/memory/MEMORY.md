@@ -16,3 +16,4 @@
 - [Re-imported project artifact registration gap](reimported-artifact-registration.md) — GitHub-imported project's artifact.toml files can be unregistered (empty listArtifacts, 502 on dev domain); creating any throwaway artifact forces re-registration.
 - [GuruEOB5 school-admin vs platform-admin](guru-eob5-school-admin-role.md) — kepala_sekolah must be a school-scoped admin (add students/teachers/materials), separate from the hardcoded platform-owner admin gate.
 - [Gemini structured-output + storage guard](gemini-structured-output-decisions.md) — thinkingBudget:0 required for JSON schema output; AI content rows capped at 15/teacher; feedback screenshots as base64 JPEG.
+- [Generated API contract freshness](generated-api-contract-freshness.md) — after OpenAPI changes, regenerate api-zod and api-client-react or runtime can reject requests despite matching source routes.

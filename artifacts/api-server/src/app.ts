@@ -108,6 +108,22 @@ const sessionTableReady = sessionPool
     ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_data text;
     ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_name text;
 
+    -- The attendance routes still use the legacy TOMAT-compatible shape so
+    -- existing history and student_accounts mappings remain readable.
+    -- Keep this compatibility table available on fresh app databases too.
+    CREATE SEQUENCE IF NOT EXISTS eob5_absensi_id_seq;
+    CREATE TABLE IF NOT EXISTS absensi (
+      id integer PRIMARY KEY DEFAULT nextval('eob5_absensi_id_seq'),
+      student_id text NOT NULL,
+      guru_id text NOT NULL,
+      tanggal date NOT NULL,
+      status text NOT NULL CHECK (status IN ('hadir','izin','sakit','alpa')),
+      keterangan text,
+      created_at timestamptz DEFAULT now()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS eob5_absensi_student_id_tanggal_key
+      ON absensi (student_id, tanggal);
+
     -- Create attendance_records table if not exists (new schema: per-day per-student).
     CREATE TABLE IF NOT EXISTS attendance_records (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
