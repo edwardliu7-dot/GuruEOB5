@@ -435,6 +435,11 @@ export const UpdateTeacherParams = zod.object({
   "id": zod.coerce.string()
 })
 
+export const updateTeacherBodyUsernameMin = 3;
+export const updateTeacherBodyUsernameMax = 80;
+
+
+export const updateTeacherBodyUsernameRegExp = new RegExp('^[A-Za-z0-9._-]+$');
 export const updateTeacherBodyBioMax = 500;
 
 export const updateTeacherBodyPhotoUrlMax = 400000;
@@ -444,6 +449,7 @@ export const updateTeacherBodyPhotoUrlRegExp = new RegExp('^$|^data:image/(jpeg|
 
 
 export const UpdateTeacherBody = zod.object({
+  "username": zod.string().min(updateTeacherBodyUsernameMin).max(updateTeacherBodyUsernameMax).regex(updateTeacherBodyUsernameRegExp).optional(),
   "name": zod.string().optional(),
   "jabatan": zod.array(zod.enum(['kepala_sekolah', 'wakasek', 'guru', 'wali_kelas'])).optional(),
   "mapel": zod.array(zod.string()).optional(),

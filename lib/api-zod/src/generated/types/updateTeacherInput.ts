@@ -8,6 +8,12 @@
 import type { UpdateTeacherInputJabatanItem } from './updateTeacherInputJabatanItem';
 
 export interface UpdateTeacherInput {
+  /**
+     * @minLength 3
+     * @maxLength 80
+     * @pattern ^[A-Za-z0-9._-]+$
+     */
+  username?: string;
   name?: string;
   jabatan?: UpdateTeacherInputJabatanItem[];
   mapel?: string[];

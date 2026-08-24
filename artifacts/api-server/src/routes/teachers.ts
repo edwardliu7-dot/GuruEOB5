@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, count, eq, gte, inArray } from "drizzle-orm";
+import { and, count, eq, gte, inArray, ne } from "drizzle-orm";
 import { neonDb, gurusTable, db, subjectsTable, documentsTable, journalEntriesTable } from "@workspace/db";
 import {
   ListTeachersResponse,
@@ -133,6 +133,25 @@ router.patch("/teachers/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   const updates: Partial<typeof gurusTable.$inferInsert> = { ...parsed.data };
+  if (parsed.data.username !== undefined) {
+    const username = parsed.data.username.trim();
+    if (!/^[A-Za-z0-9._-]{3,80}$/.test(username)) {
+      res.status(400).json({
+        error: "Username harus 3–80 karakter dan hanya boleh berisi huruf, angka, titik, garis bawah, atau tanda hubung",
+      });
+      return;
+    }
+
+    const [usernameOwner] = await neonDb
+      .select({ id: gurusTable.id })
+      .from(gurusTable)
+      .where(and(eq(gurusTable.username, username), ne(gurusTable.id, params.data.id)));
+    if (usernameOwner) {
+      res.status(409).json({ error: "Username sudah digunakan" });
+      return;
+    }
+    updates.username = username;
+  }
   if (parsed.data.photoUrl === "") updates.photoUrl = null;
 
   const [guru] = await neonDb
