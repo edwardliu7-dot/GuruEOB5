@@ -302,17 +302,22 @@ router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => 
   }
 
   const legacyIds = await legacyStudentIds(targets);
-  const mappedTargets = targets.filter((studentId) => legacyIds.has(studentId));
+  // A roster can contain duplicate links to the same legacy TOMAT account.
+  // The absensi table is keyed by (legacy student_id, tanggal), so sending
+  // both rows in one INSERT makes PostgreSQL reject the whole batch with
+  // "ON CONFLICT DO UPDATE command cannot affect row a second time".
+  const mappedTargets = [...new Set(
+    targets
+      .map((studentId) => legacyIds.get(studentId))
+      .filter((id): id is string => Boolean(id)),
+  )];
   if (mappedTargets.length === 0) {
     res.status(400).json({ error: "Siswa belum terhubung ke data absensi lama" });
     return;
   }
   const inserted = await db
     .insert(attendanceTable)
-    .values(mappedTargets.flatMap((studentId) => {
-      const legacyStudentId = legacyIds.get(studentId);
-      return legacyStudentId ? [{ studentId: legacyStudentId, tanggal, status, guruId: guru.username }] : [];
-    }))
+    .values(mappedTargets.map((studentId) => ({ studentId, tanggal, status, guruId: guru.username })))
     .onConflictDoUpdate({
       target: [attendanceTable.studentId, attendanceTable.tanggal],
       set: { status, guruId: guru.username },
@@ -363,12 +368,20 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
     return;
   }
 
-  const values = targets.map((studentId) => ({
-    studentId: legacyIds.get(studentId)!,
-    tanggal,
-    status: byStudent.get(studentId)!,
-    guruId: guru.username,
-  }));
+  // Multiple roster records may point to one legacy account. Collapse those
+  // rows before INSERT because the unique key is the legacy ID + date.
+  const valuesByLegacyId = new Map<string, { studentId: string; tanggal: string; status: typeof entries[number]["status"]; guruId: string }>();
+  for (const studentId of targets) {
+    const legacyStudentId = legacyIds.get(studentId);
+    if (!legacyStudentId) continue;
+    valuesByLegacyId.set(legacyStudentId, {
+      studentId: legacyStudentId,
+      tanggal,
+      status: byStudent.get(studentId)!,
+      guruId: guru.username,
+    });
+  }
+  const values = [...valuesByLegacyId.values()];
   const saved = await db.transaction(async (tx) =>
     tx
       .insert(attendanceTable)

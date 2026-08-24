@@ -17,3 +17,4 @@
 - [GuruEOB5 school-admin vs platform-admin](guru-eob5-school-admin-role.md) — kepala_sekolah must be a school-scoped admin (add students/teachers/materials), separate from the hardcoded platform-owner admin gate.
 - [Gemini structured-output + storage guard](gemini-structured-output-decisions.md) — thinkingBudget:0 required for JSON schema output; AI content rows capped at 15/teacher; feedback screenshots as base64 JPEG.
 - [Generated API contract freshness](generated-api-contract-freshness.md) — after OpenAPI changes, regenerate api-zod and api-client-react or runtime can reject requests despite matching source routes.
+- [Attendance legacy ID deduplication](attendance-legacy-id-deduplication.md) — bulk attendance must deduplicate roster-to-legacy account mappings before PostgreSQL upsert.
