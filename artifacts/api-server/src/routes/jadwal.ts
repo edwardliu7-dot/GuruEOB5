@@ -273,7 +273,15 @@ router.post("/jadwal/bulk", requireAuth, async (req, res): Promise<void> => {
     .where(inArray(subjectsTable.id, subjectIds));
   const teacherBySubjectId = new Map(subjects.map((s) => [s.id, s.teacherId]));
 
-  const rows = entries
+  const rows: {
+    teacherId: string;
+    subjectId: string;
+    kelas: string;
+    hari: "Senin" | "Selasa" | "Rabu" | "Kamis" | "Jumat" | "Sabtu";
+    jamMulai: string;
+    jamSelesai: string;
+    school: string | null;
+  }[] = entries
     .map((e) => {
       const teacherId = teacherBySubjectId.get(e.subjectId);
       if (!teacherId) return null;
@@ -281,13 +289,13 @@ router.post("/jadwal/bulk", requireAuth, async (req, res): Promise<void> => {
         teacherId,
         subjectId: e.subjectId,
         kelas: e.kelas,
-        hari: e.hari as any,
+        hari: e.hari as "Senin" | "Selasa" | "Rabu" | "Kamis" | "Jumat" | "Sabtu",
         jamMulai: e.jamMulai,
         jamSelesai: e.jamSelesai,
         school: guru.school ?? null,
       };
     })
-    .filter(Boolean) as NonNullable<ReturnType<typeof entries.map>[number]>[];
+    .filter((row): row is NonNullable<typeof row> => row !== null);
 
   if (rows.length === 0) {
     res.status(400).json({ error: "Tidak ada entry valid" });

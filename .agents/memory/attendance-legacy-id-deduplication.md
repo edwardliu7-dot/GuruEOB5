@@ -7,4 +7,4 @@ Bulk attendance writes must collapse entries by the legacy TOMAT `student_id` be
 
 **Why:** More than one current roster record can potentially point at the same legacy account. PostgreSQL rejects a single `INSERT ... ON CONFLICT DO UPDATE` when the same target row appears twice in the input batch.
 
-**How to apply:** Deduplicate mapped legacy IDs in every attendance bulk path, not only the frontend's roster IDs, because frontend IDs can be unique while their legacy mappings are not.
+**How to apply:** Deduplicate mapped legacy IDs in every attendance bulk path, not only the frontend's roster IDs, because frontend IDs can be unique while their legacy mappings are not. Legacy deployments may also lack the expected composite unique index, so explicit transactional update-or-insert is safer than relying on `ON CONFLICT`.

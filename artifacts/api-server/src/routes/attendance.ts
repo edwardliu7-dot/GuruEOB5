@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, inArray, or, sql, type SQL } from "drizzle-orm";
+import { eq, and, inArray, or, type SQL } from "drizzle-orm";
 import {
   db,
   neonDb,
@@ -125,6 +125,56 @@ async function legacyStudentIds(
   return new Map(accounts.map((account) => [account.studentId, account.tomatStudentId]));
 }
 
+type AttendanceWrite = {
+  studentId: string;
+  tanggal: string;
+  status: "hadir" | "izin" | "sakit" | "alpa";
+  guruId: string;
+};
+
+/**
+ * The legacy absensi table is shared with the older TOMAT app. Some
+ * deployments have the composite unique index and some do not, so relying on
+ * ON CONFLICT (student_id, tanggal) makes otherwise valid attendance fail with
+ * "no unique or exclusion constraint matching the ON CONFLICT specification".
+ *
+ * Resolve the existing row explicitly instead. The transaction also keeps the
+ * read/update-or-insert sequence together for a single save operation.
+ */
+async function saveAttendanceRows(values: AttendanceWrite[]): Promise<Attendance[]> {
+  return db.transaction(async (tx) => {
+    const saved: Attendance[] = [];
+    for (const value of values) {
+      const [existing] = await tx
+        .select()
+        .from(attendanceTable)
+        .where(
+          and(
+            eq(attendanceTable.studentId, value.studentId),
+            eq(attendanceTable.tanggal, value.tanggal),
+          ),
+        )
+        .limit(1);
+
+      if (existing) {
+        const [updated] = await tx
+          .update(attendanceTable)
+          .set({ status: value.status, guruId: value.guruId })
+          .where(eq(attendanceTable.id, existing.id))
+          .returning();
+        if (updated) saved.push(updated);
+      } else {
+        const [inserted] = await tx
+          .insert(attendanceTable)
+          .values(value)
+          .returning();
+        if (inserted) saved.push(inserted);
+      }
+    }
+    return saved;
+  });
+}
+
 router.get("/attendance", requireAuth, async (req, res): Promise<void> => {
   const kelas = typeof req.query["kelas"] === "string" ? req.query["kelas"] : undefined;
   const guru = await getCurrentGuru(req);
@@ -167,19 +217,16 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
     res.status(404).json({ error: "Akun siswa belum terhubung ke data absensi lama" });
     return;
   }
-  const [saved] = await db
-    .insert(attendanceTable)
-    .values({
+  const [saved] = await saveAttendanceRows([{
       studentId: legacyStudentId,
       guruId: guru.username,
       tanggal: parsed.data.tanggal,
       status: parsed.data.status,
-    })
-    .onConflictDoUpdate({
-      target: [attendanceTable.studentId, attendanceTable.tanggal],
-      set: { status: parsed.data.status, guruId: guru.username },
-    })
-    .returning();
+    }]);
+  if (!saved) {
+    res.status(500).json({ error: "Absensi gagal disimpan" });
+    return;
+  }
   const rows = await scopedAttendance(guru, { tanggal: saved.tanggal });
   const row = rows.find((item) => item.attendance.id === saved.id);
   if (!row) {
@@ -315,15 +362,10 @@ router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => 
     res.status(400).json({ error: "Siswa belum terhubung ke data absensi lama" });
     return;
   }
-  const inserted = await db
-    .insert(attendanceTable)
-    .values(mappedTargets.map((studentId) => ({ studentId, tanggal, status, guruId: guru.username })))
-    .onConflictDoUpdate({
-      target: [attendanceTable.studentId, attendanceTable.tanggal],
-      set: { status, guruId: guru.username },
-    })
-    .returning();
-  res.json(BulkCreateAttendanceResponse.parse({ count: inserted.length }));
+  const saved = await saveAttendanceRows(
+    mappedTargets.map((studentId) => ({ studentId, tanggal, status, guruId: guru.username })),
+  );
+  res.json(BulkCreateAttendanceResponse.parse({ count: saved.length }));
 });
 
 /**
@@ -382,16 +424,7 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
     });
   }
   const values = [...valuesByLegacyId.values()];
-  const saved = await db.transaction(async (tx) =>
-    tx
-      .insert(attendanceTable)
-      .values(values)
-      .onConflictDoUpdate({
-        target: [attendanceTable.studentId, attendanceTable.tanggal],
-        set: { status: sql`excluded.status`, guruId: guru.username },
-      })
-      .returning({ id: attendanceTable.id }),
-  );
+  const saved = await saveAttendanceRows(values);
   res.json(BulkMixedCreateAttendanceResponse.parse({ count: saved.length }));
 });
 
