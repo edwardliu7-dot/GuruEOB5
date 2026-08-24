@@ -213,7 +213,7 @@ function SubjectCard({ group, index }: { group: GroupedItem; index: number }) {
                 {realRows.map((r: any, i: number) => (
                   <li key={r.journalEntryId ?? i} className="text-xs text-slate-700 leading-snug">
                     {realRows.length > 1 && <span className="mr-1 text-[10px] text-slate-400">{i + 1}.</span>}
-                    {group.hasPlan ? "Jurnal terisi" : r.materi}
+                    {r.materi || (group.hasPlan ? "Jurnal terisi" : "Materi belum diisi")}
                   </li>
                 ))}
               </ul>
