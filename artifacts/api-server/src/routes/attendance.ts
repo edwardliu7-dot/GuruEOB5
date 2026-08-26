@@ -219,7 +219,9 @@ router.post("/attendance", requireAuth, async (req, res): Promise<void> => {
   }
   const [saved] = await saveAttendanceRows([{
       studentId: legacyStudentId,
-      guruId: guru.username,
+      // Store the canonical guru id. Legacy rows may contain usernames, and
+      // guruNamesFor intentionally supports both formats when reading them.
+      guruId: guru.id,
       tanggal: parsed.data.tanggal,
       status: parsed.data.status,
     }]);
@@ -363,7 +365,7 @@ router.post("/attendance/bulk", requireAuth, async (req, res): Promise<void> => 
     return;
   }
   const saved = await saveAttendanceRows(
-    mappedTargets.map((studentId) => ({ studentId, tanggal, status, guruId: guru.username })),
+    mappedTargets.map((studentId) => ({ studentId, tanggal, status, guruId: guru.id })),
   );
   res.json(BulkCreateAttendanceResponse.parse({ count: saved.length }));
 });
@@ -420,7 +422,7 @@ router.post("/attendance/bulk-mixed", requireAuth, async (req, res): Promise<voi
       studentId: legacyStudentId,
       tanggal,
       status: byStudent.get(studentId)!,
-      guruId: guru.username,
+      guruId: guru.id,
     });
   }
   const values = [...valuesByLegacyId.values()];
