@@ -62,6 +62,14 @@ const sessionTableReady = sessionPool
       created_by_name text NOT NULL,
       created_at timestamptz NOT NULL DEFAULT now()
     );
+    -- If an older bahan_ajar table already exists, CREATE TABLE IF NOT EXISTS
+    -- does not add the file columns required by the upload route.
+    ALTER TABLE bahan_ajar
+      ADD COLUMN IF NOT EXISTS file_name text,
+      ADD COLUMN IF NOT EXISTS file_type text,
+      ADD COLUMN IF NOT EXISTS file_size integer,
+      ADD COLUMN IF NOT EXISTS file_data text,
+      ADD COLUMN IF NOT EXISTS link_url text;
 
     -- Create feedback table if it doesn't exist yet.
     CREATE TABLE IF NOT EXISTS feedback (
@@ -242,9 +250,21 @@ if (fs.existsSync(frontendDist)) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   logger.error({ err }, "Unhandled route error");
+  const httpError = err as { status?: unknown; statusCode?: unknown; type?: unknown };
+  const candidateStatus = Number(httpError.status ?? httpError.statusCode);
+  const status =
+    httpError.type === "entity.too.large"
+      ? 413
+      : Number.isInteger(candidateStatus) && candidateStatus >= 400 && candidateStatus < 600
+        ? candidateStatus
+        : 500;
   const message =
-    err instanceof Error ? err.message : "Terjadi kesalahan pada server";
-  res.status(500).json({ error: message });
+    httpError.type === "entity.too.large"
+      ? "Ukuran berkas terlalu besar untuk diunggah."
+      : err instanceof Error
+        ? err.message
+        : "Terjadi kesalahan pada server";
+  res.status(status).json({ error: message });
 });
 
 export default app;

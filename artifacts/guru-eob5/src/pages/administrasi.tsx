@@ -52,6 +52,22 @@ function formatFileSize(bytes?: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function getApiErrorMessage(error: unknown): string {
+  const raw = error instanceof Error ? error.message : "";
+  if (!raw) return "Terjadi kesalahan saat menyimpan bahan ajar.";
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      const data = parsed as { error?: unknown; message?: unknown };
+      if (typeof data.error === "string") return data.error;
+      if (typeof data.message === "string") return data.message;
+    }
+  } catch {
+    // apiFetch may receive a plain-text error response rather than JSON.
+  }
+  return raw.startsWith("<") ? "Server menolak unggahan. Periksa log API untuk detail." : raw;
+}
+
 // Strip extension from filename for default document name
 function fileBaseName(filename: string): string {
   return filename.replace(/\.[^.]+$/, "");
@@ -149,8 +165,12 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
       setIsDialogOpen(false);
       form.reset();
       setSelectedFile(null);
-    } catch {
-      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Gagal mengunggah bahan ajar",
+        description: getApiErrorMessage(error),
+      });
     } finally {
       setIsUploading(false);
     }
