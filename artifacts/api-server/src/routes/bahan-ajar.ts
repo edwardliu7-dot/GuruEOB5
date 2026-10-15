@@ -43,7 +43,7 @@ router.get("/bahan-ajar/:id/file", requireAuth, async (req, res): Promise<void> 
     .from(bahanAjarTable)
     .where(
       and(
-        eq(bahanAjarTable.id, req.params.id),
+        eq(bahanAjarTable.id, String(req.params.id)),
         guru.school ? eq(bahanAjarTable.school, guru.school) : eq(bahanAjarTable.school, ""),
       ),
     );
@@ -114,7 +114,7 @@ router.delete("/bahan-ajar/:id", requireAuth, async (req, res): Promise<void> =>
   const [item] = await db
     .select({ id: bahanAjarTable.id, createdBy: bahanAjarTable.createdBy, school: bahanAjarTable.school })
     .from(bahanAjarTable)
-    .where(eq(bahanAjarTable.id, req.params.id));
+    .where(eq(bahanAjarTable.id, String(req.params.id)));
 
   if (!item) { res.status(404).json({ error: "Bahan ajar tidak ditemukan" }); return; }
 
@@ -126,7 +126,7 @@ router.delete("/bahan-ajar/:id", requireAuth, async (req, res): Promise<void> =>
     return;
   }
 
-  await db.delete(bahanAjarTable).where(eq(bahanAjarTable.id, req.params.id));
+  await db.delete(bahanAjarTable).where(eq(bahanAjarTable.id, String(req.params.id)));
   res.json({ success: true });
 });
 

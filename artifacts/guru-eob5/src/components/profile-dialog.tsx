@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -82,6 +83,7 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const dragState = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
 
   const [bio, setBio] = useState("");
+  const [username, setUsername] = useState("");
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [processing, setProcessing] = useState(false);
 
@@ -93,6 +95,7 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   useEffect(() => {
     if (open) {
       setBio(user?.bio ?? "");
+      setUsername(user?.username ?? "");
       setPhotoUrl(user?.photoUrl ?? undefined);
       setPending(null);
     }
@@ -182,17 +185,30 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   const handleSave = async () => {
     if (!user) return;
+    const nextUsername = username.trim();
+    if (!/^[A-Za-z0-9._-]{3,80}$/.test(nextUsername)) {
+      toast({
+        variant: "destructive",
+        title: "Username tidak valid",
+        description: "Gunakan 3–80 karakter: huruf, angka, titik, garis bawah, atau tanda hubung.",
+      });
+      return;
+    }
     try {
       await updateTeacher.mutateAsync({
         id: user.id,
-        data: { bio: bio.trim(), photoUrl: photoUrl ?? "" },
+        data: { username: nextUsername, bio: bio.trim(), photoUrl: photoUrl ?? "" },
       });
       await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
       await queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
       toast({ title: "Berhasil", description: "Profil diperbarui" });
       onOpenChange(false);
-    } catch {
-      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan" });
+    } catch (error: any) {
+      const description =
+        error?.data?.error ||
+        error?.data?.message ||
+        "Terjadi kesalahan saat memperbarui profil";
+      toast({ variant: "destructive", title: "Gagal", description });
     }
   };
 
@@ -275,6 +291,21 @@ export function ProfileDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 </Button>
               ) : null}
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="contoh: ani.widyastuti"
+                maxLength={80}
+                autoComplete="username"
+              />
+              <p className="text-xs text-muted-foreground">
+                Username digunakan untuk masuk. Hanya huruf, angka, titik, garis bawah, dan tanda hubung.
+              </p>
             </div>
 
             <div className="space-y-2">

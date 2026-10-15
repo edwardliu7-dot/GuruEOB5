@@ -2126,6 +2126,11 @@ components:
     UpdateTeacherInput:
       type: object
       properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 80
+          pattern: "^[A-Za-z0-9._-]+$"
         name:
           type: string
         jabatan:

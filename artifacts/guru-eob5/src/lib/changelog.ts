@@ -20,6 +20,21 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    id: "20260824",
+    date: "24 Agustus 2026",
+    title: "Pengaturan Profil Guru",
+    items: [
+      {
+        tag: "Baru",
+        text: "Username guru sekarang dapat diubah langsung dari popup Edit Profil bersama Bio dan foto.",
+      },
+      {
+        tag: "Keamanan",
+        text: "Username divalidasi agar aman digunakan untuk login dan tidak boleh sama dengan akun guru lain.",
+      },
+    ],
+  },
+  {
     id: "20260722-2",
     date: "22 Juli 2026",
     title: "Perbaikan & Peningkatan Fitur",
