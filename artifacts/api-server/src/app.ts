@@ -115,6 +115,10 @@ const sessionTableReady = sessionPool
     -- table was created before these columns were added to the Drizzle schema.
     ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_data text;
     ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_name text;
+    ALTER TABLE documents
+      ADD COLUMN IF NOT EXISTS file_type text,
+      ADD COLUMN IF NOT EXISTS file_size integer,
+      ADD COLUMN IF NOT EXISTS uploaded_at timestamptz NOT NULL DEFAULT now();
 
     -- The attendance routes still use the legacy TOMAT-compatible shape so
     -- existing history and student_accounts mappings remain readable.

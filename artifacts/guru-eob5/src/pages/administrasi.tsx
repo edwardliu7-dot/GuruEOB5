@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TujuanPembelajaranTab } from "@/components/tujuan-pembelajaran-tab";
 import { Badge } from "@/components/ui/badge";
+import { PptxDocumentPreview } from "@/components/pptx-document-preview";
 
 function readFileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -53,8 +54,26 @@ function formatFileSize(bytes?: number | null): string {
 }
 
 function getApiErrorMessage(error: unknown): string {
-  const raw = error instanceof Error ? error.message : "";
-  if (!raw) return "Terjadi kesalahan saat menyimpan bahan ajar.";
+  const apiError = error as {
+    data?: unknown;
+    status?: unknown;
+    message?: unknown;
+  } | null;
+  if (apiError?.status === 413) {
+    return "Berkas terlalu besar untuk batas unggahan server.";
+  }
+  if (apiError?.data && typeof apiError.data === "object") {
+    const data = apiError.data as { error?: unknown; message?: unknown };
+    if (typeof data.error === "string") return data.error;
+    if (typeof data.message === "string") return data.message;
+  }
+  const raw =
+    error instanceof Error
+      ? error.message
+      : typeof apiError?.message === "string"
+        ? apiError.message
+        : "";
+  if (!raw) return "Terjadi kesalahan saat menyimpan.";
   try {
     const parsed: unknown = JSON.parse(raw);
     if (parsed && typeof parsed === "object") {
@@ -78,6 +97,19 @@ interface PendingDoc {
   file: File;
   name: string;
   status: "pending" | "uploading" | "done" | "error";
+  errorMessage?: string;
+}
+
+function isPptxDocument(fileName?: string | null, fileType?: string | null) {
+  return (
+    /\.pptx$/i.test(fileName ?? "") ||
+    fileType?.toLowerCase() ===
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+  );
+}
+
+function isPdfDocument(fileName?: string | null, fileType?: string | null) {
+  return /\.pdf$/i.test(fileName ?? "") || fileType?.toLowerCase() === "application/pdf";
 }
 
 const subjectSchema = z.object({ name: z.string().min(1, "Nama mata pelajaran harus diisi") });
@@ -137,7 +169,11 @@ function BahanAjarTab({ isAdmin, currentUserId, subjects, me }: {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [presentingId, setPresentingId] = useState<string | null>(null);
   const [previewingId, setPreviewingId] = useState<string | null>(null);
-  const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string; fileType?: string | null } | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<{
+    name: string;
+    url: string;
+    fileType?: string | null;
+  } | null>(null);
 
   // Build dropdown options from existing data
   const subjectOptions: string[] = subjects?.map((s: any) => s.name).filter(Boolean) ?? [];
@@ -478,7 +514,13 @@ export default function Administrasi() {
   const [pendingDocs, setPendingDocs] = useState<PendingDoc[]>([]);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string; fileType?: string | null } | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<{
+    name: string;
+    fileName?: string | null;
+    url: string;
+    blob: Blob;
+    fileType?: string | null;
+  } | null>(null);
   const [previewingId, setPreviewingId] = useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const docFileInputRef = useRef<HTMLInputElement>(null);
@@ -512,7 +554,11 @@ export default function Administrasi() {
 
   const removeDoc = (id: string) => setPendingDocs((prev) => prev.filter((d) => d.id !== id));
   const updateDocName = (id: string, name: string) =>
-    setPendingDocs((prev) => prev.map((d) => (d.id === id ? { ...d, name } : d)));
+    setPendingDocs((prev) =>
+      prev.map((d) =>
+        d.id === id ? { ...d, name, errorMessage: undefined } : d,
+      ),
+    );
 
   const closeDocDialog = () => {
     if (uploadProgress) return; // block close while uploading
@@ -542,13 +588,20 @@ export default function Administrasi() {
 
   const handleUploadDocs = async () => {
     if (!selectedSubject || pendingDocs.length === 0) return;
-    const todo = pendingDocs.filter((d) => d.status === "pending");
+    const todo = pendingDocs.filter((d) => d.status === "pending" || d.status === "error");
     if (todo.length === 0) return;
     setUploadProgress({ done: 0, total: todo.length });
     let done = 0;
     let failed = 0;
+    let firstError: string | null = null;
     for (const doc of todo) {
-      setPendingDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: "uploading" } : d)));
+      setPendingDocs((prev) =>
+        prev.map((d) =>
+          d.id === doc.id
+            ? { ...d, status: "uploading", errorMessage: undefined }
+            : d,
+        ),
+      );
       try {
         const fileData = await readFileAsBase64(doc.file);
         await createDocument.mutateAsync({
@@ -564,7 +617,15 @@ export default function Administrasi() {
         setPendingDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: "done" } : d)));
         done++;
       } catch (err) {
-        setPendingDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: "error" } : d)));
+        const errorMessage = getApiErrorMessage(err);
+        firstError ??= errorMessage;
+        setPendingDocs((prev) =>
+          prev.map((d) =>
+            d.id === doc.id
+              ? { ...d, status: "error", errorMessage }
+              : d,
+          ),
+        );
         failed++;
         console.error("Upload dokumen gagal:", err);
       }
@@ -577,7 +638,13 @@ export default function Administrasi() {
       setPendingDocs([]);
       setUploadProgress(null);
     } else {
-      toast({ variant: "destructive", title: `${failed} dokumen gagal`, description: "Dokumen yang gagal ditandai merah — Anda dapat mencoba lagi." });
+      toast({
+        variant: "destructive",
+        title: `${failed} dokumen gagal`,
+        description: firstError
+          ? `${firstError} Berkas gagal ditandai merah; Anda dapat mencoba lagi.`
+          : "Berkas gagal ditandai merah; Anda dapat mencoba lagi.",
+      });
       setUploadProgress(null);
     }
   };
@@ -607,7 +674,13 @@ export default function Administrasi() {
       if (!response.ok) throw new Error();
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      setPreviewDoc({ name: doc.name, url, fileType: doc.fileType });
+      setPreviewDoc({
+        name: doc.name,
+        fileName: doc.fileName,
+        url,
+        blob,
+        fileType: doc.fileType,
+      });
     } catch {
       toast({ variant: "destructive", title: "Gagal", description: "Tidak dapat membuka dokumen" });
     } finally {
@@ -758,13 +831,23 @@ export default function Administrasi() {
                         </div>
 
                         {/* Editable name */}
-                        <Input
-                          className="h-7 text-xs flex-1 min-w-0 border-0 bg-transparent shadow-none focus-visible:ring-0 px-0"
-                          value={doc.name}
-                          disabled={doc.status !== "pending"}
-                          onChange={(e) => updateDocName(doc.id, e.target.value)}
-                          placeholder="Nama dokumen"
-                        />
+                        <div className="min-w-0 flex-1">
+                          <Input
+                            className="h-7 w-full border-0 bg-transparent px-0 text-xs shadow-none focus-visible:ring-0"
+                            value={doc.name}
+                            disabled={doc.status !== "pending" && doc.status !== "error"}
+                            onChange={(e) => updateDocName(doc.id, e.target.value)}
+                            placeholder="Nama dokumen"
+                          />
+                          {doc.errorMessage && (
+                            <p
+                              className="truncate text-[11px] text-red-600"
+                              title={doc.errorMessage}
+                            >
+                              {doc.errorMessage}
+                            </p>
+                          )}
+                        </div>
 
                         {/* File size */}
                         <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">
@@ -772,7 +855,7 @@ export default function Administrasi() {
                         </span>
 
                         {/* Remove */}
-                        {doc.status === "pending" && (
+                        {(doc.status === "pending" || doc.status === "error") && (
                           <button
                             type="button"
                             className="shrink-0 text-muted-foreground hover:text-destructive"
@@ -808,13 +891,13 @@ export default function Administrasi() {
                   </Button>
                   <Button
                     onClick={handleUploadDocs}
-                    disabled={pendingDocs.filter((d) => d.status === "pending").length === 0 || !!uploadProgress}
+                    disabled={pendingDocs.filter((d) => d.status === "pending" || d.status === "error").length === 0 || !!uploadProgress}
                   >
                     {uploadProgress
                       ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mengunggah…</>
                       : <>
                           <Upload className="w-4 h-4 mr-2" />
-                          Unggah {pendingDocs.filter((d) => d.status === "pending").length} Berkas
+                          Unggah {pendingDocs.filter((d) => d.status === "pending" || d.status === "error").length} Berkas
                         </>
                     }
                   </Button>
@@ -1105,18 +1188,29 @@ export default function Administrasi() {
             <DialogHeader className="px-6 pt-5 pb-3 border-b flex-shrink-0">
               <DialogTitle className="truncate">{previewDoc.name}</DialogTitle>
             </DialogHeader>
-            <div className="flex-1 overflow-hidden">
-              {previewDoc.fileType?.startsWith("image/") ? (
+            <div className="min-h-0 flex-1 overflow-hidden">
+              {isPptxDocument(previewDoc.fileName, previewDoc.fileType) ? (
+                <PptxDocumentPreview file={previewDoc.blob} />
+              ) : previewDoc.fileType?.toLowerCase().startsWith("image/") ? (
                 <div className="w-full h-full flex items-center justify-center bg-muted/30 p-4">
                   <img src={previewDoc.url} alt={previewDoc.name} className="max-h-full max-w-full object-contain rounded" />
                 </div>
-              ) : (
+              ) : isPdfDocument(previewDoc.fileName, previewDoc.fileType) ? (
                 <iframe
                   src={previewDoc.url}
                   className="w-full h-full"
                   title={previewDoc.name}
                   style={{ border: "none" }}
                 />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/30 p-6 text-center">
+                  <FileText className="h-10 w-10 text-muted-foreground/50" />
+                  <p className="font-medium">Pratinjau format ini belum tersedia</p>
+                  <p className="max-w-lg text-sm text-muted-foreground">
+                    Pratinjau langsung tersedia untuk PowerPoint (.pptx), PDF, dan gambar.
+                    Gunakan tombol Unduh pada daftar dokumen untuk file Word atau Excel.
+                  </p>
+                </div>
               )}
             </div>
           </DialogContent>
